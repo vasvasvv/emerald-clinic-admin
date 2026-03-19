@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
+import Records from "./pages/Records";
 import Doctors from "./pages/Doctors";
 import News from "./pages/News";
 import Notifications from "./pages/Notifications";
