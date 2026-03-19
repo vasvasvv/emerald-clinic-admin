@@ -1,5 +1,5 @@
 import { 
-  LayoutDashboard, Calendar, Users, Newspaper, Bell, 
+  LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, 
   LogOut, ChevronLeft, ChevronRight, Languages
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
