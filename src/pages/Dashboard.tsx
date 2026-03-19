@@ -40,7 +40,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            onClick={() => navigate('/appointments')}
+            onClick={() => navigate('/records')}
             className="btn-accent flex items-center justify-center gap-3 py-6 text-lg font-heading font-semibold rounded-2xl"
           >
             <CalendarPlus className="w-6 h-6" />

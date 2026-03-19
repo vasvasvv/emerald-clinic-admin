@@ -80,10 +80,6 @@ export default function Appointments() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-          <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
-            <Plus className="w-4 h-4" />
-            {t('newAppointment')}
-          </button>
         </div>
 
         {/* Filters */}
