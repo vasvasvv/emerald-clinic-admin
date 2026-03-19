@@ -168,7 +168,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
 
                 return (
                   <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''} ${isPast ? 'opacity-50' : ''}`}>
-                    <div className={`px-3 py-2 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
+                    <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
                       <span className="text-xs text-muted-foreground font-medium">{dayNamesMap[lang]?.[i] || dayNamesMap.en[i]}</span>
                       <span className={`font-heading font-semibold text-sm ${isToday ? 'text-primary' : ''}`}>
                         {day.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
