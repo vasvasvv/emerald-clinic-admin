@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
+import Records from "./pages/Records";
 import Doctors from "./pages/Doctors";
 import News from "./pages/News";
 import Notifications from "./pages/Notifications";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
+            <Route path="/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
             <Route path="/doctors" element={<ProtectedRoute><Doctors /></ProtectedRoute>} />
             <Route path="/news" element={<ProtectedRoute><News /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

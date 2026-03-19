@@ -1,5 +1,5 @@
 import { 
-  LayoutDashboard, Calendar, Users, Newspaper, Bell, 
+  LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, 
   LogOut, ChevronLeft, ChevronRight, Languages
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
@@ -9,6 +9,7 @@ import { useState } from 'react';
 const navItems = [
   { key: 'dashboard' as const, url: '/', icon: LayoutDashboard },
   { key: 'appointments' as const, url: '/appointments', icon: Calendar },
+  { key: 'records' as const, url: '/records', icon: ClipboardList },
   { key: 'doctors' as const, url: '/doctors', icon: Users },
   { key: 'news' as const, url: '/news', icon: Newspaper },
   { key: 'notifications' as const, url: '/notifications', icon: Bell },
