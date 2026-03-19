@@ -168,14 +168,14 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
 
                 return (
                   <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''} ${isPast ? 'opacity-50' : ''}`}>
-                    <div className={`px-3 py-2 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
+                    <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
                       <span className="text-xs text-muted-foreground font-medium">{dayNamesMap[lang]?.[i] || dayNamesMap.en[i]}</span>
                       <span className={`font-heading font-semibold text-sm ${isToday ? 'text-primary' : ''}`}>
                         {day.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
                       </span>
                       <span className="text-xs text-muted-foreground ml-auto">{freeSlots.length} {t('available')}</span>
                     </div>
-                    <div className="p-2 flex flex-wrap gap-1">
+                    <div className="p-3 flex flex-wrap gap-1.5">
                       {workHours.map((hour) => {
                         const isFree = freeSlots.includes(hour);
                         const isSelected = selectedDate === dateStr && selectedTime === hour;
@@ -184,7 +184,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                             key={hour}
                             disabled={!isFree || isPast}
                             onClick={() => handleSlotClick(dateStr, hour)}
-                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                               isSelected
                                 ? 'bg-accent text-accent-foreground ring-2 ring-accent/50'
                                 : isFree && !isPast
@@ -202,24 +202,26 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               })}
             </motion.div>
 
-            {/* Manual time edit + Next button */}
-            <div className="flex items-center justify-between gap-4 pb-4">
-              {selectedDate ? (
-                <div className="flex items-center gap-3 glass-panel-sm px-4 py-2.5">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{selectedDate}</span>
-                  <input
-                    type="time"
-                    value={manualTime}
-                    onChange={(e) => handleManualTimeChange(e.target.value)}
-                    className="input-glass text-sm py-1 w-28"
-                  />
-                </div>
-              ) : <div />}
+            {/* Manual time edit */}
+            {selectedDate && (
+              <div className="flex items-center gap-3 glass-panel-sm px-4 py-2.5">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{selectedDate}</span>
+                <input
+                  type="time"
+                  value={manualTime}
+                  onChange={(e) => handleManualTimeChange(e.target.value)}
+                  className="input-glass text-sm py-1 w-28"
+                />
+              </div>
+            )}
+
+            {/* Next button */}
+            <div className="pb-4">
               <button
                 onClick={handleNext}
                 disabled={!selectedDate || !selectedTime}
-                className="btn-accent flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-accent w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('confirm')}
                 <ArrowRight className="w-4 h-4" />
