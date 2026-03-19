@@ -231,5 +231,3 @@ export default function Appointments() {
     </AdminLayout>
   );
 }
-
-import { Calendar } from 'lucide-react';

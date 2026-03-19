@@ -20,7 +20,7 @@ const initialNews: NewsItem[] = [
   { id: 3, type: 'news', label: 'update', title: 'Оновлення графіку роботи', description: 'З 1 квітня клініка працює в новому графіку.', expiryDate: '2026-04-01', hotOffer: false },
 ];
 
-const emptyForm = { type: 'news' as const, label: 'info' as const, title: '', description: '', expiryDate: '', hotOffer: false };
+const emptyForm: Omit<NewsItem, 'id'> = { type: 'news', label: 'info', title: '', description: '', expiryDate: '', hotOffer: false };
 
 const labelColors: Record<string, string> = {
   info: 'bg-info/20 text-info',
