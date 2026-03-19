@@ -15,7 +15,7 @@ interface AppointmentRecord {
 
 const mockDoctors = ['Др. Іваненко', 'Др. Шевченко', 'Др. Бондаренко', 'Др. Кравченко'];
 
-const mockRecords: Record[] = [
+const mockRecords: AppointmentRecord[] = [
   { id: 1, clientName: 'Олена Петренко', phone: '+380991234567', date: '2026-03-16', time: '10:00', doctor: 'Др. Іваненко' },
   { id: 2, clientName: 'Максим Коваль', phone: '+380991234568', date: '2026-03-16', time: '11:30', doctor: 'Др. Шевченко' },
   { id: 3, clientName: 'Анна Мельник', phone: '+380991234569', date: '2026-03-17', time: '14:00', doctor: 'Др. Бондаренко' },
