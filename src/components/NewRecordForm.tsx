@@ -221,7 +221,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               <button
                 onClick={handleNext}
                 disabled={!selectedDate || !selectedTime}
-                className="btn-accent flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-accent w-full flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t('confirm')}
                 <ArrowRight className="w-4 h-4" />
