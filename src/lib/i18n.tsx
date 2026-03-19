@@ -48,6 +48,11 @@ const translations = {
     month: 'Місяць',
     today: 'Сьогодні',
     noRecords: 'Немає записів',
+    newRecord: 'Новий запис',
+    selectTimeSlot: 'Оберіть дату та час',
+    available: 'вільно',
+    patientName: "Ім'я та прізвище",
+    backToRecords: 'Назад до записів',
     
     // Doctors
     newDoctor: 'Новий лікар',
