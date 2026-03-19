@@ -141,6 +141,11 @@ const translations = {
     month: 'Month',
     today: 'Today',
     noRecords: 'No records',
+    newRecord: 'New Record',
+    selectTimeSlot: 'Select date & time',
+    available: 'available',
+    patientName: 'Full name',
+    backToRecords: 'Back to records',
     
     newDoctor: 'New Doctor',
     fullName: 'Full Name',
