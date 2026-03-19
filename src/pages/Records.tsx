@@ -4,7 +4,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-interface Record {
+interface AppointmentRecord {
   id: number;
   clientName: string;
   phone: string;
