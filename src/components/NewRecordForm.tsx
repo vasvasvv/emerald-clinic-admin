@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { ArrowLeft, Clock, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewRecordFormProps {
@@ -10,7 +10,8 @@ interface NewRecordFormProps {
   doctors: string[];
 }
 
-const WORK_HOURS = Array.from({ length: 9 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
+const WORK_HOURS_WEEKDAY = Array.from({ length: 9 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
+const WORK_HOURS_SATURDAY = Array.from({ length: 5 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
@@ -29,6 +30,11 @@ const dayNamesMap: Record<string, string[]> = {
   uk: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
   en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
+
+function getWorkHours(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.getDay() === 6 ? WORK_HOURS_SATURDAY : WORK_HOURS_WEEKDAY;
+}
 
 export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: NewRecordFormProps) {
   const { t, lang } = useI18n();
@@ -66,7 +72,8 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
 
   const getFreeSlots = (dateStr: string) => {
     const occupied = getOccupiedSlots(dateStr);
-    return WORK_HOURS.filter((h) => !occupied.includes(h));
+    const hours = getWorkHours(dateStr);
+    return hours.filter((h) => !occupied.includes(h));
   };
 
   const handleSlotClick = (dateStr: string, time: string) => {
@@ -90,7 +97,8 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   };
 
   const today = formatDate(new Date());
-  const weekLabel = `${weekDays[0].toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short' })} — ${weekDays[5].toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
+  const weekLabel = `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' })} — ${weekDays[5].toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}`;
 
   return (
     <motion.div
@@ -106,41 +114,41 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
-            className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6"
+            className="max-w-5xl mx-auto p-4 sm:p-5 space-y-3"
           >
-            {/* Header */}
-            <div className="flex items-center gap-4">
-              <button onClick={onClose} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-heading font-bold">{t('newRecord')}</h1>
-                <p className="text-sm text-muted-foreground">{t('selectTimeSlot')}</p>
+            {/* Header with doctor selector */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button onClick={onClose} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h1 className="text-xl font-heading font-bold">{t('newRecord')}</h1>
+                  <p className="text-xs text-muted-foreground">{t('selectTimeSlot')}</p>
+                </div>
               </div>
-            </div>
-
-            {/* Doctor selector */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-muted-foreground">{t('doctor')}:</label>
-              <select
-                value={selectedDoctor}
-                onChange={(e) => setSelectedDoctor(e.target.value)}
-                className="input-glass text-sm py-1.5 pr-8"
-              >
-                {doctors.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground hidden sm:inline">{t('doctor')}:</label>
+                <select
+                  value={selectedDoctor}
+                  onChange={(e) => setSelectedDoctor(e.target.value)}
+                  className="input-glass text-sm py-1.5 pr-8"
+                >
+                  {doctors.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Week navigation */}
             <div className="flex items-center justify-between">
-              <button onClick={() => navigateWeek(-1)} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors text-sm">
-                ← {t('week')}
+              <button onClick={() => navigateWeek(-1)} className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-heading font-semibold capitalize">{weekLabel}</span>
-              <button onClick={() => navigateWeek(1)} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors text-sm">
-                {t('week')} →
+              <span className="font-heading font-semibold text-sm capitalize">{weekLabel}</span>
+              <button onClick={() => navigateWeek(1)} className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
@@ -149,25 +157,26 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               key={monday.getTime()}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-3"
             >
               {weekDays.map((day, i) => {
                 const dateStr = formatDate(day);
+                const workHours = getWorkHours(dateStr);
                 const freeSlots = getFreeSlots(dateStr);
                 const isToday = dateStr === today;
                 const isPast = dateStr < today;
 
                 return (
                   <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''} ${isPast ? 'opacity-50' : ''}`}>
-                    <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
+                    <div className={`px-3 py-2 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
                       <span className="text-xs text-muted-foreground font-medium">{dayNamesMap[lang]?.[i] || dayNamesMap.en[i]}</span>
-                      <span className={`font-heading font-semibold ${isToday ? 'text-primary' : ''}`}>
-                        {day.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short' })}
+                      <span className={`font-heading font-semibold text-sm ${isToday ? 'text-primary' : ''}`}>
+                        {day.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
                       </span>
                       <span className="text-xs text-muted-foreground ml-auto">{freeSlots.length} {t('available')}</span>
                     </div>
-                    <div className="p-3 flex flex-wrap gap-1.5">
-                      {WORK_HOURS.map((hour) => {
+                    <div className="p-2 flex flex-wrap gap-1">
+                      {workHours.map((hour) => {
                         const isFree = freeSlots.includes(hour);
                         const isSelected = selectedDate === dateStr && selectedTime === hour;
                         return (
@@ -175,7 +184,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                             key={hour}
                             disabled={!isFree || isPast}
                             onClick={() => handleSlotClick(dateStr, hour)}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
                               isSelected
                                 ? 'bg-accent text-accent-foreground ring-2 ring-accent/50'
                                 : isFree && !isPast
@@ -193,23 +202,20 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               })}
             </motion.div>
 
-            {/* Manual time edit */}
-            {selectedDate && (
-              <div className="flex items-center gap-3 glass-panel p-4">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{t('date')}: <strong className="text-foreground">{selectedDate}</strong></span>
-                <span className="text-sm text-muted-foreground">{t('time')}:</span>
-                <input
-                  type="time"
-                  value={manualTime}
-                  onChange={(e) => handleManualTimeChange(e.target.value)}
-                  className="input-glass text-sm py-1 w-28"
-                />
-              </div>
-            )}
-
-            {/* Next button */}
-            <div className="flex justify-end pb-6">
+            {/* Manual time edit + Next button */}
+            <div className="flex items-center justify-between gap-4 pb-4">
+              {selectedDate ? (
+                <div className="flex items-center gap-3 glass-panel-sm px-4 py-2.5">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{selectedDate}</span>
+                  <input
+                    type="time"
+                    value={manualTime}
+                    onChange={(e) => handleManualTimeChange(e.target.value)}
+                    className="input-glass text-sm py-1 w-28"
+                  />
+                </div>
+              ) : <div />}
               <button
                 onClick={handleNext}
                 disabled={!selectedDate || !selectedTime}
@@ -229,7 +235,6 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
             className="max-w-lg mx-auto p-4 sm:p-6 lg:p-8 space-y-6 min-h-screen flex flex-col justify-center"
           >
             <div className="space-y-6">
-              {/* Header */}
               <div className="flex items-center gap-4">
                 <button onClick={() => setStep(1)} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
                   <ArrowLeft className="w-5 h-5" />
@@ -242,7 +247,6 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                 </div>
               </div>
 
-              {/* Patient fields */}
               <div className="glass-panel p-5 space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-sm text-muted-foreground">{t('patientName')}</label>
@@ -274,7 +278,6 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 justify-end">
                 <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">
                   {t('cancel')}
