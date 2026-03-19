@@ -7,6 +7,7 @@ const translations = {
     // Sidebar
     dashboard: 'Панель керування',
     appointments: 'Прийоми',
+    records: 'Записи',
     doctors: 'Лікарі',
     news: 'Новини',
     notifications: 'Сповіщення',
@@ -14,11 +15,10 @@ const translations = {
     logout: 'Вийти',
     
     // Dashboard
-    totalAppointments: 'Усього прийомів',
     todayAppointments: 'Прийоми сьогодні',
-    totalDoctors: 'Лікарі',
-    totalNews: 'Новини',
-    recentAppointments: 'Останні прийоми',
+    tomorrowAppointments: 'Прийоми на завтра',
+    addRecord: 'Додати запис',
+    sendNotification: 'Надіслати сповіщення',
     
     // Appointments
     newAppointment: 'Новий прийом',
@@ -41,6 +41,13 @@ const translations = {
     scheduled: 'Заплановано',
     completed: 'Завершено',
     cancelled: 'Скасовано',
+
+    // Records
+    allDoctors: 'Усі лікарі',
+    week: 'Тиждень',
+    month: 'Місяць',
+    today: 'Сьогодні',
+    noRecords: 'Немає записів',
     
     // Doctors
     newDoctor: 'Новий лікар',
