@@ -98,17 +98,17 @@ const translations = {
   en: {
     dashboard: 'Dashboard',
     appointments: 'Appointments',
+    records: 'Records',
     doctors: 'Doctors',
     news: 'News',
     notifications: 'Notifications',
     settings: 'Settings',
     logout: 'Log out',
     
-    totalAppointments: 'Total Appointments',
     todayAppointments: "Today's Appointments",
-    totalDoctors: 'Doctors',
-    totalNews: 'News',
-    recentAppointments: 'Recent Appointments',
+    tomorrowAppointments: "Tomorrow's Appointments",
+    addRecord: 'Add Record',
+    sendNotification: 'Send Notification',
     
     newAppointment: 'New Appointment',
     clientName: 'Client Name',
@@ -130,6 +130,12 @@ const translations = {
     scheduled: 'Scheduled',
     completed: 'Completed',
     cancelled: 'Cancelled',
+
+    allDoctors: 'All Doctors',
+    week: 'Week',
+    month: 'Month',
+    today: 'Today',
+    noRecords: 'No records',
     
     newDoctor: 'New Doctor',
     fullName: 'Full Name',
