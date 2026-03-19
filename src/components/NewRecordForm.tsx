@@ -175,7 +175,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                       </span>
                       <span className="text-xs text-muted-foreground ml-auto">{freeSlots.length} {t('available')}</span>
                     </div>
-                    <div className="p-2 flex flex-wrap gap-1">
+                    <div className="p-3 flex flex-wrap gap-1.5">
                       {workHours.map((hour) => {
                         const isFree = freeSlots.includes(hour);
                         const isSelected = selectedDate === dateStr && selectedTime === hour;
@@ -184,7 +184,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                             key={hour}
                             disabled={!isFree || isPast}
                             onClick={() => handleSlotClick(dateStr, hour)}
-                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                               isSelected
                                 ? 'bg-accent text-accent-foreground ring-2 ring-accent/50'
                                 : isFree && !isPast
