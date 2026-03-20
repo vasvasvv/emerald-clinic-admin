@@ -244,14 +244,10 @@ export default function Dashboard() {
                   const doctorAccent = doctorAccentMap.get(appointment.doctor || 'Без лікаря') ?? doctorBadgePalette[0];
                   return (
                     <div key={appointment.id} className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-colors duration-300 hover:bg-secondary/24">
-                      <div className="grid gap-3 lg:grid-cols-[90px_1.2fr_1fr_1fr] lg:items-center">
+                      <div className="grid gap-3 lg:grid-cols-[90px_1fr_1.2fr_1fr] lg:items-center">
                         <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                           <Clock className="h-4 w-4" />
                           {appointment.time}
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Пацієнт</p>
-                          <p className="text-sm font-medium text-foreground">{appointment.client}</p>
                         </div>
                         <div>
                           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Лікар</p>
@@ -259,6 +255,10 @@ export default function Dashboard() {
                             <Stethoscope className="h-3.5 w-3.5" />
                             {appointment.doctor || 'Без лікаря'}
                           </div>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Пацієнт</p>
+                          <p className="text-sm font-medium text-foreground">{appointment.client}</p>
                         </div>
                         <div>
                           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Телефон</p>

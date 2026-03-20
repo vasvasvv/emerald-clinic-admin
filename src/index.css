@@ -163,24 +163,6 @@
   }
 }
 
-.emerald-mobile-toggle {
-  display: none;
-}
-
 .emerald-main-shell {
   padding-top: 0;
-}
-
-@media (max-width: 600px) {
-  .emerald-desktop-sidebar {
-    display: none;
-  }
-
-  .emerald-main-shell {
-    padding-top: 84px;
-  }
-
-  .emerald-mobile-toggle {
-    display: block;
-  }
 }
