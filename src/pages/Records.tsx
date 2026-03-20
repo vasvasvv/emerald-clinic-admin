@@ -35,6 +35,15 @@ function formatDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+function buildPatientName(lastName: string, firstName: string) {
+  return `${lastName.trim()} ${firstName.trim()}`.trim();
+}
+
+function extractFirstName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return parts.length > 1 ? parts[1] : parts[0] || '';
+}
+
 function getDaysInMonth(year: number, month: number): Date[] {
   const days: Date[] = [];
   const cursor = new Date(year, month, 1);
@@ -139,7 +148,8 @@ export default function Records() {
   const today = formatDate(new Date());
 
   const handleNewRecord = async (record: {
-    clientName: string;
+    firstName: string;
+    lastName: string;
     phone: string;
     date: string;
     time: string;
@@ -152,7 +162,7 @@ export default function Records() {
     try {
       const doctor = doctorOptions.find((item) => item.name === record.doctor);
       await api.createAppointment(token, {
-        patient_name: record.clientName,
+        patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
         doctor_user_id: doctor?.id ?? null,
@@ -308,7 +318,7 @@ export default function Records() {
                       <div className="mt-1 space-y-0.5">
                         {dayRecords.slice(0, 3).map((record) => (
                           <div key={record.id} className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate">
-                            {record.time} {record.clientName.split(' ')[0]}
+                            {record.time} {extractFirstName(record.clientName)}
                           </div>
                         ))}
                         {dayRecords.length > 3 && <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>}

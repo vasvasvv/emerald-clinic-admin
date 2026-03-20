@@ -1,5 +1,5 @@
 import { 
-  LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, 
+  LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, ExternalLink,
   LogOut, ChevronLeft, ChevronRight, Languages
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
@@ -57,6 +57,33 @@ export function AppSidebar() {
             {!collapsed && <span className="text-sm font-medium">{t(item.key)}</span>}
           </NavLink>
         ))}
+
+        <div className={`mt-4 rounded-2xl border border-border/70 bg-secondary/35 p-3 ${collapsed ? 'px-2' : ''}`}>
+          {!collapsed ? (
+            <>
+              <p className="text-sm font-semibold text-foreground">{t('dentalChart')}</p>
+              <a
+                href="https://dentis-clinic.pp.ua/"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex w-full items-center justify-between rounded-xl bg-primary/15 px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/25"
+              >
+                <span>{t('openDentalChart')}</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </>
+          ) : (
+            <a
+              href="https://dentis-clinic.pp.ua/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center rounded-xl bg-primary/15 px-2 py-2.5 text-primary transition-colors hover:bg-primary/25"
+              title={t('dentalChart')}
+            >
+              <ExternalLink className="w-5 h-5" />
+            </a>
+          )}
+        </div>
       </nav>
 
       {/* Bottom */}

@@ -28,6 +28,10 @@ function formatDateKey(date: Date) {
   return date.toISOString().split('T')[0];
 }
 
+function buildPatientName(lastName: string, firstName: string) {
+  return `${lastName.trim()} ${firstName.trim()}`.trim();
+}
+
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -91,7 +95,8 @@ export default function Dashboard() {
   const displayDate = activeView === 'today' ? today : tomorrow;
 
   const handleCreateRecord = async (record: {
-    clientName: string;
+    firstName: string;
+    lastName: string;
     phone: string;
     date: string;
     time: string;
@@ -104,7 +109,7 @@ export default function Dashboard() {
     try {
       const doctor = doctors.find((item) => item.name === record.doctor);
       await api.createAppointment(token, {
-        patient_name: record.clientName,
+        patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
         doctor_user_id: doctor?.id ?? null,

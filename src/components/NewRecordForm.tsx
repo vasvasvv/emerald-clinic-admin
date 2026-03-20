@@ -5,7 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewRecordFormProps {
   onClose: () => void;
-  onSave: (record: { clientName: string; phone: string; date: string; time: string; doctor: string; comment: string }) => void | Promise<void>;
+  onSave: (record: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    date: string;
+    time: string;
+    doctor: string;
+    comment: string;
+  }) => void | Promise<void>;
   existingRecords: { date: string; time: string; doctor: string }[];
   doctors: string[];
 }
@@ -44,7 +52,8 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   const [selectedTime, setSelectedTime] = useState('');
   const [manualTime, setManualTime] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState(doctors[0] || '');
-  const [clientName, setClientName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
   const [saving, setSaving] = useState(false);
@@ -93,10 +102,10 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   };
 
   const handleSave = async () => {
-    if (!clientName || !phone) return;
+    if (!firstName || !lastName || !phone) return;
     setSaving(true);
     try {
-      await onSave({ clientName, phone, date: selectedDate, time: selectedTime, doctor: selectedDoctor, comment });
+      await onSave({ firstName, lastName, phone, date: selectedDate, time: selectedTime, doctor: selectedDoctor, comment });
     } finally {
       setSaving(false);
     }
@@ -256,15 +265,26 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               </div>
 
               <div className="glass-panel p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm text-muted-foreground">{t('patientName')}</label>
-                  <input
-                    className="input-glass w-full"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder={t('patientName')}
-                    autoFocus
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-muted-foreground">{t('lastName')}</label>
+                    <input
+                      className="input-glass w-full"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder={t('lastName')}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-muted-foreground">{t('firstName')}</label>
+                    <input
+                      className="input-glass w-full"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder={t('firstName')}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm text-muted-foreground">{t('phone')}</label>
@@ -292,7 +312,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                 </button>
                 <button
                   onClick={() => void handleSave()}
-                  disabled={!clientName || !phone || saving}
+                  disabled={!firstName || !lastName || !phone || saving}
                   className="btn-accent disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {t('save')}

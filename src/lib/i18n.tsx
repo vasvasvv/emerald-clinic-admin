@@ -4,25 +4,26 @@ type Lang = 'uk' | 'en';
 
 const translations = {
   uk: {
-    // Sidebar
     dashboard: 'Панель керування',
     appointments: 'Прийоми',
     records: 'Записи',
     doctors: 'Лікарі',
     news: 'Новини',
     notifications: 'Сповіщення',
+    dentalChart: 'Зубна карта',
+    openDentalChart: 'Відкрити',
     settings: 'Налаштування',
     logout: 'Вийти',
-    
-    // Dashboard
+
     todayAppointments: 'Прийоми сьогодні',
     tomorrowAppointments: 'Прийоми на завтра',
     addRecord: 'Додати запис',
     sendNotification: 'Надіслати сповіщення',
-    
-    // Appointments
+
     newAppointment: 'Новий прийом',
     clientName: "Ім'я клієнта",
+    firstName: "Ім'я",
+    lastName: 'Прізвище',
     phone: 'Телефон',
     dateTime: 'Дата і час',
     doctor: 'Лікар',
@@ -37,12 +38,12 @@ const translations = {
     cancel: 'Скасувати',
     noAppointments: 'Немає прийомів на вибрану дату',
     filterByDate: 'Фільтр за датою',
+    filterByDoctor: 'Фільтр за лікарем',
     all: 'Усі',
     scheduled: 'Заплановано',
     completed: 'Завершено',
     cancelled: 'Скасовано',
 
-    // Records
     allDoctors: 'Усі лікарі',
     week: 'Тиждень',
     month: 'Місяць',
@@ -53,8 +54,7 @@ const translations = {
     available: 'вільно',
     patientName: "Ім'я та прізвище",
     backToRecords: 'Назад до записів',
-    
-    // Doctors
+
     newDoctor: 'Новий лікар',
     fullName: 'ПІБ',
     position: 'Посада',
@@ -63,8 +63,7 @@ const translations = {
     description: 'Опис',
     photo: 'Фото',
     years: 'років',
-    
-    // News
+
     newArticle: 'Нова стаття',
     title: 'Заголовок',
     type: 'Тип',
@@ -76,23 +75,22 @@ const translations = {
     infoLabel: 'Інформація',
     newsLabel: 'Новини',
     updateLabel: 'Оновлення',
-    
-    // Notifications
+
     sendToAll: 'Надіслати всім',
     sendTargeted: 'Цільове сповіщення',
     notificationHistory: 'Історія сповіщень',
     message: 'Повідомлення',
     send: 'Надіслати',
     sent: 'Надіслано',
-    
-    // Auth
+    telegramContactsLabel: 'Контактів Telegram',
+    pushSubscribersLabel: 'Підписників додатку',
+
     login: 'Увійти',
     email: 'Електронна пошта',
     password: 'Пароль',
     welcomeBack: 'Ласкаво просимо',
     loginSubtitle: 'Увійдіть до панелі адміністратора',
-    
-    // Common
+
     search: 'Пошук...',
     loading: 'Завантаження...',
     confirm: 'Підтвердити',
@@ -107,16 +105,20 @@ const translations = {
     doctors: 'Doctors',
     news: 'News',
     notifications: 'Notifications',
+    dentalChart: 'Dental Chart',
+    openDentalChart: 'Open',
     settings: 'Settings',
     logout: 'Log out',
-    
+
     todayAppointments: "Today's Appointments",
     tomorrowAppointments: "Tomorrow's Appointments",
     addRecord: 'Add Record',
     sendNotification: 'Send Notification',
-    
+
     newAppointment: 'New Appointment',
     clientName: 'Client Name',
+    firstName: 'First Name',
+    lastName: 'Last Name',
     phone: 'Phone',
     dateTime: 'Date & Time',
     doctor: 'Doctor',
@@ -131,6 +133,7 @@ const translations = {
     cancel: 'Cancel',
     noAppointments: 'No appointments for selected date',
     filterByDate: 'Filter by date',
+    filterByDoctor: 'Filter by doctor',
     all: 'All',
     scheduled: 'Scheduled',
     completed: 'Completed',
@@ -146,7 +149,7 @@ const translations = {
     available: 'available',
     patientName: 'Full name',
     backToRecords: 'Back to records',
-    
+
     newDoctor: 'New Doctor',
     fullName: 'Full Name',
     position: 'Position',
@@ -155,7 +158,7 @@ const translations = {
     description: 'Description',
     photo: 'Photo',
     years: 'years',
-    
+
     newArticle: 'New Article',
     title: 'Title',
     type: 'Type',
@@ -167,20 +170,22 @@ const translations = {
     infoLabel: 'Info',
     newsLabel: 'News',
     updateLabel: 'Update',
-    
+
     sendToAll: 'Send to All',
     sendTargeted: 'Targeted Notification',
     notificationHistory: 'Notification History',
     message: 'Message',
     send: 'Send',
     sent: 'Sent',
-    
+    telegramContactsLabel: 'Telegram Contacts',
+    pushSubscribersLabel: 'App Subscribers',
+
     login: 'Log In',
     email: 'Email',
     password: 'Password',
     welcomeBack: 'Welcome Back',
     loginSubtitle: 'Sign in to admin panel',
-    
+
     search: 'Search...',
     loading: 'Loading...',
     confirm: 'Confirm',
@@ -203,16 +208,9 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>('uk');
 
-  const t = useCallback(
-    (key: TranslationKey) => translations[lang][key] || key,
-    [lang]
-  );
+  const t = useCallback((key: TranslationKey) => translations[lang][key] || key, [lang]);
 
-  return (
-    <I18nContext.Provider value={{ lang, setLang, t }}>
-      {children}
-    </I18nContext.Provider>
-  );
+  return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {

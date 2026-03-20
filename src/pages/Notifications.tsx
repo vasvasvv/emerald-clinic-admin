@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Send, Bell, Clock, CheckCircle, Smartphone, MessageCircle, RefreshCw, Link2, Phone } from 'lucide-react';
+import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle, MessageSquareShare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
@@ -45,10 +45,16 @@ function normalizePhone(raw: string) {
   return null;
 }
 
+function extractFirstName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length > 1) return parts[1];
+  return parts[0] || '';
+}
+
 export default function Notifications() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const token = getAdminToken();
-  const [section, setSection] = useState<'push' | 'telegram'>('push');
+  const [section, setSection] = useState<'push' | 'telegram'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
@@ -73,6 +79,8 @@ export default function Notifications() {
   const [linkPhone, setLinkPhone] = useState('');
   const [linking, setLinking] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
 
   const loadBase = async () => {
     if (!token) return;
@@ -195,7 +203,7 @@ export default function Notifications() {
         phone,
         telegram_chat_id: linkModal.chat_id,
       });
-      setResult(response.updated > 0 ? `Прив’язано до ${response.updated} записів.` : 'Записів з таким номером не знайдено.');
+      setResult(response.updated > 0 ? `Прив'язано до ${response.updated} записів.` : 'Записів з таким номером не знайдено.');
       setLinkModal(null);
       setLinkPhone('');
       await Promise.all([loadTelegramPending(), loadTelegramAppointments(), loadBase()]);
@@ -214,40 +222,46 @@ export default function Notifications() {
         {error && <p className="text-sm text-destructive">{error}</p>}
         {result && <p className="text-sm text-success">{result}</p>}
 
-        <div className="flex rounded-xl overflow-hidden border border-border w-full sm:w-fit">
-          <button
-            onClick={() => setSection('push')}
-            className={`px-4 py-2 text-sm font-medium ${section === 'push' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
-          >
-            Push
-          </button>
+        <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
           <button
             onClick={() => setSection('telegram')}
-            className={`px-4 py-2 text-sm font-medium ${section === 'telegram' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${
+              section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'
+            }`}
           >
+            <Send className="h-4 w-4" />
             Telegram
+          </button>
+          <button
+            onClick={() => setSection('push')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${
+              section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            Push
           </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-primary" />
+              <div className="w-11 h-11 rounded-2xl bg-accent/15 flex items-center justify-center">
+                <Send className="w-5 h-5 text-accent" />
               </div>
-              <p className="text-sm text-muted-foreground">Push subscription</p>
+              <p className="text-sm text-muted-foreground">{t('telegramContactsLabel')}</p>
             </div>
-            <p className="text-3xl font-heading font-bold">{loading ? '...' : pushSubscriptions}</p>
+            <p className="text-3xl font-heading font-bold">{loading ? '...' : telegramContacts}</p>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="stat-card">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-                <Smartphone className="w-5 h-5 text-accent" />
+              <div className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">Telegram contacts</p>
+              <p className="text-sm text-muted-foreground">{t('pushSubscribersLabel')}</p>
             </div>
-            <p className="text-3xl font-heading font-bold">{loading ? '...' : telegramContacts}</p>
+            <p className="text-3xl font-heading font-bold">{loading ? '...' : pushSubscriptions}</p>
           </motion.div>
         </div>
 
@@ -256,7 +270,7 @@ export default function Notifications() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
               <h2 className="font-heading font-semibold">{t('send')}</h2>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <button
                   onClick={() => setPushTarget('all')}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -291,7 +305,7 @@ export default function Notifications() {
                   rows={4}
                   value={pushMessage}
                   onChange={(e) => setPushMessage(e.target.value)}
-                  placeholder={t('message') + '...'}
+                  placeholder={`${t('message')}...`}
                 />
               </div>
 
@@ -324,7 +338,7 @@ export default function Notifications() {
                           <span>Помилки: {log.failed_count}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(log.created_at).toLocaleString('uk-UA')}
+                            {new Date(log.created_at).toLocaleString(locale)}
                           </span>
                         </div>
                       </div>
@@ -338,22 +352,22 @@ export default function Notifications() {
 
         {section === 'telegram' && (
           <>
-            <div className="flex rounded-xl overflow-hidden border border-border w-full sm:w-fit">
+            <div className="inline-flex w-full max-w-2xl rounded-2xl border border-border bg-secondary/25 p-1">
               <button
                 onClick={() => setTelegramTab('appointments')}
-                className={`px-4 py-2 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 Записи
               </button>
               <button
                 onClick={() => setTelegramTab('pending')}
-                className={`px-4 py-2 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 Очікують прив'язки
               </button>
               <button
                 onClick={() => setTelegramTab('settings')}
-                className={`px-4 py-2 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 Налаштування
               </button>
@@ -377,36 +391,39 @@ export default function Notifications() {
                   <div className="text-sm text-muted-foreground">Записів на цю дату немає.</div>
                 ) : (
                   <div className="space-y-3">
-                    {telegramAppointments.map((appointment) => (
-                      <div key={appointment.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-medium">{appointment.patient_name}</p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}>
-                              {appointment.telegram_chat_id ? 'Telegram OK' : 'Без Telegram'}
-                            </span>
+                    {telegramAppointments.map((appointment) => {
+                      const firstName = extractFirstName(appointment.patient_name);
+                      return (
+                        <div key={appointment.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-medium">{firstName || appointment.patient_name}</p>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}>
+                                {appointment.telegram_chat_id ? 'Telegram OK' : 'Без Telegram'}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
+                              <span>{new Date(appointment.appointment_at).toLocaleString(locale)}</span>
+                              <span>{appointment.phone || '-'}</span>
+                              <span>{appointment.doctor_name || '-'}</span>
+                              {appointment.telegram_chat_id && <span>chat_id: {appointment.telegram_chat_id}</span>}
+                            </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
-                            <span>{new Date(appointment.appointment_at).toLocaleString('uk-UA')}</span>
-                            <span>{appointment.phone || '-'}</span>
-                            <span>{appointment.doctor_name || '-'}</span>
-                            {appointment.telegram_chat_id && <span>chat_id: {appointment.telegram_chat_id}</span>}
-                          </div>
+                          {appointment.telegram_chat_id && (
+                            <button
+                              onClick={() => {
+                                setSendModal(appointment);
+                                setSendText(`Доброго дня, ${firstName || 'пацієнте'}! Нагадуємо про ваш прийом у Dentis.`);
+                              }}
+                              className="btn-accent flex items-center gap-2"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              Написати
+                            </button>
+                          )}
                         </div>
-                        {appointment.telegram_chat_id && (
-                          <button
-                            onClick={() => {
-                              setSendModal(appointment);
-                              setSendText(`Доброго дня, ${appointment.patient_name}! Нагадуємо про ваш прийом у Dentis.`);
-                            }}
-                            className="btn-accent flex items-center gap-2"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            Написати
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </motion.div>
@@ -415,7 +432,7 @@ export default function Notifications() {
             {telegramTab === 'pending' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-muted-foreground">Користувачі, які написали боту, але ще не прив’язані до телефону.</p>
+                  <p className="text-sm text-muted-foreground">Користувачі, які написали боту, але ще не прив'язані до телефону.</p>
                   <button onClick={() => void loadTelegramPending()} className="p-2 rounded-xl hover:bg-secondary/60">
                     <RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} />
                   </button>
@@ -430,13 +447,13 @@ export default function Notifications() {
                     {telegramPending.map((pending) => (
                       <div key={pending.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center">
-                          <MessageCircle className="w-5 h-5 text-info" />
+                          <Send className="w-5 h-5 text-info" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium">{pending.first_name || 'Без імені'}</p>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
                             <span>chat_id: {pending.chat_id}</span>
-                            <span>{new Date(pending.created_at).toLocaleString('uk-UA')}</span>
+                            <span>{new Date(pending.created_at).toLocaleString(locale)}</span>
                           </div>
                         </div>
                         <button
@@ -473,14 +490,14 @@ export default function Notifications() {
                       {copied ? 'Скопійовано' : 'Копіювати'}
                     </button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Пацієнт відкриває бота, надсилає `/start`, ділиться номером телефону, після чого його можна зв’язати із записами.</p>
+                  <p className="text-sm text-muted-foreground">Пацієнт відкриває бота, надсилає `/start`, ділиться номером телефону, після чого його можна зв'язати із записами.</p>
                 </div>
 
                 <div className="glass-panel p-6 space-y-2 text-sm text-muted-foreground">
                   <p>1. Пацієнт переходить у Telegram-бота.</p>
                   <p>2. Надсилає `/start` і ділиться номером телефону.</p>
-                  <p>3. Контакт потрапляє в `pending` або відразу збігається з номером у системі.</p>
-                  <p>4. Менеджер може вручну прив’язати pending-контакт до номера пацієнта.</p>
+                  <p>3. Контакт потрапляє в `pending` або одразу збігається з номером у системі.</p>
+                  <p>4. Менеджер може вручну прив'язати pending-контакт до номера пацієнта.</p>
                   <p>5. Після цього можна надсилати ручні Telegram-повідомлення з адмінки.</p>
                 </div>
               </motion.div>
@@ -494,7 +511,7 @@ export default function Notifications() {
               <motion.div className="glass-panel w-full max-w-lg p-6 space-y-4" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
                 <h2 className="font-heading font-semibold text-lg">Написати в Telegram</h2>
                 <div className="rounded-xl bg-secondary/50 p-4 text-sm">
-                  <p className="font-medium">{sendModal.patient_name}</p>
+                  <p className="font-medium">{extractFirstName(sendModal.patient_name) || sendModal.patient_name}</p>
                   <p className="text-muted-foreground">{sendModal.phone}</p>
                   <p className="text-muted-foreground">chat_id: {sendModal.telegram_chat_id}</p>
                 </div>
@@ -504,7 +521,7 @@ export default function Notifications() {
                     {t('cancel')}
                   </button>
                   <button onClick={() => void handleSendTelegram()} className="btn-accent flex items-center gap-2" disabled={sendingTelegram || !sendText.trim()}>
-                    <Send className="w-4 h-4" />
+                    <MessageSquareShare className="w-4 h-4" />
                     {t('send')}
                   </button>
                 </div>

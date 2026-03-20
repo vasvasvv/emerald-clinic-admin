@@ -8,6 +8,8 @@ import { getAdminToken } from '@/lib/auth';
 
 interface Appointment {
   id: number;
+  firstName: string;
+  lastName: string;
   clientName: string;
   phone: string;
   date: string;
@@ -23,6 +25,8 @@ interface DoctorOption {
 }
 
 const emptyForm: Omit<Appointment, 'id'> = {
+  firstName: '',
+  lastName: '',
   clientName: '',
   phone: '',
   date: '',
@@ -31,6 +35,18 @@ const emptyForm: Omit<Appointment, 'id'> = {
   comment: '',
   status: 'scheduled',
 };
+
+function splitPatientName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    lastName: parts[0] ?? '',
+    firstName: parts.slice(1).join(' '),
+  };
+}
+
+function buildPatientName(lastName: string, firstName: string) {
+  return `${lastName.trim()} ${firstName.trim()}`.trim();
+}
 
 const statusColors: Record<string, string> = {
   scheduled: 'bg-info/20 text-info',
@@ -47,6 +63,7 @@ export default function Appointments() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterDate, setFilterDate] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,8 +82,11 @@ export default function Appointments() {
         items.map((item) => {
           const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
           const [date = '', timeWithZone = ''] = normalized.split('T');
+          const split = splitPatientName(item.patient_name ?? '');
           return {
             id: Number(item.id),
+            firstName: split.firstName,
+            lastName: split.lastName,
             clientName: item.patient_name ?? '',
             phone: item.phone ?? '',
             date,
@@ -93,10 +113,11 @@ export default function Appointments() {
     () =>
       appointments.filter((appointment) => {
         if (filterDate && appointment.date !== filterDate) return false;
+        if (selectedDoctor && appointment.doctor !== selectedDoctor) return false;
         if (searchQuery && !appointment.clientName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         return true;
       }),
-    [appointments, filterDate, searchQuery],
+    [appointments, filterDate, selectedDoctor, searchQuery],
   );
 
   const openNew = () => {
@@ -106,18 +127,20 @@ export default function Appointments() {
   };
 
   const openEdit = (appointment: Appointment) => {
-    setForm({ ...appointment });
+    const split = splitPatientName(appointment.clientName);
+    setForm({ ...appointment, firstName: split.firstName, lastName: split.lastName });
     setEditingId(appointment.id);
     setShowForm(true);
   };
 
   const handleSave = async () => {
-    if (!token || !form.clientName || !form.phone || !form.date || !form.time || !form.doctor) return;
+    if (!token || !form.firstName || !form.lastName || !form.phone || !form.date || !form.time || !form.doctor) return;
     setSaving(true);
     setError('');
     const doctor = doctorOptions.find((item) => item.name === form.doctor);
+    const patientName = buildPatientName(form.lastName, form.firstName);
     const payload = {
-      patient_name: form.clientName,
+      patient_name: patientName,
       phone: form.phone,
       appointment_at: `${form.date}T${form.time}:00`,
       doctor_user_id: doctor?.id ?? null,
@@ -174,9 +197,23 @@ export default function Appointments() {
               className="input-glass w-full pl-10"
             />
           </div>
+          <select className="input-glass" value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)}>
+            <option value="">{t('allDoctors')}</option>
+            {doctorOptions.map((doctor) => (
+              <option key={doctor.id} value={doctor.name}>
+                {doctor.name}
+              </option>
+            ))}
+          </select>
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="input-glass" />
-          {filterDate && (
-            <button onClick={() => setFilterDate('')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          {(filterDate || selectedDoctor) && (
+            <button
+              onClick={() => {
+                setFilterDate('');
+                setSelectedDoctor('');
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               {t('all')}
             </button>
           )}
@@ -258,8 +295,12 @@ export default function Appointments() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('clientName')}</label>
-                    <input className="input-glass w-full" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} />
+                    <label className="text-sm text-muted-foreground">{t('lastName')}</label>
+                    <input className="input-glass w-full" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value, clientName: buildPatientName(e.target.value, form.firstName) })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-muted-foreground">{t('firstName')}</label>
+                    <input className="input-glass w-full" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value, clientName: buildPatientName(form.lastName, e.target.value) })} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('phone')}</label>
