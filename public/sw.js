@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dentis-admin-v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/favicon.ico', '/emerald-icon.png', '/admin-icon-192.png'];
+const CACHE_NAME = 'dentis-admin-v2';
+const APP_SHELL = ['/', '/manifest.webmanifest', '/favicon.ico', '/emerald-general.png', '/admin-icon-192.png', '/admin-icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

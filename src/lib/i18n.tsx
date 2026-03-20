@@ -11,7 +11,9 @@ const translations = {
     news: 'Новини',
     notifications: 'Сповіщення',
     dentalChart: 'Зубна карта',
+    dentalCharts: 'Зубні карти',
     openDentalChart: 'Відкрити',
+    dentalChartsPatients: 'Зубні карти пацієнтів',
     settings: 'Налаштування',
     logout: 'Вийти',
 
@@ -106,7 +108,9 @@ const translations = {
     news: 'News',
     notifications: 'Notifications',
     dentalChart: 'Dental Chart',
+    dentalCharts: 'Dental Charts',
     openDentalChart: 'Open',
+    dentalChartsPatients: 'Patient dental charts',
     settings: 'Settings',
     logout: 'Log out',
 

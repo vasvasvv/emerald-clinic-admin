@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Clock, CalendarPlus, Bell } from 'lucide-react';
+import { Clock, CalendarPlus, Bell, Stethoscope, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { NewRecordForm } from '@/components/NewRecordForm';
@@ -24,6 +24,14 @@ interface DoctorOption {
   name: string;
 }
 
+const doctorBadgePalette = [
+  'border-l-[#f4c95d] bg-[#f4c95d]/10 text-[#f8d985]',
+  'border-l-[#6ccff6] bg-[#6ccff6]/10 text-[#9fddfa]',
+  'border-l-[#8ce99a] bg-[#8ce99a]/10 text-[#b7f1c1]',
+  'border-l-[#ff9f6e] bg-[#ff9f6e]/10 text-[#ffc19c]',
+  'border-l-[#d0a6ff] bg-[#d0a6ff]/10 text-[#e2c9ff]',
+];
+
 function formatDateKey(date: Date) {
   return date.toISOString().split('T')[0];
 }
@@ -32,17 +40,22 @@ function buildPatientName(lastName: string, firstName: string) {
   return `${lastName.trim()} ${firstName.trim()}`.trim();
 }
 
+function toAppointmentDate(date: string, time: string) {
+  return new Date(`${date}T${time}:00`);
+}
+
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const token = getAdminToken();
-  const [activeView, setActiveView] = useState<ViewMode>('tomorrow');
+  const [activeView, setActiveView] = useState<ViewMode>('today');
   const [showNewForm, setShowNewForm] = useState(false);
   const [appointments, setAppointments] = useState<AppointmentCard[]>([]);
   const [doctors, setDoctors] = useState<DoctorOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [now, setNow] = useState(() => new Date());
 
   const load = async () => {
     if (!token) return;
@@ -76,18 +89,36 @@ export default function Dashboard() {
     void load();
   }, [token]);
 
-  const today = new Date();
-  const tomorrow = new Date();
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const today = now;
+  const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const todayKey = formatDateKey(today);
   const tomorrowKey = formatDateKey(tomorrow);
 
+  const doctorAccentMap = useMemo(() => {
+    const allDoctors = Array.from(new Set(appointments.map((appointment) => appointment.doctor || 'Без лікаря')));
+    return new Map(allDoctors.map((doctor, index) => [doctor, doctorBadgePalette[index % doctorBadgePalette.length]]));
+  }, [appointments]);
+
   const todayAppointments = useMemo(
-    () => appointments.filter((appointment) => appointment.date === todayKey),
-    [appointments, todayKey],
+    () =>
+      appointments
+        .filter((appointment) => appointment.date === todayKey)
+        .filter((appointment) => {
+          const appointmentDate = toAppointmentDate(appointment.date, appointment.time);
+          return appointmentDate.getTime() + 17 * 60 * 1000 > now.getTime();
+        })
+        .sort((a, b) => a.time.localeCompare(b.time)),
+    [appointments, todayKey, now],
   );
+
   const tomorrowAppointments = useMemo(
-    () => appointments.filter((appointment) => appointment.date === tomorrowKey),
+    () => appointments.filter((appointment) => appointment.date === tomorrowKey).sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, tomorrowKey],
   );
 
@@ -118,7 +149,7 @@ export default function Dashboard() {
       });
       await load();
       setShowNewForm(false);
-      setActiveView(record.date === todayKey ? 'today' : 'tomorrow');
+      setActiveView(record.date === tomorrowKey ? 'tomorrow' : 'today');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create appointment');
       throw err;
@@ -133,22 +164,22 @@ export default function Dashboard() {
         <div className="space-y-8">
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('dashboard')}</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               {new Date().toLocaleDateString('uk-UA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               onClick={() => setShowNewForm(true)}
-              className="btn-accent flex items-center justify-center gap-3 py-6 text-lg font-heading font-semibold rounded-2xl"
+              className="btn-accent flex items-center justify-center gap-3 rounded-2xl py-6 text-lg font-heading font-semibold"
             >
-              <CalendarPlus className="w-6 h-6" />
+              <CalendarPlus className="h-6 w-6" />
               {t('addRecord')}
             </motion.button>
             <motion.button
@@ -156,14 +187,14 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               onClick={() => navigate('/notifications')}
-              className="glass-panel flex items-center justify-center gap-3 py-6 text-lg font-heading font-semibold rounded-2xl text-foreground hover:bg-secondary/60 transition-colors cursor-pointer border-0"
+              className="glass-panel flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 py-6 text-lg font-heading font-semibold text-foreground transition-colors hover:bg-secondary/60"
             >
-              <Bell className="w-6 h-6" />
+              <Bell className="h-6 w-6" />
               {t('sendNotification')}
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -171,9 +202,9 @@ export default function Dashboard() {
               onClick={() => setActiveView('today')}
               className={`dashboard-toggle-card text-left ${activeView === 'today' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary" />
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <p className="text-sm text-muted-foreground">{t('todayAppointments')}</p>
               </div>
@@ -187,9 +218,9 @@ export default function Dashboard() {
               onClick={() => setActiveView('tomorrow')}
               className={`dashboard-toggle-card text-left ${activeView === 'tomorrow' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-accent" />
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
+                  <Clock className="h-5 w-5 text-accent" />
                 </div>
                 <p className="text-sm text-muted-foreground">{t('tomorrowAppointments')}</p>
               </div>
@@ -197,15 +228,9 @@ export default function Dashboard() {
             </motion.button>
           </div>
 
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass-panel"
-          >
-            <div className="p-5 border-b border-border">
-              <h2 className="font-heading font-semibold text-lg">
+          <motion.div key={activeView} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel">
+            <div className="border-b border-border p-5">
+              <h2 className="font-heading text-lg font-semibold">
                 {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} - {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
               </h2>
             </div>
@@ -214,15 +239,38 @@ export default function Dashboard() {
             ) : displayedAppointments.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">{t('noAppointments')}</div>
             ) : (
-              <div className="divide-y divide-border/50">
-                {displayedAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center gap-4 px-5 py-3.5 transition-colors duration-300 hover:bg-secondary/25">
-                    <span className="text-sm font-medium text-accent w-14">{appointment.time}</span>
-                    <span className="text-sm font-medium flex-1">{appointment.client}</span>
-                    <span className="text-sm text-muted-foreground hidden sm:block">{appointment.doctor || '-'}</span>
-                    <span className="text-sm text-muted-foreground">{appointment.phone}</span>
-                  </div>
-                ))}
+              <div className="space-y-3 p-4 sm:p-5">
+                {displayedAppointments.map((appointment) => {
+                  const doctorAccent = doctorAccentMap.get(appointment.doctor || 'Без лікаря') ?? doctorBadgePalette[0];
+                  return (
+                    <div key={appointment.id} className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-colors duration-300 hover:bg-secondary/24">
+                      <div className="grid gap-3 lg:grid-cols-[90px_1.2fr_1fr_1fr] lg:items-center">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                          <Clock className="h-4 w-4" />
+                          {appointment.time}
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Пацієнт</p>
+                          <p className="text-sm font-medium text-foreground">{appointment.client}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Лікар</p>
+                          <div className={`mt-1 inline-flex items-center gap-2 rounded-full border border-white/5 border-l-4 px-3 py-1.5 text-xs font-semibold ${doctorAccent}`}>
+                            <Stethoscope className="h-3.5 w-3.5" />
+                            {appointment.doctor || 'Без лікаря'}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Телефон</p>
+                          <div className="mt-1 flex items-center gap-2 text-sm text-foreground">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            {appointment.phone}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </motion.div>

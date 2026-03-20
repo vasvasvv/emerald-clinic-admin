@@ -3,9 +3,8 @@ import { format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Plus, Edit2, Trash2, X, Search, Calendar, Clock3, Stethoscope, Phone } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, Calendar, Clock3, Phone, ChevronDown, UserRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
 import { api } from '@/lib/api';
@@ -51,8 +50,32 @@ const splitPatientName = (fullName: string) => {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
   return { lastName: parts[0] ?? '', firstName: parts.slice(1).join(' ') };
 };
+
 const buildPatientName = (lastName: string, firstName: string) => `${lastName.trim()} ${firstName.trim()}`.trim();
 const parseDateValue = (value: string) => (value ? new Date(`${value}T00:00:00`) : undefined);
+
+function SelectField({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <select
+        className="input-glass w-full appearance-none pr-11 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
 
 export default function Appointments() {
   const { t, lang } = useI18n();
@@ -110,29 +133,16 @@ export default function Appointments() {
 
   const filtered = useMemo(
     () =>
-      appointments.filter((appointment) => {
-        if (filterDate && appointment.date !== filterDate) return false;
-        if (selectedDoctor && appointment.doctor !== selectedDoctor) return false;
-        if (searchQuery && !appointment.clientName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        return true;
-      }),
+      appointments
+        .filter((appointment) => {
+          if (filterDate && appointment.date !== filterDate) return false;
+          if (selectedDoctor && appointment.doctor !== selectedDoctor) return false;
+          if (searchQuery && !appointment.clientName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+          return true;
+        })
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
     [appointments, filterDate, selectedDoctor, searchQuery],
   );
-
-  const groupedAppointments = useMemo(() => {
-    const groups = new Map<string, Appointment[]>();
-    filtered.forEach((appointment) => {
-      const doctor = appointment.doctor || 'Без лікаря';
-      if (!groups.has(doctor)) groups.set(doctor, []);
-      groups.get(doctor)?.push(appointment);
-    });
-    return Array.from(groups.entries()).map(([doctor, items]) => ({
-      doctor,
-      items: items.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
-    }));
-  }, [filtered]);
-
-  const accordionValue = selectedDoctor || groupedAppointments[0]?.doctor || undefined;
 
   const openNew = () => {
     setForm(emptyForm);
@@ -186,12 +196,12 @@ export default function Appointments() {
   const DateField = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="input-glass flex w-full items-center justify-between text-left">
+        <button className="input-glass flex w-full items-center justify-between bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
           <span className={value ? 'text-foreground' : 'text-muted-foreground'}>{value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : t('date')}</span>
-          <Calendar className="w-4 h-4 text-muted-foreground" />
+          <Calendar className="h-4 w-4 text-muted-foreground" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 glass-panel overflow-hidden border-glass-border" align="start">
+      <PopoverContent className="w-auto overflow-hidden border-glass-border p-0 glass-panel" align="start">
         <DateCalendar
           mode="single"
           selected={parseDateValue(value)}
@@ -208,10 +218,10 @@ export default function Appointments() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Керування прийомами по лікарях та датах</p>
+            <p className="mt-1 text-sm text-muted-foreground">Керування прийомами по лікарях та датах.</p>
           </div>
           <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
-            <Plus className="w-4 h-4" />
+            <Plus className="h-4 w-4" />
             {t('newAppointment')}
           </button>
         </div>
@@ -221,17 +231,17 @@ export default function Appointments() {
         <div className="glass-panel p-4 md:p-5">
           <div className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input type="text" placeholder={t('search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="input-glass w-full pl-10" />
             </div>
-            <select className="input-glass" value={selectedDoctor} onChange={(e) => setSelectedDoctor(e.target.value)}>
+            <SelectField value={selectedDoctor} onChange={setSelectedDoctor}>
               <option value="">{t('allDoctors')}</option>
               {doctorOptions.map((doctor) => (
                 <option key={doctor.id} value={doctor.name}>
                   {doctor.name}
                 </option>
               ))}
-            </select>
+            </SelectField>
             <DateField value={filterDate} onChange={setFilterDate} />
             <button
               onClick={() => {
@@ -249,84 +259,79 @@ export default function Appointments() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-panel overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-muted-foreground">{t('loading')}</div>
-          ) : groupedAppointments.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
-              <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
+              <Calendar className="mx-auto mb-3 h-12 w-12 opacity-40" />
               <p>{t('noAppointments')}</p>
             </div>
           ) : (
-            <Accordion type="single" collapsible className="divide-y divide-border/40" defaultValue={accordionValue}>
-              {groupedAppointments.map((group) => (
-                <AccordionItem key={group.doctor} value={group.doctor} className="border-0">
-                  <AccordionTrigger className="appointment-accordion-trigger px-5 py-5 hover:no-underline">
-                    <div className="flex flex-1 items-center gap-4 text-left">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
-                        <Stethoscope className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-heading text-base font-semibold text-foreground">{group.doctor}</p>
-                        <p className="text-sm text-muted-foreground">{group.items.length} запис(ів)</p>
+            <div className="divide-y divide-border/45">
+              <div className="hidden grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] gap-3 border-b border-border/50 bg-secondary/18 px-5 py-3 text-xs uppercase tracking-[0.16em] text-muted-foreground lg:grid">
+                <span>{t('time')}</span>
+                <span>{t('doctor')}</span>
+                <span>{patientLabel}</span>
+                <span>{t('phone')}</span>
+                <span>{t('status')}</span>
+                <span className="text-right">{t('actions')}</span>
+              </div>
+
+              {filtered.map((appointment) => (
+                <div key={appointment.id} className="px-4 py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5">
+                  <div className="grid gap-3 lg:grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] lg:items-center">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                      <Clock3 className="h-4 w-4" />
+                      {appointment.time}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('doctor')}</p>
+                      <p className="text-sm font-medium text-foreground">{appointment.doctor}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{patientLabel}</p>
+                      <div className="flex items-center gap-2">
+                        <UserRound className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-foreground">{appointment.clientName}</p>
                       </div>
                     </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-0">
-                    <div className="space-y-3">
-                      {group.items.map((appointment) => (
-                        <div key={appointment.id} className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-all duration-300 hover:border-primary/25 hover:bg-secondary/28">
-                          <div className="grid gap-3 lg:grid-cols-[110px_1.1fr_1.2fr_1fr_130px_auto] lg:items-center">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                              <Clock3 className="h-4 w-4" />
-                              {appointment.time}
-                            </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Лікар</p>
-                              <p className="text-sm font-medium text-foreground">{appointment.doctor}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{patientLabel}</p>
-                              <p className="text-sm font-medium text-foreground">{appointment.clientName}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t('phone')}</p>
-                              <p className="text-sm text-foreground">{appointment.phone}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{t('date')}</p>
-                              <p className="text-sm text-foreground">{appointment.date}</p>
-                            </div>
-                            <div className="flex items-center gap-2 lg:justify-end">
-                              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColors[appointment.status]}`}>{t(appointment.status)}</span>
-                              <button onClick={() => openEdit(appointment)} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => void handleDelete(appointment.id)} className="p-2 rounded-xl hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                          {appointment.comment && <p className="mt-3 text-sm text-muted-foreground">{appointment.comment}</p>}
-                        </div>
-                      ))}
+                    <div className="space-y-1">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('phone')}</p>
+                      <div className="flex items-center gap-2 text-sm text-foreground">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        {appointment.phone}
+                      </div>
                     </div>
-                  </AccordionContent>
-                </AccordionItem>
+                    <div className="space-y-1">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('status')}</p>
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[appointment.status]}`}>{t(appointment.status)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 lg:justify-end">
+                      <button onClick={() => openEdit(appointment)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => void handleDelete(appointment.id)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  {appointment.comment && <p className="mt-3 text-sm text-muted-foreground">{appointment.comment}</p>}
+                </div>
               ))}
-            </Accordion>
+            </div>
           )}
         </motion.div>
 
         <AnimatePresence>
           {showForm && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
-              <motion.div initial={{ scale: 0.97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.97, opacity: 0 }} className="glass-panel w-full max-w-xl p-6 space-y-5" onClick={(e) => e.stopPropagation()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setShowForm(false)}>
+              <motion.div initial={{ scale: 0.97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.97, opacity: 0 }} className="glass-panel w-full max-w-xl space-y-5 p-6" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
-                  <h2 className="font-heading font-semibold text-lg">{editingId ? t('edit') : t('newAppointment')}</h2>
-                  <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground">
-                    <X className="w-5 h-5" />
+                  <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newAppointment')}</h2>
+                  <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60">
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('lastName')}</label>
                     <input className="input-glass w-full" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value, clientName: buildPatientName(e.target.value, form.firstName) })} />
@@ -338,7 +343,7 @@ export default function Appointments() {
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('phone')}</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input className="input-glass w-full pl-10" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                     </div>
                   </div>
@@ -352,14 +357,14 @@ export default function Appointments() {
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('doctor')}</label>
-                    <select className="input-glass w-full" value={form.doctor} onChange={(e) => setForm({ ...form, doctor: e.target.value })}>
+                    <SelectField value={form.doctor} onChange={(value) => setForm({ ...form, doctor: value })}>
                       <option value="">-</option>
                       {doctorOptions.map((doctor) => (
                         <option key={doctor.id} value={doctor.name}>
                           {doctor.name}
                         </option>
                       ))}
-                    </select>
+                    </SelectField>
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('comment')}</label>
@@ -367,8 +372,8 @@ export default function Appointments() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 justify-end">
-                  <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setShowForm(false)} className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60">
                     {t('cancel')}
                   </button>
                   <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>

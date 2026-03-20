@@ -163,7 +163,7 @@
   }
 }
 
-.emerald-mobile-header {
+.emerald-mobile-toggle {
   display: none;
 }
 
@@ -176,11 +176,11 @@
     display: none;
   }
 
-  .emerald-mobile-header {
-    display: block;
+  .emerald-main-shell {
+    padding-top: 84px;
   }
 
-  .emerald-main-shell {
-    padding-top: 86px;
+  .emerald-mobile-toggle {
+    display: block;
   }
 }

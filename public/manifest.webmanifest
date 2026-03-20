@@ -13,12 +13,12 @@
       "type": "image/png"
     },
     {
-      "src": "/emerald-icon.png",
+      "src": "/admin-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/emerald-icon.png",
+      "src": "/admin-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
