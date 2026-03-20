@@ -88,4 +88,13 @@ export const api = {
     apiCall<{ sent: number; failed: number; total: number }>('/api/push/send', { method: 'POST', body: JSON.stringify(data) }, token),
   sendPushToPhone: (token: string, data: { phone: string; title?: string; body: string; url?: string }) =>
     apiCall<{ sent: number; failed: number; total: number }>('/api/push/send-to', { method: 'POST', body: JSON.stringify(data) }, token),
+
+  getTelegramAppointments: (token: string, date?: string) =>
+    apiCall<any[]>(`/api/telegram/appointments${date ? `?date=${date}` : ''}`, {}, token),
+  getTelegramPending: (token: string) =>
+    apiCall<any[]>('/api/telegram/pending', {}, token),
+  linkTelegramPhone: (token: string, data: { phone: string; telegram_chat_id: string }) =>
+    apiCall<{ updated: number }>('/api/telegram/link', { method: 'POST', body: JSON.stringify(data) }, token),
+  sendTelegramMessage: (token: string, data: { chat_id: string; text: string }) =>
+    apiCall<{ ok: boolean }>('/api/telegram/send', { method: 'POST', body: JSON.stringify(data) }, token),
 };
