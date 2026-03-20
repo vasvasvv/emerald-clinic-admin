@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, LogOut, Stethoscope, ChevronLeft } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
@@ -19,14 +19,15 @@ const secondaryNavItems = [
 ];
 
 const logoSrc = '/emerald-general.png';
+const SIDEBAR_COLLAPSED_KEY = 'emerald-sidebar-collapsed';
 
 function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-      <img src={logoSrc} alt="Дентіс адмін" className="h-12 w-12 rounded-2xl object-cover shadow-[0_12px_24px_rgba(0,0,0,0.24)]" />
+      <img src={logoSrc} alt="Дентіс адмін" className={`${collapsed ? 'h-14 w-14' : 'h-16 w-16'} rounded-[1.4rem] object-cover shadow-[0_12px_24px_rgba(0,0,0,0.24)]`} />
       {!collapsed && (
         <div className="min-w-0 leading-none">
-          <p className="truncate font-heading text-[1.35rem] font-bold tracking-[-0.02em] text-foreground">Дентіс</p>
+          <p className="truncate font-heading text-[1.5rem] font-bold tracking-[-0.02em] text-foreground">Дентіс</p>
           <p className="mt-1 truncate text-[0.78rem] font-light uppercase tracking-[0.28em] text-muted-foreground">Адмін</p>
         </div>
       )}
@@ -71,8 +72,8 @@ function SidebarContent({
         <div className="space-y-1.5">
           {primaryNavItems.map((item) => (
             <NavLink key={item.key} to={item.url} end={item.url === '/'} className={linkClass} activeClassName={activeClass}>
-              <item.icon className="h-[1.15rem] w-[1.15rem] flex-shrink-0" />
-              {!collapsed && <span className="text-[0.98rem] font-medium">{t(item.key)}</span>}
+              <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
+              {!collapsed && <span className="text-[1.08rem] font-medium">{t(item.key)}</span>}
             </NavLink>
           ))}
         </div>
@@ -81,8 +82,8 @@ function SidebarContent({
       <div className="space-y-1.5 border-t border-border/70 px-2 py-4">
         {secondaryNavItems.map((item) => (
           <NavLink key={item.key} to={item.url} className={linkClass} activeClassName={activeClass}>
-            <item.icon className="h-[1.15rem] w-[1.15rem] flex-shrink-0" />
-            {!collapsed && <span className="text-[0.98rem] font-medium">{t(item.key)}</span>}
+            <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
+            {!collapsed && <span className="text-[1.08rem] font-medium">{t(item.key)}</span>}
           </NavLink>
         ))}
 
@@ -93,8 +94,8 @@ function SidebarContent({
           }}
           className={`flex w-full items-center rounded-2xl px-3 py-3 text-destructive/85 transition-colors duration-200 hover:bg-destructive/10 ${collapsed ? 'justify-center' : 'gap-3'}`}
         >
-          <LogOut className="h-[1.15rem] w-[1.15rem] flex-shrink-0" />
-          {!collapsed && <span className="text-[0.98rem] font-medium">{t('logout')}</span>}
+          <LogOut className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
+          {!collapsed && <span className="text-[1.08rem] font-medium">{t('logout')}</span>}
         </button>
       </div>
     </div>
@@ -103,18 +104,58 @@ function SidebarContent({
 
 export function AppSidebar() {
   const [compactMode, setCompactMode] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1200 : false));
-  const [collapsed, setCollapsed] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1200 : false));
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    if (window.innerWidth >= 1200) return false;
+    return window.sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY) !== 'false';
+  });
+  const inactivityTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const updateLayout = () => {
       const compact = window.innerWidth < 1200;
       setCompactMode(compact);
-      setCollapsed(compact);
+      if (!compact) {
+        setCollapsed(false);
+        window.sessionStorage.removeItem(SIDEBAR_COLLAPSED_KEY);
+        return;
+      }
+      const storedValue = window.sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      setCollapsed(storedValue !== 'false');
     };
+
     updateLayout();
     window.addEventListener('resize', updateLayout);
     return () => window.removeEventListener('resize', updateLayout);
   }, []);
+
+  useEffect(() => {
+    if (!compactMode) return;
+    window.sessionStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed));
+  }, [collapsed, compactMode]);
+
+  useEffect(() => {
+    if (!compactMode || collapsed) {
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+      return;
+    }
+
+    const resetTimer = () => {
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = window.setTimeout(() => {
+        setCollapsed(true);
+      }, 20000);
+    };
+
+    const events: Array<keyof WindowEventMap> = ['pointerdown', 'mousemove', 'keydown', 'touchstart', 'wheel'];
+    resetTimer();
+    events.forEach((eventName) => window.addEventListener(eventName, resetTimer, { passive: true }));
+
+    return () => {
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+      events.forEach((eventName) => window.removeEventListener(eventName, resetTimer));
+    };
+  }, [compactMode, collapsed]);
 
   return (
     <aside
