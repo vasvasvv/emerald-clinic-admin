@@ -1,0 +1,27 @@
+{
+  "name": "Дентіс Адмін",
+  "short_name": "Дентіс",
+  "description": "Адмін-панель клініки Дентіс",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d2322",
+  "theme_color": "#123734",
+  "icons": [
+    {
+      "src": "/admin-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/emerald-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/emerald-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

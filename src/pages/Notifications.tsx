@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle, MessageSquareShare, TimerReset, Siren } from 'lucide-react';
+import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle, MessageSquareShare, TimerReset, Siren, Download, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
@@ -20,6 +20,11 @@ interface TelegramDebugResult {
   dryRun: boolean;
 }
 
+type DeferredInstallPrompt = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
+
 const normalizeDateKey = (date: Date) => date.toISOString().split('T')[0];
 const normalizePhone = (raw: string) => {
   const digits = raw.replace(/\D/g, '');
@@ -36,7 +41,7 @@ export default function Notifications() {
   const { t, lang } = useI18n();
   const token = getAdminToken();
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
-  const [section, setSection] = useState<'push' | 'telegram'>('telegram');
+  const [section, setSection] = useState<'push' | 'telegram' | 'pwa'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
@@ -63,6 +68,9 @@ export default function Notifications() {
   const [debugData, setDebugData] = useState<TelegramDebugResult | null>(null);
   const [loadingDebug, setLoadingDebug] = useState(false);
   const [triggeringCron, setTriggeringCron] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<DeferredInstallPrompt | null>(null);
+  const [installingPwa, setInstallingPwa] = useState(false);
+  const [pwaInstalled, setPwaInstalled] = useState(typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches);
 
   const loadBase = async () => {
     if (!token) return;
@@ -108,6 +116,23 @@ export default function Notifications() {
   useEffect(() => { if (section === 'telegram' && telegramTab === 'appointments') void loadTelegramAppointments(); }, [section, telegramTab, filterDate, token]);
   useEffect(() => { if (section === 'telegram' && telegramTab === 'pending') void loadTelegramPending(); }, [section, telegramTab, token]);
   useEffect(() => { if (section === 'telegram' && telegramTab === 'settings') void loadTelegramDebug(); }, [section, telegramTab, token]);
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event as DeferredInstallPrompt);
+    };
+    const handleInstalled = () => {
+      setPwaInstalled(true);
+      setDeferredInstallPrompt(null);
+      setResult('PWA встановлено.');
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
+  }, []);
 
   const filteredLogs = useMemo(() => logs.filter((log) => (section === 'push' ? log.channel === 'push' : log.channel === 'telegram')), [logs, section]);
 
@@ -157,6 +182,25 @@ export default function Notifications() {
     finally { setTriggeringCron(false); }
   };
 
+  const handleInstallPwa = async () => {
+    if (!deferredInstallPrompt) {
+      setResult('Встановлення PWA стане доступним, коли браузер дозволить інсталяцію.');
+      return;
+    }
+    setInstallingPwa(true); setError(''); setResult('');
+    try {
+      await deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
+        setResult('Запит на встановлення PWA підтверджено.');
+      } else {
+        setResult('Встановлення PWA скасовано.');
+      }
+      setDeferredInstallPrompt(null);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Не вдалося запустити встановлення PWA'); }
+    finally { setInstallingPwa(false); }
+  };
+
   const StatCard = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string | number; accent: string }) => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
       <div className="flex items-center gap-3 mb-3">
@@ -194,6 +238,7 @@ export default function Notifications() {
         <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
           <button onClick={() => setSection('telegram')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Send className="h-4 w-4" />Telegram</button>
           <button onClick={() => setSection('push')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Bell className="h-4 w-4" />Push</button>
+          <button onClick={() => setSection('pwa')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Smartphone className="h-4 w-4" />PWA</button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -395,6 +440,40 @@ export default function Notifications() {
               </motion.div>
             )}
           </>
+        )}
+
+        {section === 'pwa' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-5">
+            <div className="space-y-2">
+              <h2 className="font-heading font-semibold">Встановлення застосунку</h2>
+              <p className="text-sm text-muted-foreground">Встанови `Дентіс Адмін` як окремий застосунок без адресного рядка браузера.</p>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-secondary/30 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Статус PWA</p>
+                  <p className="text-sm text-muted-foreground">
+                    {pwaInstalled
+                      ? 'Застосунок уже встановлено на цьому пристрої.'
+                      : deferredInstallPrompt
+                        ? 'Застосунок готовий до встановлення.'
+                        : 'Кнопка стане активною, коли браузер підготує інсталяцію.'}
+                  </p>
+                </div>
+                <button onClick={() => void handleInstallPwa()} className="btn-accent flex items-center justify-center gap-2 sm:min-w-[220px]" disabled={installingPwa || pwaInstalled || !deferredInstallPrompt}>
+                  <Download className="w-4 h-4" />
+                  {pwaInstalled ? 'Встановлено' : installingPwa ? 'Запуск...' : 'Встановити PWA'}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border p-4 text-sm text-muted-foreground space-y-2">
+              <p>1. Відкрий цю сторінку у Chrome, Edge або Safari на потрібному пристрої.</p>
+              <p>2. Якщо кнопка неактивна, онови сторінку і зачекай, поки браузер підготує встановлення.</p>
+              <p>3. На iPhone або iPad встановлення доступне через `Поділитися` → `На початковий екран`.</p>
+            </div>
+          </motion.div>
         )}
 
         <AnimatePresence>

@@ -169,7 +169,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               onClick={() => setActiveView('today')}
-              className={`stat-card text-left transition-all ${activeView === 'today' ? 'ring-2 ring-primary/50' : ''}`}
+              className={`dashboard-toggle-card text-left ${activeView === 'today' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
@@ -185,7 +185,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               onClick={() => setActiveView('tomorrow')}
-              className={`stat-card text-left transition-all ${activeView === 'tomorrow' ? 'ring-2 ring-accent/50' : ''}`}
+              className={`dashboard-toggle-card text-left ${activeView === 'tomorrow' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
@@ -216,7 +216,7 @@ export default function Dashboard() {
             ) : (
               <div className="divide-y divide-border/50">
                 {displayedAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <div key={appointment.id} className="flex items-center gap-4 px-5 py-3.5 transition-colors duration-300 hover:bg-secondary/25">
                     <span className="text-sm font-medium text-accent w-14">{appointment.time}</span>
                     <span className="text-sm font-medium flex-1">{appointment.client}</span>
                     <span className="text-sm text-muted-foreground hidden sm:block">{appointment.doctor || '-'}</span>
