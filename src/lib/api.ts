@@ -93,6 +93,28 @@ export const api = {
     apiCall<any[]>(`/api/telegram/appointments${date ? `?date=${date}` : ''}`, {}, token),
   getTelegramPending: (token: string) =>
     apiCall<any[]>('/api/telegram/pending', {}, token),
+  getTelegramUpcoming: (token: string) =>
+    apiCall<{
+      log: string[];
+      offsetHours: number;
+      windows: { from24: string; to24: string; from1: string; to1: string };
+      remind24: number;
+      remind1: number;
+      appointments24: Array<{ id: number; patient_name: string; appointment_at: string }>;
+      appointments1: Array<{ id: number; patient_name: string; appointment_at: string }>;
+      dryRun: boolean;
+    }>('/api/telegram/debug/upcoming', {}, token),
+  triggerTelegramCron: (token: string) =>
+    apiCall<{
+      log: string[];
+      offsetHours: number;
+      windows: { from24: string; to24: string; from1: string; to1: string };
+      remind24: number;
+      remind1: number;
+      appointments24: Array<{ id: number; patient_name: string; appointment_at: string }>;
+      appointments1: Array<{ id: number; patient_name: string; appointment_at: string }>;
+      dryRun: boolean;
+    }>('/api/telegram/debug/trigger', { method: 'POST' }, token),
   linkTelegramPhone: (token: string, data: { phone: string; telegram_chat_id: string }) =>
     apiCall<{ updated: number }>('/api/telegram/link', { method: 'POST', body: JSON.stringify(data) }, token),
   sendTelegramMessage: (token: string, data: { chat_id: string; text: string }) =>
