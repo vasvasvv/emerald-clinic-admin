@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Plus, Edit2, Trash2, X, Flame, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
+import { getAdminToken } from '@/lib/auth';
 
 interface NewsItem {
   id: number;
@@ -14,12 +16,6 @@ interface NewsItem {
   hotOffer: boolean;
 }
 
-const initialNews: NewsItem[] = [
-  { id: 1, type: 'promo', label: 'info', title: 'Знижка 20% на відбілювання', description: 'Акція діє до кінця місяця. Професійне відбілювання зубів зі знижкою.', expiryDate: '2026-04-01', hotOffer: true },
-  { id: 2, type: 'news', label: 'news', title: 'Новий лікар у нашій команді', description: 'Раді представити нового спеціаліста з ортодонтії.', expiryDate: '', hotOffer: false },
-  { id: 3, type: 'news', label: 'update', title: 'Оновлення графіку роботи', description: 'З 1 квітня клініка працює в новому графіку.', expiryDate: '2026-04-01', hotOffer: false },
-];
-
 const emptyForm: Omit<NewsItem, 'id'> = { type: 'news', label: 'info', title: '', description: '', expiryDate: '', hotOffer: false };
 
 const labelColors: Record<string, string> = {
@@ -30,29 +26,97 @@ const labelColors: Record<string, string> = {
 
 export default function News() {
   const { t } = useI18n();
-  const [news, setNews] = useState<NewsItem[]>(initialNews);
+  const token = getAdminToken();
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const openNew = () => { setForm(emptyForm); setEditingId(null); setShowForm(true); };
-  const openEdit = (n: NewsItem) => {
-    setForm({ type: n.type, label: n.label, title: n.title, description: n.description, expiryDate: n.expiryDate, hotOffer: n.hotOffer });
-    setEditingId(n.id);
+  const load = async () => {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const items = await api.getNews(token);
+      setNews(items.map((item) => ({
+        id: Number(item.id),
+        type: item.kind,
+        label: item.label,
+        title: item.title,
+        description: item.description,
+        expiryDate: item.expires_on ?? '',
+        hotOffer: Boolean(item.is_hot),
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load news');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, [token]);
+
+  const openNew = () => {
+    setForm(emptyForm);
+    setEditingId(null);
     setShowForm(true);
   };
 
-  const handleSave = () => {
-    if (!form.title) return;
-    if (editingId !== null) {
-      setNews((prev) => prev.map((n) => (n.id === editingId ? { ...n, ...form } : n)));
-    } else {
-      setNews((prev) => [...prev, { id: Date.now(), ...form }]);
-    }
-    setShowForm(false);
+  const openEdit = (item: NewsItem) => {
+    setForm({
+      type: item.type,
+      label: item.label,
+      title: item.title,
+      description: item.description,
+      expiryDate: item.expiryDate,
+      hotOffer: item.hotOffer,
+    });
+    setEditingId(item.id);
+    setShowForm(true);
   };
 
-  const handleDelete = (id: number) => setNews((prev) => prev.filter((n) => n.id !== id));
+  const handleSave = async () => {
+    if (!token || !form.title) return;
+    setSaving(true);
+    setError('');
+    const payload = {
+      kind: form.type,
+      label: form.label,
+      title: form.title,
+      description: form.description,
+      expires_on: form.expiryDate || null,
+      is_hot: form.hotOffer,
+    };
+    try {
+      if (editingId !== null) {
+        await api.updateNews(token, editingId, payload);
+      } else {
+        await api.createNews(token, payload);
+      }
+      await load();
+      setShowForm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save news');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!token) return;
+    setError('');
+    try {
+      await api.deleteNews(token, id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete news');
+    }
+  };
 
   return (
     <AdminLayout>
@@ -65,8 +129,12 @@ export default function News() {
           </button>
         </div>
 
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
         <div className="space-y-3">
-          {news.map((item, i) => (
+          {loading ? (
+            <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
+          ) : news.map((item, i) => (
             <motion.div
               key={item.id}
               initial={{ opacity: 0, y: 10 }}
@@ -101,7 +169,7 @@ export default function News() {
                   <button onClick={() => openEdit(item)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                  <button onClick={() => void handleDelete(item.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -110,7 +178,6 @@ export default function News() {
           ))}
         </div>
 
-        {/* Modal */}
         <AnimatePresence>
           {showForm && (
             <motion.div
@@ -170,7 +237,7 @@ export default function News() {
                 </div>
                 <div className="flex gap-3 justify-end">
                   <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">{t('cancel')}</button>
-                  <button onClick={handleSave} className="btn-accent">{t('save')}</button>
+                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>{t('save')}</button>
                 </div>
               </motion.div>
             </motion.div>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface NewRecordFormProps {
   onClose: () => void;
-  onSave: (record: { clientName: string; phone: string; date: string; time: string; doctor: string; comment: string }) => void;
+  onSave: (record: { clientName: string; phone: string; date: string; time: string; doctor: string; comment: string }) => void | Promise<void>;
   existingRecords: { date: string; time: string; doctor: string }[];
   doctors: string[];
 }
@@ -47,6 +47,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   const [clientName, setClientName] = useState('');
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const monday = getMonday(currentDate);
 
@@ -91,9 +92,14 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
     if (selectedDate && selectedTime) setStep(2);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!clientName || !phone) return;
-    onSave({ clientName, phone, date: selectedDate, time: selectedTime, doctor: selectedDoctor, comment });
+    setSaving(true);
+    try {
+      await onSave({ clientName, phone, date: selectedDate, time: selectedTime, doctor: selectedDoctor, comment });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const today = formatDate(new Date());
@@ -285,8 +291,8 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                   {t('cancel')}
                 </button>
                 <button
-                  onClick={handleSave}
-                  disabled={!clientName || !phone}
+                  onClick={() => void handleSave()}
+                  disabled={!clientName || !phone || saving}
                   className="btn-accent disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {t('save')}

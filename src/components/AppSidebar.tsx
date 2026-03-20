@@ -5,6 +5,8 @@ import {
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { clearAdminSession } from '@/lib/auth';
 
 const navItems = [
   { key: 'dashboard' as const, url: '/', icon: LayoutDashboard },
@@ -18,6 +20,7 @@ const navItems = [
 export function AppSidebar() {
   const { t, lang, setLang } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <aside
@@ -86,6 +89,10 @@ export function AppSidebar() {
 
         {/* Logout */}
         <button
+          onClick={() => {
+            clearAdminSession();
+            navigate('/login');
+          }}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-destructive/80 hover:bg-destructive/10 transition-colors duration-150"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />

@@ -1,47 +1,126 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Clock, CalendarPlus, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { NewRecordForm } from '@/components/NewRecordForm';
-
-const mockDoctors = ['Др. Іваненко', 'Др. Шевченко', 'Др. Бондаренко', 'Др. Кравченко'];
-
-const todayAppointments = [
-  { id: 1, client: 'Олена Петренко', doctor: 'Др. Іваненко', time: '10:00', phone: '+380991234567' },
-  { id: 2, client: 'Максим Коваль', doctor: 'Др. Шевченко', time: '11:30', phone: '+380991234568' },
-  { id: 3, client: 'Анна Мельник', doctor: 'Др. Бондаренко', time: '14:00', phone: '+380991234569' },
-  { id: 4, client: 'Дмитро Ткаченко', doctor: 'Др. Іваненко', time: '15:30', phone: '+380991234570' },
-];
-
-const tomorrowAppointments = [
-  { id: 5, client: 'Марія Сидоренко', doctor: 'Др. Шевченко', time: '09:00', phone: '+380991234571' },
-  { id: 6, client: 'Ігор Литвин', doctor: 'Др. Кравченко', time: '12:00', phone: '+380991234572' },
-  { id: 7, client: 'Тетяна Бойко', doctor: 'Др. Іваненко', time: '16:00', phone: '+380991234573' },
-];
-
-const existingRecords = [
-  ...todayAppointments.map(a => ({ date: new Date().toISOString().split('T')[0], time: a.time, doctor: a.doctor })),
-  ...tomorrowAppointments.map(a => {
-    const t = new Date(); t.setDate(t.getDate() + 1);
-    return { date: t.toISOString().split('T')[0], time: a.time, doctor: a.doctor };
-  }),
-];
+import { api } from '@/lib/api';
+import { getAdminToken } from '@/lib/auth';
 
 type ViewMode = 'today' | 'tomorrow';
+
+interface AppointmentCard {
+  id: number;
+  client: string;
+  doctor: string;
+  time: string;
+  phone: string;
+  date: string;
+}
+
+interface DoctorOption {
+  id: number;
+  name: string;
+}
+
+function formatDateKey(date: Date) {
+  return date.toISOString().split('T')[0];
+}
 
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const token = getAdminToken();
   const [activeView, setActiveView] = useState<ViewMode>('tomorrow');
   const [showNewForm, setShowNewForm] = useState(false);
+  const [appointments, setAppointments] = useState<AppointmentCard[]>([]);
+  const [doctors, setDoctors] = useState<DoctorOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
+  const load = async () => {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [items, doctorItems] = await Promise.all([api.getAppointments(token), api.getSystemDoctors(token)]);
+      setAppointments(
+        items.map((item) => {
+          const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
+          const [date = '', time = ''] = normalized.split('T');
+          return {
+            id: Number(item.id),
+            client: item.patient_name ?? '',
+            doctor: item.doctor_name ?? '',
+            time: time.slice(0, 5),
+            phone: item.phone ?? '',
+            date,
+          };
+        }),
+      );
+      setDoctors(doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, [token]);
+
+  const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
+  const todayKey = formatDateKey(today);
+  const tomorrowKey = formatDateKey(tomorrow);
+
+  const todayAppointments = useMemo(
+    () => appointments.filter((appointment) => appointment.date === todayKey),
+    [appointments, todayKey],
+  );
+  const tomorrowAppointments = useMemo(
+    () => appointments.filter((appointment) => appointment.date === tomorrowKey),
+    [appointments, tomorrowKey],
+  );
 
   const displayedAppointments = activeView === 'today' ? todayAppointments : tomorrowAppointments;
-  const displayDate = activeView === 'today' ? new Date() : tomorrow;
+  const displayDate = activeView === 'today' ? today : tomorrow;
+
+  const handleCreateRecord = async (record: {
+    clientName: string;
+    phone: string;
+    date: string;
+    time: string;
+    doctor: string;
+    comment: string;
+  }) => {
+    if (!token) return;
+    setSaving(true);
+    setError('');
+    try {
+      const doctor = doctors.find((item) => item.name === record.doctor);
+      await api.createAppointment(token, {
+        patient_name: record.clientName,
+        phone: record.phone,
+        appointment_at: `${record.date}T${record.time}:00`,
+        doctor_user_id: doctor?.id ?? null,
+        notes: record.comment,
+        status: 'scheduled',
+      });
+      await load();
+      setShowNewForm(false);
+      setActiveView(record.date === todayKey ? 'today' : 'tomorrow');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create appointment');
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -54,7 +133,8 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Big Action Buttons */}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
@@ -78,7 +158,6 @@ export default function Dashboard() {
             </motion.button>
           </div>
 
-          {/* Stats row - clickable */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
@@ -113,7 +192,6 @@ export default function Dashboard() {
             </motion.button>
           </div>
 
-          {/* Appointments detail - switches based on activeView */}
           <motion.div
             key={activeView}
             initial={{ opacity: 0, y: 20 }}
@@ -123,19 +201,21 @@ export default function Dashboard() {
           >
             <div className="p-5 border-b border-border">
               <h2 className="font-heading font-semibold text-lg">
-                {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} — {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
+                {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} - {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
               </h2>
             </div>
-            {displayedAppointments.length === 0 ? (
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">{t('loading')}</div>
+            ) : displayedAppointments.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">{t('noAppointments')}</div>
             ) : (
               <div className="divide-y divide-border/50">
-                {displayedAppointments.map((apt) => (
-                  <div key={apt.id} className="flex items-center gap-4 px-5 py-3.5">
-                    <span className="text-sm font-medium text-accent w-14">{apt.time}</span>
-                    <span className="text-sm font-medium flex-1">{apt.client}</span>
-                    <span className="text-sm text-muted-foreground hidden sm:block">{apt.doctor}</span>
-                    <span className="text-sm text-muted-foreground">{apt.phone}</span>
+                {displayedAppointments.map((appointment) => (
+                  <div key={appointment.id} className="flex items-center gap-4 px-5 py-3.5">
+                    <span className="text-sm font-medium text-accent w-14">{appointment.time}</span>
+                    <span className="text-sm font-medium flex-1">{appointment.client}</span>
+                    <span className="text-sm text-muted-foreground hidden sm:block">{appointment.doctor || '-'}</span>
+                    <span className="text-sm text-muted-foreground">{appointment.phone}</span>
                   </div>
                 ))}
               </div>
@@ -147,10 +227,14 @@ export default function Dashboard() {
       <AnimatePresence>
         {showNewForm && (
           <NewRecordForm
-            onClose={() => setShowNewForm(false)}
-            onSave={() => setShowNewForm(false)}
-            existingRecords={existingRecords}
-            doctors={mockDoctors}
+            onClose={() => !saving && setShowNewForm(false)}
+            onSave={handleCreateRecord}
+            existingRecords={appointments.map((appointment) => ({
+              date: appointment.date,
+              time: appointment.time,
+              doctor: appointment.doctor,
+            }))}
+            doctors={doctors.map((doctor) => doctor.name)}
           />
         )}
       </AnimatePresence>

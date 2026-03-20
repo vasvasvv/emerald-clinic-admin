@@ -12,11 +12,12 @@ import News from "./pages/News";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { isAdminAuthenticated } from "./lib/auth";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuth = localStorage.getItem('dental_admin_auth') === 'true';
+  const isAuth = isAdminAuthenticated();
   if (!isAuth) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }

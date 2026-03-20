@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/lib/i18n';
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
+import { api } from '@/lib/api';
+import { clearAdminSession } from '@/lib/auth';
 
 export default function Login() {
   const { t } = useI18n();
@@ -10,16 +12,27 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@dental.com' && password === 'admin') {
+    setLoading(true);
+    setError('');
+    clearAdminSession();
+
+    try {
+      const result = await api.login(email, password);
       localStorage.setItem('dental_admin_auth', 'true');
+      localStorage.setItem('dental_admin_token', result.token);
+      localStorage.setItem('dental_admin_user', JSON.stringify(result.user));
       navigate('/');
-    } else {
-      setError('Invalid credentials. Use admin@dental.com / admin');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -60,14 +73,10 @@ export default function Login() {
 
           {error && <p className="text-xs text-destructive">{error}</p>}
 
-          <button type="submit" className="btn-accent w-full">
+          <button type="submit" className="btn-accent w-full" disabled={loading}>
             {t('login')}
           </button>
         </form>
-
-        <p className="text-xs text-muted-foreground text-center">
-          Demo: admin@dental.com / admin
-        </p>
       </motion.div>
     </div>
   );

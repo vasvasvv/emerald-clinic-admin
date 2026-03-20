@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Plus, Edit2, Trash2, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api';
+import { getAdminToken } from '@/lib/auth';
 
 interface Doctor {
   id: number;
@@ -14,39 +16,102 @@ interface Doctor {
   photo: string;
 }
 
-const initialDoctors: Doctor[] = [
-  { id: 1, fullName: 'Іваненко Олексій Петрович', position: 'Головний лікар', specialization: 'Ортодонтія', experience: 15, description: 'Досвідчений спеціаліст з виправлення прикусу', photo: '' },
-  { id: 2, fullName: 'Шевченко Марина Іванівна', position: 'Стоматолог-терапевт', specialization: 'Терапевтична стоматологія', experience: 10, description: 'Спеціаліст з лікування карієсу та пульпіту', photo: '' },
-  { id: 3, fullName: 'Бондаренко Андрій Вікторович', position: 'Хірург', specialization: 'Хірургічна стоматологія', experience: 12, description: 'Імплантація та видалення зубів', photo: '' },
-];
-
 const emptyForm = { fullName: '', position: '', specialization: '', experience: 0, description: '', photo: '' };
 
 export default function Doctors() {
   const { t } = useI18n();
-  const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors);
+  const token = getAdminToken();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const openNew = () => { setForm(emptyForm); setEditingId(null); setShowForm(true); };
-  const openEdit = (d: Doctor) => {
-    setForm({ fullName: d.fullName, position: d.position, specialization: d.specialization, experience: d.experience, description: d.description, photo: d.photo });
-    setEditingId(d.id);
+  const load = async () => {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const items = await api.getSiteDoctors(token);
+      setDoctors(items.map((item) => ({
+        id: Number(item.id),
+        fullName: item.full_name ?? '',
+        position: item.position ?? '',
+        specialization: item.specialization ?? '',
+        experience: Number(item.experience_years ?? 0),
+        description: item.description ?? '',
+        photo: item.photo_url ?? '',
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load doctors');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, [token]);
+
+  const openNew = () => {
+    setForm(emptyForm);
+    setEditingId(null);
     setShowForm(true);
   };
 
-  const handleSave = () => {
-    if (!form.fullName || !form.position) return;
-    if (editingId !== null) {
-      setDoctors((prev) => prev.map((d) => (d.id === editingId ? { ...d, ...form } : d)));
-    } else {
-      setDoctors((prev) => [...prev, { id: Date.now(), ...form }]);
-    }
-    setShowForm(false);
+  const openEdit = (doctor: Doctor) => {
+    setForm({
+      fullName: doctor.fullName,
+      position: doctor.position,
+      specialization: doctor.specialization,
+      experience: doctor.experience,
+      description: doctor.description,
+      photo: doctor.photo,
+    });
+    setEditingId(doctor.id);
+    setShowForm(true);
   };
 
-  const handleDelete = (id: number) => setDoctors((prev) => prev.filter((d) => d.id !== id));
+  const handleSave = async () => {
+    if (!token || !form.fullName || !form.position) return;
+    setSaving(true);
+    setError('');
+    const payload = {
+      full_name: form.fullName,
+      position: form.position,
+      specialization: form.specialization,
+      experience_years: form.experience,
+      description: form.description,
+      photo_url: form.photo,
+      is_published: true,
+    };
+    try {
+      if (editingId !== null) {
+        await api.updateSiteDoctor(token, editingId, payload);
+      } else {
+        await api.createSiteDoctor(token, payload);
+      }
+      await load();
+      setShowForm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save doctor');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!token) return;
+    setError('');
+    try {
+      await api.deleteSiteDoctor(token, id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete doctor');
+    }
+  };
 
   return (
     <AdminLayout>
@@ -59,10 +124,14 @@ export default function Doctors() {
           </button>
         </div>
 
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {doctors.map((doc, i) => (
+          {loading ? (
+            <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
+          ) : doctors.map((doctor, i) => (
             <motion.div
-              key={doc.id}
+              key={doctor.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
@@ -74,29 +143,28 @@ export default function Doctors() {
                     <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-semibold text-sm">{doc.fullName}</h3>
-                    <p className="text-xs text-primary">{doc.position}</p>
+                    <h3 className="font-heading font-semibold text-sm">{doctor.fullName}</h3>
+                    <p className="text-xs text-primary">{doctor.position}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit(doc)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                  <button onClick={() => openEdit(doctor)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => handleDelete(doc.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                  <button onClick={() => void handleDelete(doctor.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
               <div className="space-y-1.5 text-sm">
-                <p className="text-muted-foreground"><span className="text-foreground/70">{t('specialization')}:</span> {doc.specialization}</p>
-                <p className="text-muted-foreground"><span className="text-foreground/70">{t('experience')}:</span> {doc.experience} {t('years')}</p>
-                {doc.description && <p className="text-muted-foreground text-xs mt-2">{doc.description}</p>}
+                <p className="text-muted-foreground"><span className="text-foreground/70">{t('specialization')}:</span> {doctor.specialization}</p>
+                <p className="text-muted-foreground"><span className="text-foreground/70">{t('experience')}:</span> {doctor.experience} {t('years')}</p>
+                {doctor.description && <p className="text-muted-foreground text-xs mt-2">{doctor.description}</p>}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Modal */}
         <AnimatePresence>
           {showForm && (
             <motion.div
@@ -128,7 +196,7 @@ export default function Doctors() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('experience')}</label>
-                    <input type="number" className="input-glass w-full" value={form.experience} onChange={(e) => setForm({ ...form, experience: parseInt(e.target.value) || 0 })} />
+                    <input type="number" className="input-glass w-full" value={form.experience} onChange={(e) => setForm({ ...form, experience: parseInt(e.target.value, 10) || 0 })} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('photo')} (URL)</label>
@@ -141,7 +209,7 @@ export default function Doctors() {
                 </div>
                 <div className="flex gap-3 justify-end">
                   <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">{t('cancel')}</button>
-                  <button onClick={handleSave} className="btn-accent">{t('save')}</button>
+                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>{t('save')}</button>
                 </div>
               </motion.div>
             </motion.div>

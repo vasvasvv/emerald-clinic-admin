@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NewRecordForm } from '@/components/NewRecordForm';
+import { api } from '@/lib/api';
+import { getAdminToken } from '@/lib/auth';
 
 interface AppointmentRecord {
   id: number;
@@ -15,44 +17,30 @@ interface AppointmentRecord {
   comment?: string;
 }
 
-const mockDoctors = ['Др. Іваненко', 'Др. Шевченко', 'Др. Бондаренко', 'Др. Кравченко'];
-
-const initialRecords: AppointmentRecord[] = [
-  { id: 1, clientName: 'Олена Петренко', phone: '+380991234567', date: '2026-03-16', time: '10:00', doctor: 'Др. Іваненко' },
-  { id: 2, clientName: 'Максим Коваль', phone: '+380991234568', date: '2026-03-16', time: '11:00', doctor: 'Др. Шевченко' },
-  { id: 3, clientName: 'Анна Мельник', phone: '+380991234569', date: '2026-03-17', time: '14:00', doctor: 'Др. Бондаренко' },
-  { id: 4, clientName: 'Дмитро Ткаченко', phone: '+380991234570', date: '2026-03-17', time: '09:00', doctor: 'Др. Іваненко' },
-  { id: 5, clientName: 'Марія Сидоренко', phone: '+380991234571', date: '2026-03-18', time: '12:00', doctor: 'Др. Шевченко' },
-  { id: 6, clientName: 'Ігор Литвин', phone: '+380991234572', date: '2026-03-18', time: '15:00', doctor: 'Др. Кравченко' },
-  { id: 7, clientName: 'Тетяна Бойко', phone: '+380991234573', date: '2026-03-19', time: '10:00', doctor: 'Др. Іваненко' },
-  { id: 8, clientName: 'Віктор Гончар', phone: '+380991234574', date: '2026-03-19', time: '13:00', doctor: 'Др. Бондаренко' },
-  { id: 9, clientName: 'Наталія Кузь', phone: '+380991234575', date: '2026-03-19', time: '16:00', doctor: 'Др. Шевченко' },
-  { id: 10, clientName: 'Олег Романюк', phone: '+380991234576', date: '2026-03-20', time: '09:00', doctor: 'Др. Кравченко' },
-  { id: 11, clientName: 'Юлія Дорош', phone: '+380991234577', date: '2026-03-20', time: '11:00', doctor: 'Др. Іваненко' },
-  { id: 12, clientName: 'Сергій Мороз', phone: '+380991234578', date: '2026-03-21', time: '10:00', doctor: 'Др. Шевченко' },
-  { id: 13, clientName: 'Катерина Лис', phone: '+380991234579', date: '2026-03-21', time: '14:00', doctor: 'Др. Бондаренко' },
-  { id: 14, clientName: 'Павло Ярош', phone: '+380991234580', date: '2026-03-22', time: '09:00', doctor: 'Др. Іваненко' },
-];
-
-function getMonday(d: Date): Date {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  date.setDate(diff);
-  date.setHours(0, 0, 0, 0);
-  return date;
+interface DoctorOption {
+  id: number;
+  name: string;
 }
 
-function formatDate(d: Date): string {
-  return d.toISOString().split('T')[0];
+function getMonday(date: Date): Date {
+  const value = new Date(date);
+  const day = value.getDay();
+  const diff = value.getDate() - day + (day === 0 ? -6 : 1);
+  value.setDate(diff);
+  value.setHours(0, 0, 0, 0);
+  return value;
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
 }
 
 function getDaysInMonth(year: number, month: number): Date[] {
   const days: Date[] = [];
-  const date = new Date(year, month, 1);
-  while (date.getMonth() === month) {
-    days.push(new Date(date));
-    date.setDate(date.getDate() + 1);
+  const cursor = new Date(year, month, 1);
+  while (cursor.getMonth() === month) {
+    days.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
   }
   return days;
 }
@@ -64,56 +52,121 @@ const dayNames: Record<string, string[]> = {
 
 export default function Records() {
   const { t, lang } = useI18n();
-  const [records, setRecords] = useState<AppointmentRecord[]>(initialRecords);
+  const token = getAdminToken();
+  const [records, setRecords] = useState<AppointmentRecord[]>([]);
+  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
+  const [selectedDoctor, setSelectedDoctor] = useState('');
   const [showNewForm, setShowNewForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const monday = getMonday(currentDate);
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      return d;
-    });
-  }, [monday.getTime()]);
-
-  const filteredRecords = useMemo(() => {
-    return records.filter((r) => !selectedDoctor || r.doctor === selectedDoctor);
-  }, [selectedDoctor, records]);
-
-  const getRecordsForDate = (dateStr: string) => {
-    return filteredRecords
-      .filter((r) => r.date === dateStr)
-      .sort((a, b) => a.time.localeCompare(b.time));
+  const load = async () => {
+    if (!token) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [items, doctors] = await Promise.all([api.getAppointments(token), api.getSystemDoctors(token)]);
+      setRecords(
+        items.map((item) => {
+          const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
+          const [date = '', time = ''] = normalized.split('T');
+          return {
+            id: Number(item.id),
+            clientName: item.patient_name ?? '',
+            phone: item.phone ?? '',
+            date,
+            time: time.slice(0, 5),
+            doctor: item.doctor_name ?? '',
+            comment: item.notes ?? '',
+          };
+        }),
+      );
+      setDoctorOptions(doctors.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load records');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const navigateWeek = (dir: number) => {
-    const d = new Date(currentDate);
-    d.setDate(d.getDate() + dir * 7);
-    setCurrentDate(d);
+  useEffect(() => {
+    void load();
+  }, [token]);
+
+  const weekDays = useMemo(
+    () =>
+      Array.from({ length: 6 }, (_, index) => {
+        const day = new Date(monday);
+        day.setDate(monday.getDate() + index);
+        return day;
+      }),
+    [monday],
+  );
+
+  const filteredRecords = useMemo(
+    () => records.filter((record) => !selectedDoctor || record.doctor === selectedDoctor),
+    [records, selectedDoctor],
+  );
+
+  const getRecordsForDate = (dateStr: string) =>
+    filteredRecords.filter((record) => record.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
+
+  const monthDays = useMemo(
+    () => getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth()),
+    [currentDate],
+  );
+
+  const navigateWeek = (direction: number) => {
+    const next = new Date(currentDate);
+    next.setDate(next.getDate() + direction * 7);
+    setCurrentDate(next);
   };
 
-  const navigateMonth = (dir: number) => {
-    const d = new Date(currentDate);
-    d.setMonth(d.getMonth() + dir);
-    setCurrentDate(d);
+  const navigateMonth = (direction: number) => {
+    const next = new Date(currentDate);
+    next.setMonth(next.getMonth() + direction);
+    setCurrentDate(next);
   };
 
-  const monthDays = useMemo(() => {
-    return getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
-  }, [currentDate.getFullYear(), currentDate.getMonth()]);
-
-  const weekRangeLabel = `${weekDays[0].toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short' })} — ${weekDays[5].toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-  const monthLabel = currentDate.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { month: 'long', year: 'numeric' });
-
+  const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
+  const weekRangeLabel = `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'short' })} - ${weekDays[5].toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const monthLabel = currentDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
   const today = formatDate(new Date());
 
-  const handleNewRecord = (rec: { clientName: string; phone: string; date: string; time: string; doctor: string; comment: string }) => {
-    setRecords((prev) => [...prev, { id: Date.now(), ...rec }]);
-    setShowNewForm(false);
+  const handleNewRecord = async (record: {
+    clientName: string;
+    phone: string;
+    date: string;
+    time: string;
+    doctor: string;
+    comment: string;
+  }) => {
+    if (!token) return;
+    setSaving(true);
+    setError('');
+    try {
+      const doctor = doctorOptions.find((item) => item.name === record.doctor);
+      await api.createAppointment(token, {
+        patient_name: record.clientName,
+        phone: record.phone,
+        appointment_at: `${record.date}T${record.time}:00`,
+        doctor_user_id: doctor?.id ?? null,
+        notes: record.comment,
+        status: 'scheduled',
+      });
+      await load();
+      setShowNewForm(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create record');
+      throw err;
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -124,12 +177,11 @@ export default function Records() {
             <h1 className="text-2xl font-heading font-bold">{t('records')}</h1>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <button onClick={() => setShowNewForm(true)} className="btn-accent flex items-center gap-2">
+              <button onClick={() => setShowNewForm(true)} className="btn-accent flex items-center gap-2" disabled={saving}>
                 <Plus className="w-4 h-4" />
                 {t('newRecord')}
               </button>
 
-              {/* Doctor filter */}
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <select
@@ -138,13 +190,14 @@ export default function Records() {
                   className="input-glass text-sm py-1.5 pr-8"
                 >
                   <option value="">{t('allDoctors')}</option>
-                  {mockDoctors.map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                  {doctorOptions.map((doctor) => (
+                    <option key={doctor.id} value={doctor.name}>
+                      {doctor.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              {/* View toggle */}
               <div className="flex rounded-xl overflow-hidden border border-border">
                 <button
                   onClick={() => setViewMode('week')}
@@ -166,49 +219,37 @@ export default function Records() {
             </div>
           </div>
 
-          {/* Navigation */}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
           <div className="flex items-center justify-between">
             <button
-              onClick={() => viewMode === 'week' ? navigateWeek(-1) : navigateMonth(-1)}
+              onClick={() => (viewMode === 'week' ? navigateWeek(-1) : navigateMonth(-1))}
               className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="font-heading font-semibold text-lg capitalize">
-              {viewMode === 'week' ? weekRangeLabel : monthLabel}
-            </span>
+            <span className="font-heading font-semibold text-lg capitalize">{viewMode === 'week' ? weekRangeLabel : monthLabel}</span>
             <button
-              onClick={() => viewMode === 'week' ? navigateWeek(1) : navigateMonth(1)}
+              onClick={() => (viewMode === 'week' ? navigateWeek(1) : navigateMonth(1))}
               className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Calendar */}
           {viewMode === 'week' ? (
-            <motion.div
-              key={monday.getTime()}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            >
-              {weekDays.map((day, i) => {
+            <motion.div key={monday.getTime()} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {weekDays.map((day, index) => {
                 const dateStr = formatDate(day);
                 const dayRecords = getRecordsForDate(dateStr);
                 const isToday = dateStr === today;
 
                 return (
-                  <div
-                    key={dateStr}
-                    className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}
-                  >
+                  <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}>
                     <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {dayNames[lang]?.[i] || dayNames.en[i]}
-                      </span>
+                      <span className="text-xs text-muted-foreground font-medium">{dayNames[lang]?.[index] || dayNames.en[index]}</span>
                       <span className={`font-heading font-semibold ${isToday ? 'text-primary' : ''}`}>
-                        {day.toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { day: 'numeric', month: 'short' })}
+                        {day.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                       </span>
                       {isToday && (
                         <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium ml-auto">
@@ -216,18 +257,18 @@ export default function Records() {
                         </span>
                       )}
                     </div>
-                    {dayRecords.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-muted-foreground/60">
-                        {t('noRecords')}
-                      </div>
+                    {loading ? (
+                      <div className="px-4 py-6 text-center text-sm text-muted-foreground">{t('loading')}</div>
+                    ) : dayRecords.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-sm text-muted-foreground/60">{t('noRecords')}</div>
                     ) : (
                       <div className="divide-y divide-border/40">
-                        {dayRecords.map((rec) => (
-                          <div key={rec.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/30 transition-colors">
-                            <span className="text-sm font-semibold text-accent w-12 shrink-0">{rec.time}</span>
+                        {dayRecords.map((record) => (
+                          <div key={record.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/30 transition-colors">
+                            <span className="text-sm font-semibold text-accent w-12 shrink-0">{record.time}</span>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{rec.clientName}</p>
-                              <p className="text-xs text-muted-foreground">{rec.phone}</p>
+                              <p className="text-sm font-medium truncate">{record.clientName}</p>
+                              <p className="text-xs text-muted-foreground">{record.phone}</p>
                             </div>
                           </div>
                         ))}
@@ -238,12 +279,7 @@ export default function Records() {
               })}
             </motion.div>
           ) : (
-            <motion.div
-              key={currentDate.getMonth()}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="glass-panel overflow-hidden"
-            >
+            <motion.div key={currentDate.getMonth()} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-panel overflow-hidden">
               <div className="grid grid-cols-7 border-b border-border">
                 {(dayNames[lang] || dayNames.en).concat(lang === 'uk' ? 'Нд' : 'Sun').map((name) => (
                   <div key={name} className="px-2 py-2 text-center text-xs text-muted-foreground font-medium">
@@ -252,8 +288,8 @@ export default function Records() {
                 ))}
               </div>
               <div className="grid grid-cols-7">
-                {Array.from({ length: (monthDays[0]?.getDay() || 7) - 1 }, (_, i) => (
-                  <div key={`empty-${i}`} className="border-b border-r border-border/30 min-h-[80px]" />
+                {Array.from({ length: (monthDays[0]?.getDay() || 7) - 1 }, (_, index) => (
+                  <div key={`empty-${index}`} className="border-b border-r border-border/30 min-h-[80px]" />
                 ))}
                 {monthDays.map((day) => {
                   const dateStr = formatDate(day);
@@ -270,14 +306,12 @@ export default function Records() {
                         {day.getDate()}
                       </span>
                       <div className="mt-1 space-y-0.5">
-                        {dayRecords.slice(0, 3).map((rec) => (
-                          <div key={rec.id} className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate">
-                            {rec.time} {rec.clientName.split(' ')[0]}
+                        {dayRecords.slice(0, 3).map((record) => (
+                          <div key={record.id} className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate">
+                            {record.time} {record.clientName.split(' ')[0]}
                           </div>
                         ))}
-                        {dayRecords.length > 3 && (
-                          <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>
-                        )}
+                        {dayRecords.length > 3 && <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>}
                       </div>
                     </div>
                   );
@@ -291,10 +325,10 @@ export default function Records() {
       <AnimatePresence>
         {showNewForm && (
           <NewRecordForm
-            onClose={() => setShowNewForm(false)}
+            onClose={() => !saving && setShowNewForm(false)}
             onSave={handleNewRecord}
-            existingRecords={records.map((r) => ({ date: r.date, time: r.time, doctor: r.doctor }))}
-            doctors={mockDoctors}
+            existingRecords={records.map((record) => ({ date: record.date, time: record.time, doctor: record.doctor }))}
+            doctors={doctorOptions.map((doctor) => doctor.name)}
           />
         )}
       </AnimatePresence>
