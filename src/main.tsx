@@ -8,4 +8,12 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   });
 }
 
+if ('serviceWorker' in navigator && import.meta.env.DEV) {
+  void navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      void registration.unregister();
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);

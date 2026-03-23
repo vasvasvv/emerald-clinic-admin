@@ -186,11 +186,11 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              onClick={() => navigate('/notifications')}
+              onClick={() => window.alert('Функція знімка буде підключена пізніше.')}
               className="glass-panel flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 py-6 text-lg font-heading font-semibold text-foreground transition-colors hover:bg-secondary/60"
             >
               <Bell className="h-6 w-6" />
-              {t('sendNotification')}
+              {'Зробити знімок'}
             </motion.button>
           </div>
 
