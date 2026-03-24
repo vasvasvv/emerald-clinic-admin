@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Appointments = lazy(() => import("./pages/Appointments"));
 const Records = lazy(() => import("./pages/Records"));
 const DentalCharts = lazy(() => import("./pages/DentalCharts"));
+const Xrays = lazy(() => import("./pages/Xrays"));
 const Doctors = lazy(() => import("./pages/Doctors"));
 const News = lazy(() => import("./pages/News"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/appointments" element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
               <Route path="/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
               <Route path="/dental-charts" element={<ProtectedRoute><DentalCharts /></ProtectedRoute>} />
+              <Route path="/xrays" element={<ProtectedRoute><Xrays /></ProtectedRoute>} />
               <Route path="/doctors" element={<ProtectedRoute><Doctors /></ProtectedRoute>} />
               <Route path="/news" element={<ProtectedRoute><News /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

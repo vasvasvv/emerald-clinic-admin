@@ -34,6 +34,47 @@ export async function apiCall<T>(
   return response.json();
 }
 
+export async function apiFetch(
+  endpoint: string,
+  options: RequestInit = {},
+  token?: string | null
+): Promise<Response> {
+  const headers: HeadersInit = {
+    ...options.headers,
+  };
+
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let message = `HTTP ${response.status}`;
+    try {
+      const error = await response.clone().json();
+      message = error.error || message;
+    } catch {
+      const errorText = await response.text().catch(() => '');
+      if (errorText) message = errorText;
+    }
+    throw new Error(message);
+  }
+
+  return response;
+}
+
+export async function apiBlob(
+  endpoint: string,
+  token?: string | null
+): Promise<Blob> {
+  const response = await apiFetch(endpoint, {}, token);
+  return response.blob();
+}
+
 export const api = {
   login: (email: string, password: string) =>
     apiCall<{ token: string; user: { id: number; email: string; fullName: string; role: string } }>(
@@ -77,8 +118,47 @@ export const api = {
   getUsers: (token: string) =>
     apiCall<any[]>('/api/users', {}, token),
 
-  getPatients: (token: string) =>
-    apiCall<any[]>('/api/patients', {}, token),
+  getPatients: (token: string, query?: string) =>
+    apiCall<any[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
+
+  startXraySession: (token: string, data: { patientId: number; toothId: number }) =>
+    apiCall<{
+      id: number;
+      patientId: number;
+      patientName: string;
+      toothId: number;
+      status: 'waiting' | 'completed';
+      createdAt: string;
+      updatedAt: string;
+      completedAt: string | null;
+      xray: null | {
+        id: number;
+        previewUrl: string;
+        originalUrl: string;
+        previewContentType: string;
+        originalContentType: string;
+      };
+    }>('/api/sessions/start', { method: 'POST', body: JSON.stringify(data) }, token),
+  getActiveXraySession: (token: string, sessionId?: number) =>
+    apiCall<null | {
+      id: number;
+      patientId: number;
+      patientName: string;
+      toothId: number;
+      status: 'waiting' | 'completed';
+      createdAt: string;
+      updatedAt: string;
+      completedAt: string | null;
+      xray: null | {
+        id: number;
+        previewUrl: string;
+        originalUrl: string;
+        previewContentType: string;
+        originalContentType: string;
+      };
+    }>(`/api/sessions/active${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, token),
+  getProtectedImageBlob: (token: string, url: string) =>
+    apiBlob(url.startsWith('/api/') ? url.slice(4) : url, token),
 
   getPushCounts: (token: string) =>
     apiCall<{ pushSubscriptions: number; telegramContacts: number }>('/api/push/count', {}, token),

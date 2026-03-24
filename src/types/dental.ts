@@ -14,6 +14,7 @@ export interface FileAttachment {
   type: string;
   data: string;
   uploadedAt: string;
+  originalUrl?: string;
 }
 
 export interface ToothRecord {
@@ -61,6 +62,7 @@ export interface Patient {
   changeHistory: ChangeHistoryEntry[];
   createdAt: string;
   updatedAt: string;
+  detailsLoaded?: boolean;
 }
 
 export interface Doctor {
@@ -81,8 +83,10 @@ export const DENTAL_TEMPLATES = [
   { id: 'sensitivity', label: 'Чутливість', description: 'Підвищена чутливість зуба' },
   { id: 'fracture', label: 'Тріщина', description: 'Тріщина або скол зуба' },
   { id: 'missing', label: 'Відсутній', description: 'Відсутній зуб' },
+  { id: 'other', label: 'Інше', description: 'Інший стан зуба' },
+  { id: 'xray', label: 'Знімки', description: 'До зуба прив’язані рентген-знімки' },
   { id: 'healthy', label: 'Здоровий', description: 'Проблем не виявлено' },
-];
+] as const;
 
-export const UPPER_TEETH = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-export const LOWER_TEETH = [32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17];
+export const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+export const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];

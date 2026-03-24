@@ -109,12 +109,29 @@ function normalizeVisit(value: any): Visit {
   };
 }
 
+function resolveToothTemplateId(value: string | undefined): string {
+  const normalized = (value ?? '').trim().toLowerCase();
+  if (!normalized) return '';
+
+  const matched = DENTAL_TEMPLATES.find((item) => {
+    return item.id.toLowerCase() === normalized
+      || item.label.toLowerCase() === normalized
+      || item.description.toLowerCase() === normalized;
+  });
+
+  return matched?.id ?? '';
+}
+
 function normalizeTooth(value: any): ToothRecord {
+  const description = value.description ?? value.status ?? '';
+  const files = Array.isArray(value.files) ? value.files : [];
+  const templateId = value.templateId ?? (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
+
   return {
     toothNumber: Number(value.toothNumber ?? value.tooth_number ?? 0),
-    description: value.description ?? value.status ?? '',
-    templateId: value.templateId ?? '',
-    files: Array.isArray(value.files) ? value.files : [],
+    description,
+    templateId,
+    files,
     notes: value.notes ?? '',
     updatedAt: value.updatedAt ?? value.updated_at ?? new Date().toISOString(),
   };
@@ -133,6 +150,9 @@ function normalizeChangeHistory(value: any): ChangeHistoryEntry {
 }
 
 function normalizePatient(value: any): Patient {
+  const hasDetailedCollections =
+    Array.isArray(value.dentalChart) || Array.isArray(value.visits) || Array.isArray(value.changeHistory);
+
   return {
     id: String(value.id ?? ''),
     firstName: value.firstName ?? value.first_name ?? '',
@@ -148,6 +168,7 @@ function normalizePatient(value: any): Patient {
     changeHistory: Array.isArray(value.changeHistory) ? value.changeHistory.map(normalizeChangeHistory) : [],
     createdAt: value.createdAt ?? value.created_at ?? new Date().toISOString(),
     updatedAt: value.updatedAt ?? value.updated_at ?? new Date().toISOString(),
+    detailsLoaded: hasDetailedCollections,
   };
 }
 
@@ -469,6 +490,9 @@ function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModal
   const [templateId, setTemplateId] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
+  const [selectedXrayUrl, setSelectedXrayUrl] = useState<string | null>(null);
+  const [isLoadingXrays, setIsLoadingXrays] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -476,6 +500,48 @@ function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModal
     setDescription(record?.description ?? '');
     setNotes(record?.notes ?? '');
   }, [isOpen, record, toothNumber]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray' && file.data);
+    if (xrayFiles.length === 0) {
+      setPreviewUrls({});
+      return;
+    }
+
+    const token = getAdminToken();
+    if (!token) return;
+
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    void (async () => {
+      setIsLoadingXrays(true);
+      try {
+        const entries = await Promise.all(
+          xrayFiles.map(async (file) => {
+            const blob = await api.getProtectedImageBlob(token, file.data);
+            const url = URL.createObjectURL(blob);
+            createdUrls.push(url);
+            return [file.id, url] as const;
+          }),
+        );
+
+        if (!cancelled) {
+          setPreviewUrls(Object.fromEntries(entries));
+        }
+      } finally {
+        if (!cancelled) setIsLoadingXrays(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      setPreviewUrls({});
+      setSelectedXrayUrl(null);
+    };
+  }, [isOpen, record?.files]);
 
   const handleTemplateChange = (value: string) => {
     if (value === '__clear__') {
@@ -502,6 +568,7 @@ function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModal
   };
 
   const currentTemplate = DENTAL_TEMPLATES.find((item) => item.id === templateId);
+  const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -539,6 +606,41 @@ function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModal
             <Label>Додаткові примітки</Label>
             <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Примітки до лікування, рекомендації..." />
           </div>
+
+          {xrayFiles.length > 0 && (
+            <div className="space-y-2">
+              <Label>Знімки</Label>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="mb-2 flex flex-wrap gap-2">
+                  <Badge variant="secondary">Знімки: {xrayFiles.length}</Badge>
+                  <Badge variant="outline">Стан: Знімки</Badge>
+                </div>
+                <div className="space-y-2">
+                  {xrayFiles.map((file) => (
+                    <button
+                      key={file.id}
+                      type="button"
+                      onClick={() => previewUrls[file.id] && setSelectedXrayUrl(previewUrls[file.id])}
+                      className="flex w-full items-center gap-3 rounded-md border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/40"
+                    >
+                      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md bg-muted">
+                        {previewUrls[file.id] ? (
+                          <img src={previewUrls[file.id]} alt={file.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">{isLoadingXrays ? '...' : 'N/A'}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(file.uploadedAt).toLocaleString('uk-UA')}</p>
+                      </div>
+                      <Badge variant="outline">Перегляд</Badge>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="gap-2">
@@ -549,6 +651,17 @@ function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModal
           <Button type="button" onClick={handleSave}>Зберегти</Button>
         </DialogFooter>
       </DialogContent>
+
+      <Dialog open={Boolean(selectedXrayUrl)} onOpenChange={(open) => !open && setSelectedXrayUrl(null)}>
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Рентген-знімок зуба {toothNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto rounded-2xl border border-border/70 bg-muted/20 p-4">
+            {selectedXrayUrl && <img src={selectedXrayUrl} alt={`Xray ${toothNumber}`} className="mx-auto rounded-xl" />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
@@ -631,20 +744,45 @@ interface ToothProps {
   compact?: boolean;
 }
 
-const LOWER_RIGHT_MAPPING: Record<number, number> = { 32: 24, 31: 23, 30: 22, 29: 22, 28: 21, 27: 20, 26: 19, 25: 18 };
-const LOWER_LEFT_MAPPING: Record<number, number> = { 17: 24, 18: 23, 19: 22, 20: 22, 21: 21, 22: 20, 23: 19, 24: 18 };
+const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {
+  18: { imageNumber: 1, mirrored: false },
+  17: { imageNumber: 2, mirrored: false },
+  16: { imageNumber: 3, mirrored: false },
+  15: { imageNumber: 4, mirrored: false },
+  14: { imageNumber: 5, mirrored: false },
+  13: { imageNumber: 6, mirrored: false },
+  12: { imageNumber: 7, mirrored: false },
+  11: { imageNumber: 8, mirrored: false },
+  21: { imageNumber: 8, mirrored: true },
+  22: { imageNumber: 7, mirrored: true },
+  23: { imageNumber: 6, mirrored: true },
+  24: { imageNumber: 5, mirrored: true },
+  25: { imageNumber: 4, mirrored: true },
+  26: { imageNumber: 3, mirrored: true },
+  27: { imageNumber: 2, mirrored: true },
+  28: { imageNumber: 1, mirrored: true },
+  48: { imageNumber: 24, mirrored: false },
+  47: { imageNumber: 23, mirrored: false },
+  46: { imageNumber: 22, mirrored: false },
+  45: { imageNumber: 22, mirrored: false },
+  44: { imageNumber: 21, mirrored: false },
+  43: { imageNumber: 20, mirrored: false },
+  42: { imageNumber: 19, mirrored: false },
+  41: { imageNumber: 18, mirrored: false },
+  31: { imageNumber: 18, mirrored: true },
+  32: { imageNumber: 19, mirrored: true },
+  33: { imageNumber: 20, mirrored: true },
+  34: { imageNumber: 21, mirrored: true },
+  35: { imageNumber: 22, mirrored: true },
+  36: { imageNumber: 22, mirrored: true },
+  37: { imageNumber: 23, mirrored: true },
+  38: { imageNumber: 24, mirrored: true },
+};
 
 function getToothImage(toothNumber: number, isUpper: boolean) {
-  if (isUpper) {
-    if (toothNumber >= 1 && toothNumber <= 8) return { imageNumber: toothNumber, mirrored: false };
-    return { imageNumber: 17 - toothNumber, mirrored: true };
-  }
-
-  if (toothNumber >= 25 && toothNumber <= 32) {
-    return { imageNumber: LOWER_RIGHT_MAPPING[toothNumber], mirrored: false };
-  }
-
-  return { imageNumber: LOWER_LEFT_MAPPING[toothNumber], mirrored: true };
+  const mapped = TOOTH_IMAGE_MAP[toothNumber];
+  if (mapped) return mapped;
+  return isUpper ? { imageNumber: 8, mirrored: false } : { imageNumber: 18, mirrored: false };
 }
 
 function Tooth({ number, isUpper, record, onClick, alignBottom = false, compact = false }: ToothProps) {
@@ -823,12 +961,21 @@ export function DentalChartsWorkspace() {
     setSelectedDoctorId('all');
   };
 
-  const loadPatients = async () => {
+  const loadPatients = async (query = '') => {
     if (!token) return;
-    const data = await api.getPatients(token);
+    const data = await api.getPatients(token, query);
     const normalized = Array.isArray(data) ? data.map(normalizePatient) : [];
     setPatients(normalized);
     setSelectedPatientId((current) => (normalized.some((patient) => patient.id === current) ? current : normalized[0]?.id ?? ''));
+  };
+
+  const loadPatientDetails = async (patientId: string) => {
+    if (!token || !patientId) return;
+    const data = await apiCall(`/api/patients/${patientId}`, {}, token);
+    const normalized = normalizePatient(data);
+    setPatients((current) =>
+      current.map((patient) => (patient.id === patientId ? { ...patient, ...normalized, detailsLoaded: true } : patient)),
+    );
   };
 
   const refresh = async () => {
@@ -847,6 +994,27 @@ export function DentalChartsWorkspace() {
   useEffect(() => {
     void refresh();
   }, [token]);
+
+  useEffect(() => {
+    if (!selectedPatientId) return;
+    const patient = patients.find((item) => item.id === selectedPatientId);
+    if (!patient || patient.detailsLoaded) return;
+    void loadPatientDetails(selectedPatientId).catch(() => null);
+  }, [selectedPatientId, patients, token]);
+
+  useEffect(() => {
+    if (!editingPatientId) return;
+    const patient = patients.find((item) => item.id === editingPatientId);
+    if (!patient || patient.detailsLoaded) return;
+    void loadPatientDetails(editingPatientId).catch(() => null);
+  }, [editingPatientId, patients, token]);
+
+  useEffect(() => {
+    if (!historyPatientId) return;
+    const patient = patients.find((item) => item.id === historyPatientId);
+    if (!patient || patient.detailsLoaded) return;
+    void loadPatientDetails(historyPatientId).catch(() => null);
+  }, [historyPatientId, patients, token]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 1279px)');
@@ -878,18 +1046,13 @@ export function DentalChartsWorkspace() {
     return patients
       .filter((patient) => (selectedDoctorId === 'all' ? true : patient.doctorId === selectedDoctorId))
       .filter((patient) => {
-        if (searchQuery.trim()) {
-          const query = searchQuery.toLowerCase();
-          const fullName = formatPatientName(patient).toLowerCase();
-          if (!fullName.includes(query) && !patient.visits.some((visit) => visit.date.includes(searchQuery))) return false;
-        }
         if (genderFilter !== 'all' && patient.gender !== genderFilter) return false;
         if (newOldFilter === 'new' && new Date(patient.createdAt) < twoWeeksAgo) return false;
         if (newOldFilter === 'old' && new Date(patient.createdAt) >= twoWeeksAgo) return false;
         return true;
       })
       .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
-  }, [patients, selectedDoctorId, searchQuery, genderFilter, newOldFilter]);
+  }, [patients, selectedDoctorId, genderFilter, newOldFilter]);
 
   const sortedVisits = useMemo(
     () => [...(selectedPatient?.visits ?? [])].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
@@ -941,7 +1104,10 @@ export function DentalChartsWorkspace() {
         );
       }
 
-      await loadPatients();
+      await loadPatients(searchQuery.trim());
+      if (editingPatient?.id) {
+        await loadPatientDetails(editingPatient.id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося зберегти пацієнта');
       throw err;
@@ -957,7 +1123,7 @@ export function DentalChartsWorkspace() {
     try {
       await apiCall(`/api/patients/${deletingPatientId}`, { method: 'DELETE' }, token);
       setDeletingPatientId(null);
-      await loadPatients();
+      await loadPatients(searchQuery.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося видалити пацієнта');
     } finally {
@@ -982,7 +1148,7 @@ export function DentalChartsWorkspace() {
         },
         token,
       );
-      await loadPatients();
+      await loadPatientDetails(selectedPatient.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося зберегти зубну карту');
       throw err;
@@ -1010,7 +1176,7 @@ export function DentalChartsWorkspace() {
         },
         token,
       );
-      await loadPatients();
+      await loadPatientDetails(selectedPatient.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося додати візит');
       throw err;
@@ -1026,7 +1192,7 @@ export function DentalChartsWorkspace() {
     try {
       await apiCall(`/api/patients/${selectedPatient.id}/visits/${deletingVisitId}`, { method: 'DELETE' }, token);
       setDeletingVisitId(null);
-      await loadPatients();
+      await loadPatients(searchQuery.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося видалити візит');
     } finally {
@@ -1041,6 +1207,7 @@ export function DentalChartsWorkspace() {
       return [searchQuery.trim(), ...filtered].slice(0, 3);
     });
     setIsSearchFocused(false);
+    void loadPatients(searchQuery.trim());
   };
 
   const canAddOrEditPatient = canPerformAction(currentUser, 'add', 'patient');
@@ -1091,7 +1258,13 @@ export function DentalChartsWorkspace() {
               <Input
                 placeholder="Пошук"
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSearchQuery(value);
+                  if (!value.trim()) {
+                    void loadPatients();
+                  }
+                }}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                 onKeyDown={(event) => event.key === 'Enter' && handleSearchSubmit()}
@@ -1106,6 +1279,7 @@ export function DentalChartsWorkspace() {
                       className="w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
                       onMouseDown={() => {
                         setSearchQuery(item);
+                        void loadPatients(item);
                         setIsSearchFocused(false);
                       }}
                     >

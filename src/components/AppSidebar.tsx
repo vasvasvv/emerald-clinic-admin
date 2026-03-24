@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, LogOut, Stethoscope, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, LogOut, Stethoscope, ChevronLeft, ScanLine } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ const primaryNavItems = [
   { key: 'appointments' as const, url: '/appointments', icon: Calendar },
   { key: 'records' as const, url: '/records', icon: ClipboardList },
   { key: 'dentalCharts' as const, url: '/dental-charts', icon: Stethoscope },
+  { key: 'xrays' as const, url: '/xrays', icon: ScanLine, label: 'Знімки' },
   { key: 'notifications' as const, url: '/notifications', icon: Bell },
 ];
 
@@ -73,7 +74,7 @@ function SidebarContent({
           {primaryNavItems.map((item) => (
             <NavLink key={item.key} to={item.url} end={item.url === '/'} className={linkClass} activeClassName={activeClass}>
               <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
-              {!collapsed && <span className="text-[1.08rem] font-medium">{t(item.key)}</span>}
+              {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key as any)}</span>}
             </NavLink>
           ))}
         </div>
@@ -83,7 +84,7 @@ function SidebarContent({
         {secondaryNavItems.map((item) => (
           <NavLink key={item.key} to={item.url} className={linkClass} activeClassName={activeClass}>
             <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
-            {!collapsed && <span className="text-[1.08rem] font-medium">{t(item.key)}</span>}
+            {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key as any)}</span>}
           </NavLink>
         ))}
 

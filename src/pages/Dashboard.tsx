@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Clock, CalendarPlus, Bell, Stethoscope, Phone } from 'lucide-react';
+import { Clock, CalendarPlus, ScanSearch, Stethoscope, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { NewRecordForm } from '@/components/NewRecordForm';
@@ -109,10 +109,7 @@ export default function Dashboard() {
     () =>
       appointments
         .filter((appointment) => appointment.date === todayKey)
-        .filter((appointment) => {
-          const appointmentDate = toAppointmentDate(appointment.date, appointment.time);
-          return appointmentDate.getTime() + 17 * 60 * 1000 > now.getTime();
-        })
+        .filter((appointment) => toAppointmentDate(appointment.date, appointment.time).getTime() + 17 * 60 * 1000 > now.getTime())
         .sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, todayKey, now],
   );
@@ -182,14 +179,15 @@ export default function Dashboard() {
               <CalendarPlus className="h-6 w-6" />
               {t('addRecord')}
             </motion.button>
+
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              onClick={() => window.alert('Функція знімка буде підключена пізніше.')}
+              onClick={() => navigate('/xrays')}
               className="glass-panel flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 py-6 text-lg font-heading font-semibold text-foreground transition-colors hover:bg-secondary/60"
             >
-              <Bell className="h-6 w-6" />
+              <ScanSearch className="h-6 w-6" />
               {'Зробити знімок'}
             </motion.button>
           </div>
