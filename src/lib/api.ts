@@ -5,12 +5,35 @@ const API_URLS = {
 
 const isDev = import.meta.env.DEV;
 export const API_URL = isDev ? API_URLS.development : API_URLS.production;
+const GET_CACHE_TTL_MS = 15_000;
+const getResponseCache = new Map<string, { expiresAt: number; value: unknown }>();
+const getInFlightRequests = new Map<string, Promise<unknown>>();
+
+function buildRequestKey(endpoint: string, token?: string | null) {
+  return `${token ?? 'anon'}:${endpoint}`;
+}
 
 export async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {},
   token?: string | null
 ): Promise<T> {
+  const method = (options.method ?? 'GET').toUpperCase();
+  const canUseGetCache = method === 'GET' && !options.signal;
+  const requestKey = canUseGetCache ? buildRequestKey(endpoint, token) : null;
+
+  if (requestKey) {
+    const cached = getResponseCache.get(requestKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as T;
+    }
+
+    const pending = getInFlightRequests.get(requestKey);
+    if (pending) {
+      return pending as Promise<T>;
+    }
+  }
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -21,17 +44,31 @@ export async function apiCall<T>(
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const execute = async () => {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (requestKey) {
+      getResponseCache.set(requestKey, { expiresAt: Date.now() + GET_CACHE_TTL_MS, value: data });
+    }
+    return data as T;
+  };
+
+  if (!requestKey) {
+    return execute();
   }
 
-  return response.json();
+  const pending = execute().finally(() => getInFlightRequests.delete(requestKey));
+  getInFlightRequests.set(requestKey, pending);
+  return pending;
 }
 
 export async function apiFetch(
@@ -120,6 +157,12 @@ export const api = {
 
   getPatients: (token: string, query?: string) =>
     apiCall<any[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
+  searchPatients: (token: string, query: string, limit = 20, signal?: AbortSignal) =>
+    apiCall<any[]>(
+      `/api/patients/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`,
+      { signal },
+      token,
+    ),
 
   startXraySession: (token: string, data: { patientId: number; toothId: number }) =>
     apiCall<{

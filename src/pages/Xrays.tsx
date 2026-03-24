@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api, apiCall } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ const DEFAULT_DOCTOR_NAME = 'Верховський Олександр';
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {18:{imageNumber:1,mirrored:false},17:{imageNumber:2,mirrored:false},16:{imageNumber:3,mirrored:false},15:{imageNumber:4,mirrored:false},14:{imageNumber:5,mirrored:false},13:{imageNumber:6,mirrored:false},12:{imageNumber:7,mirrored:false},11:{imageNumber:8,mirrored:false},21:{imageNumber:8,mirrored:true},22:{imageNumber:7,mirrored:true},23:{imageNumber:6,mirrored:true},24:{imageNumber:5,mirrored:true},25:{imageNumber:4,mirrored:true},26:{imageNumber:3,mirrored:true},27:{imageNumber:2,mirrored:true},28:{imageNumber:1,mirrored:true},48:{imageNumber:24,mirrored:false},47:{imageNumber:23,mirrored:false},46:{imageNumber:22,mirrored:false},45:{imageNumber:22,mirrored:false},44:{imageNumber:21,mirrored:false},43:{imageNumber:20,mirrored:false},42:{imageNumber:19,mirrored:false},41:{imageNumber:18,mirrored:false},31:{imageNumber:18,mirrored:true},32:{imageNumber:19,mirrored:true},33:{imageNumber:20,mirrored:true},34:{imageNumber:21,mirrored:true},35:{imageNumber:22,mirrored:true},36:{imageNumber:22,mirrored:true},37:{imageNumber:23,mirrored:true},38:{imageNumber:24,mirrored:true}};
+const patientSearchCache = new Map<string, PatientSummary[]>();
 
 const normalizePhone = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
@@ -37,18 +38,44 @@ const normalizePhone = (phone: string) => {
   if (digits.length === 9) return `+380${digits}`;
   return phone;
 };
+
+const buildPatientSearchQuery = (lastName: string, firstName: string, phone: string) => {
+  const nameQuery = [lastName.trim(), firstName.trim()].filter(Boolean).join(' ').trim();
+  if (nameQuery.length >= 2) return nameQuery;
+  return phone.trim();
+};
+
 const formatPatientName = (patient: PatientSummary | null) => [patient?.lastName, patient?.firstName, patient?.middleName].filter(Boolean).join(' ').trim();
 const findDefaultDoctor = (doctors: Doctor[]) => doctors.find((d) => d.name.trim().toLowerCase() === DEFAULT_DOCTOR_NAME.toLowerCase()) ?? doctors[0] ?? null;
 const buildDraft = (lastName: string, firstName: string, phone: string): PatientDraft => ({ lastName: lastName.trim(), firstName: firstName.trim(), middleName: '', phone: normalizePhone(phone.trim()) });
+
 const mergePatients = (items: any[]) => {
   const unique = new Map<number, PatientSummary>();
   items.forEach((item) => {
     const id = Number(item.id);
     if (!id || unique.has(id)) return;
-    unique.set(id, { id, firstName: item.first_name ?? item.firstName ?? '', lastName: item.last_name ?? item.lastName ?? '', middleName: item.middle_name ?? item.middleName ?? '', phone: item.phone ?? '', doctorId: String(item.primary_doctor_user_id ?? item.doctorId ?? '') });
+    unique.set(id, {
+      id,
+      firstName: item.first_name ?? item.firstName ?? '',
+      lastName: item.last_name ?? item.lastName ?? '',
+      middleName: item.middle_name ?? item.middleName ?? '',
+      phone: item.phone ?? '',
+      doctorId: String(item.primary_doctor_user_id ?? item.doctorId ?? ''),
+    });
   });
   return Array.from(unique.values());
 };
+
+function useDebouncedValue<T>(value: T, delay = 350) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebounced(value), delay);
+    return () => window.clearTimeout(timeoutId);
+  }, [value, delay]);
+
+  return debounced;
+}
 
 function ToothButton({ tooth, selected, isUpper, onClick }: { tooth: number; selected: boolean; isUpper: boolean; onClick: () => void }) {
   const mapped = TOOTH_IMAGE_MAP[tooth];
@@ -62,18 +89,63 @@ function ToothButton({ tooth, selected, isUpper, onClick }: { tooth: number; sel
 }
 
 function PatientModal({ open, onOpenChange, doctors, defaultDoctorId, draft, onSubmit }: { open: boolean; onOpenChange: (open: boolean) => void; doctors: Doctor[]; defaultDoctorId: string; draft: PatientDraft; onSubmit: (payload: PatientFormPayload) => Promise<void> }) {
-  const [firstName, setFirstName] = useState(''); const [lastName, setLastName] = useState(''); const [middleName, setMiddleName] = useState('');
-  const [phone, setPhone] = useState(''); const [dateOfBirth, setDateOfBirth] = useState(''); const [gender, setGender] = useState(''); const [doctorId, setDoctorId] = useState(''); const [saving, setSaving] = useState(false);
-  useEffect(() => { if (!open) return; setFirstName(draft.firstName); setLastName(draft.lastName); setMiddleName(draft.middleName); setPhone(draft.phone); setDateOfBirth(''); setGender(''); setDoctorId(defaultDoctorId); }, [open, draft, defaultDoctorId]);
-  const handleSubmit = async (event: React.FormEvent) => { event.preventDefault(); if (!firstName.trim() || !lastName.trim() || !phone.trim() || !doctorId) return; setSaving(true); try { await onSubmit({ firstName: firstName.trim(), lastName: lastName.trim(), middleName: middleName.trim() || undefined, phone: normalizePhone(phone.trim()), dateOfBirth, doctorId, gender: (gender || undefined) as 'male' | 'female' | undefined }); onOpenChange(false); } finally { setSaving(false); } };
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [gender, setGender] = useState('');
+  const [doctorId, setDoctorId] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setFirstName(draft.firstName);
+    setLastName(draft.lastName);
+    setMiddleName(draft.middleName);
+    setPhone(draft.phone);
+    setDateOfBirth('');
+    setGender('');
+    setDoctorId(defaultDoctorId);
+  }, [open, draft, defaultDoctorId]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!firstName.trim() || !lastName.trim() || !phone.trim() || !doctorId) return;
+    setSaving(true);
+    try {
+      await onSubmit({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        middleName: middleName.trim() || undefined,
+        phone: normalizePhone(phone.trim()),
+        dateOfBirth,
+        doctorId,
+        gender: (gender || undefined) as 'male' | 'female' | undefined,
+      });
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>Створити пацієнта</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="patient-last-name">Прізвище</Label><Input id="patient-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} required /></div><div className="space-y-2"><Label htmlFor="patient-first-name">Ім'я</Label><Input id="patient-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required /></div></div>
-          <div className="grid grid-cols-[1fr_130px] gap-4"><div className="space-y-2"><Label htmlFor="patient-middle-name">По батькові</Label><Input id="patient-middle-name" value={middleName} onChange={(e) => setMiddleName(e.target.value)} /></div><div className="space-y-2"><Label>Стать</Label><Select value={gender} onValueChange={setGender}><SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger><SelectContent><SelectItem value="male">Чоловіча</SelectItem><SelectItem value="female">Жіноча</SelectItem></SelectContent></Select></div></div>
-          <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="patient-phone">Телефон</Label><Input id="patient-phone" value={phone} onChange={(e) => setPhone(e.target.value)} required /></div><div className="space-y-2"><Label htmlFor="patient-date">Дата народження</Label><Input id="patient-date" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} /></div></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Label htmlFor="patient-last-name">Прізвище</Label><Input id="patient-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} required /></div>
+            <div className="space-y-2"><Label htmlFor="patient-first-name">Ім'я</Label><Input id="patient-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required /></div>
+          </div>
+          <div className="grid grid-cols-[1fr_130px] gap-4">
+            <div className="space-y-2"><Label htmlFor="patient-middle-name">По батькові</Label><Input id="patient-middle-name" value={middleName} onChange={(e) => setMiddleName(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Стать</Label><Select value={gender} onValueChange={setGender}><SelectTrigger><SelectValue placeholder="Не вказано" /></SelectTrigger><SelectContent><SelectItem value="male">Чоловіча</SelectItem><SelectItem value="female">Жіноча</SelectItem></SelectContent></Select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Label htmlFor="patient-phone">Телефон</Label><Input id="patient-phone" value={phone} onChange={(e) => setPhone(e.target.value)} required /></div>
+            <div className="space-y-2"><Label htmlFor="patient-date">Дата народження</Label><Input id="patient-date" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} /></div>
+          </div>
           <div className="space-y-2"><Label>Лікар</Label><Select value={doctorId} onValueChange={setDoctorId}><SelectTrigger><SelectValue placeholder="Оберіть лікаря" /></SelectTrigger><SelectContent>{doctors.map((doctor) => <SelectItem key={doctor.id} value={doctor.id}>{doctor.name}</SelectItem>)}</SelectContent></Select></div>
           <DialogFooter><Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Скасувати</Button><Button type="submit" disabled={saving || !doctorId}>{saving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}Зберегти пацієнта</Button></DialogFooter>
         </form>
@@ -83,58 +155,180 @@ function PatientModal({ open, onOpenChange, doctors, defaultDoctorId, draft, onS
 }
 
 export default function Xrays() {
-  const navigate = useNavigate(); const token = getAdminToken();
-  const [step, setStep] = useState<Step>('patient'); const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [lastName, setLastName] = useState(''); const [firstName, setFirstName] = useState(''); const [phone, setPhone] = useState('');
-  const [matches, setMatches] = useState<PatientSummary[]>([]); const [hasSearched, setHasSearched] = useState(false); const [isSearching, setIsSearching] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<PatientSummary | null>(null); const [selectedTooth, setSelectedTooth] = useState<number | null>(null); const [session, setSession] = useState<XraySession | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); const [originalUrl, setOriginalUrl] = useState<string | null>(null); const [isStarting, setIsStarting] = useState(false); const [isImageLoading, setIsImageLoading] = useState(false); const [isCreatingPatient, setIsCreatingPatient] = useState(false);
-  const [error, setError] = useState(''); const [zoom, setZoom] = useState(1); const [isFullResOpen, setIsFullResOpen] = useState(false);
-  const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]); const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
+  const navigate = useNavigate();
+  const token = getAdminToken();
+  const [step, setStep] = useState<Step>('patient');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [matches, setMatches] = useState<PatientSummary[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<PatientSummary | null>(null);
+  const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
+  const [session, setSession] = useState<XraySession | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
+  const [error, setError] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [isFullResOpen, setIsFullResOpen] = useState(false);
+  const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
+  const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
+  const searchQuery = useMemo(() => buildPatientSearchQuery(lastName, firstName, phone), [lastName, firstName, phone]);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 350);
+  const searchAbortRef = useRef<AbortController | null>(null);
   const canCreate = hasSearched && matches.length === 0 && lastName.trim().length > 0 && firstName.trim().length > 0 && phone.trim().length > 0;
 
-  useEffect(() => { if (!token) return; void api.getSystemDoctors(token).then((data) => setDoctors(Array.isArray(data) ? data.map((doctor) => ({ id: String(doctor.id ?? ''), name: doctor.name ?? doctor.fullName ?? '', specialty: doctor.specialty ?? 'Лікар' })) : [])).catch((e) => setError(e instanceof Error ? e.message : 'Не вдалося завантажити лікарів')); }, [token]);
-  useEffect(() => { setHasSearched(false); setMatches([]); }, [lastName, firstName, phone]);
+  useEffect(() => {
+    if (!token) return;
+    void api.getSystemDoctors(token)
+      .then((data) => setDoctors(Array.isArray(data) ? data.map((doctor) => ({ id: String(doctor.id ?? ''), name: doctor.name ?? doctor.fullName ?? '', specialty: doctor.specialty ?? 'Лікар' })) : []))
+      .catch((e) => setError(e instanceof Error ? e.message : 'Не вдалося завантажити лікарів'));
+  }, [token]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) return;
+    searchAbortRef.current?.abort();
+    setHasSearched(false);
+    setMatches([]);
+    setIsSearching(false);
+  }, [searchQuery]);
+
   useEffect(() => {
     if (!token || !session?.id || step !== 'capture' || session.status === 'completed') return;
-    const id = window.setInterval(async () => { try { const next = await api.getActiveXraySession(token, session.id); if (next) setSession(next); } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося оновити статус'); } }, 3000);
+    const id = window.setInterval(async () => {
+      try {
+        const next = await api.getActiveXraySession(token, session.id);
+        if (next) setSession(next);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Не вдалося оновити статус');
+      }
+    }, 3000);
     return () => window.clearInterval(id);
   }, [token, session?.id, session?.status, step]);
+
   useEffect(() => {
     if (!token || !session?.xray) return;
-    let cancelled = false; let previewObjectUrl: string | null = null; let originalObjectUrl: string | null = null;
+    let cancelled = false;
+    let previewObjectUrl: string | null = null;
+    let originalObjectUrl: string | null = null;
     void (async () => {
       setIsImageLoading(true);
       try {
-        const [previewBlob, originalBlob] = await Promise.all([api.getProtectedImageBlob(token, session.xray!.previewUrl), api.getProtectedImageBlob(token, session.xray!.originalUrl)]);
+        const [previewBlob, originalBlob] = await Promise.all([
+          api.getProtectedImageBlob(token, session.xray!.previewUrl),
+          api.getProtectedImageBlob(token, session.xray!.originalUrl),
+        ]);
         if (cancelled) return;
-        previewObjectUrl = URL.createObjectURL(previewBlob); originalObjectUrl = URL.createObjectURL(originalBlob); setPreviewUrl(previewObjectUrl); setOriginalUrl(originalObjectUrl);
-      } catch (e) { if (!cancelled) setError(e instanceof Error ? e.message : 'Не вдалося завантажити зображення'); } finally { if (!cancelled) setIsImageLoading(false); }
+        previewObjectUrl = URL.createObjectURL(previewBlob);
+        originalObjectUrl = URL.createObjectURL(originalBlob);
+        setPreviewUrl(previewObjectUrl);
+        setOriginalUrl(originalObjectUrl);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Не вдалося завантажити зображення');
+      } finally {
+        if (!cancelled) setIsImageLoading(false);
+      }
     })();
-    return () => { cancelled = true; if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl); if (originalObjectUrl) URL.revokeObjectURL(originalObjectUrl); };
+    return () => {
+      cancelled = true;
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+      if (originalObjectUrl) URL.revokeObjectURL(originalObjectUrl);
+    };
   }, [token, session?.xray?.id]);
 
-  const runSearch = async () => {
+  const runSearch = async (query: string) => {
     if (!token) return;
-    const queries = [[lastName.trim(), firstName.trim()].filter(Boolean).join(' '), normalizePhone(phone.trim())].filter(Boolean);
-    if (!queries.length) { setHasSearched(false); setMatches([]); return; }
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setHasSearched(false);
+      setMatches([]);
+      return;
+    }
+
+    const cacheKey = trimmedQuery.toLowerCase();
+    const cached = patientSearchCache.get(cacheKey);
+    if (cached) {
+      setMatches(cached);
+      setHasSearched(true);
+      setIsSearching(false);
+      return;
+    }
+
+    searchAbortRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     setIsSearching(true);
-    try { const results = await Promise.all(queries.map((query) => api.getPatients(token, query))); setMatches(mergePatients(results.flat())); setHasSearched(true); } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося знайти пацієнтів'); } finally { setIsSearching(false); }
+
+    try {
+      const results = mergePatients(await api.searchPatients(token, trimmedQuery, 20, controller.signal));
+      patientSearchCache.set(cacheKey, results);
+      setMatches(results);
+      setHasSearched(true);
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+      setError(e instanceof Error ? e.message : 'Не вдалося знайти пацієнтів');
+    } finally {
+      if (searchAbortRef.current === controller) {
+        searchAbortRef.current = null;
+      }
+      setIsSearching(false);
+    }
   };
-  const pickPatient = (patient: PatientSummary) => { setSelectedPatient(patient); setSelectedTooth(null); setStep('tooth'); };
+
+  useEffect(() => {
+    void runSearch(debouncedSearchQuery);
+    return () => searchAbortRef.current?.abort();
+  }, [debouncedSearchQuery, token]);
+
+  const pickPatient = (patient: PatientSummary) => {
+    setSelectedPatient(patient);
+    setSelectedTooth(null);
+    setStep('tooth');
+  };
+
   const createPatient = async (payload: PatientFormPayload) => {
     if (!token) return;
     try {
       const created = await apiCall<any>('/api/patients', { method: 'POST', body: JSON.stringify({ ...payload, middleName: payload.middleName ?? null, gender: payload.gender ?? null }) }, token);
       pickPatient({ id: Number(created.id), firstName: created.first_name ?? created.firstName ?? '', lastName: created.last_name ?? created.lastName ?? '', middleName: created.middle_name ?? created.middleName ?? '', phone: created.phone ?? '', doctorId: String(created.primary_doctor_user_id ?? payload.doctorId) });
-    } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося створити пацієнта'); throw e; }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не вдалося створити пацієнта');
+      throw e;
+    }
   };
+
   const startCapture = async () => {
     if (!token || !selectedPatient || !selectedTooth) return;
-    setError(''); setPreviewUrl(null); setOriginalUrl(null); setZoom(1); setIsStarting(true);
-    try { const nextSession = await api.startXraySession(token, { patientId: selectedPatient.id, toothId: selectedTooth }); setSession(nextSession); setStep('capture'); } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося створити сесію'); } finally { setIsStarting(false); }
+    setError('');
+    setPreviewUrl(null);
+    setOriginalUrl(null);
+    setZoom(1);
+    setIsStarting(true);
+    try {
+      const nextSession = await api.startXraySession(token, { patientId: selectedPatient.id, toothId: selectedTooth });
+      setSession(nextSession);
+      setStep('capture');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не вдалося створити сесію');
+    } finally {
+      setIsStarting(false);
+    }
   };
-  const refreshCapture = async () => { if (!token || !session?.id) return; try { const nextSession = await api.getActiveXraySession(token, session.id); if (nextSession) setSession(nextSession); } catch (e) { setError(e instanceof Error ? e.message : 'Не вдалося оновити статус'); } };
+
+  const refreshCapture = async () => {
+    if (!token || !session?.id) return;
+    try {
+      const nextSession = await api.getActiveXraySession(token, session.id);
+      if (nextSession) setSession(nextSession);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не вдалося оновити статус');
+    }
+  };
 
   return (
     <AdminLayout>
@@ -143,19 +337,17 @@ export default function Xrays() {
 
         {step === 'patient' && (
           <section className="mx-auto max-w-3xl rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
-            <div className="space-y-2"><h1 className="text-2xl font-semibold">Оберіть пацієнта</h1><p className="text-sm text-muted-foreground">Після виходу з поля прізвища або телефону система шукає збіги по всій базі і показує список нижче.</p></div>
+            <div className="space-y-2"><h1 className="text-2xl font-semibold">Оберіть пацієнта</h1><p className="text-sm text-muted-foreground">Пошук запускається автоматично з короткою затримкою, щоб не перевантажувати backend і базу даних. Кнопка нижче дозволяє примусово оновити результати.</p></div>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2"><Label htmlFor="xray-last-name">Прізвище</Label><Input id="xray-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} onBlur={() => void runSearch()} placeholder="Прізвище" /></div>
-              <div className="space-y-2"><Label htmlFor="xray-first-name">Ім'я</Label><Input id="xray-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} onBlur={() => void runSearch()} placeholder="Ім'я" /></div>
+              <div className="space-y-2"><Label htmlFor="xray-last-name">Прізвище</Label><Input id="xray-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Прізвище" /></div>
+              <div className="space-y-2"><Label htmlFor="xray-first-name">Ім'я</Label><Input id="xray-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Ім'я" /></div>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-[1fr_auto]">
-              <div className="space-y-2"><Label htmlFor="xray-phone">Телефон</Label><Input id="xray-phone" value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={() => void runSearch()} placeholder="+380..." /></div>
-              <div className="flex items-end"><Button variant="outline" onClick={() => void runSearch()}>{isSearching ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Знайти</Button></div>
+              <div className="space-y-2"><Label htmlFor="xray-phone">Телефон</Label><Input id="xray-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+380..." /></div>
+              <div className="flex items-end"><Button variant="outline" onClick={() => void runSearch(searchQuery)}>{isSearching ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Знайти</Button></div>
             </div>
             <div className="mt-6 flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">
-                Створення доступне одразу. Для активації кнопки заповніть прізвище, ім'я і телефон.
-              </p>
+              <p className="text-sm text-muted-foreground">Створення доступне одразу. Для активації кнопки заповніть прізвище, ім'я і телефон.</p>
               <Button onClick={() => setIsCreatingPatient(true)} disabled={!canCreate}>
                 <UserPlus className="mr-2 h-4 w-4" />
                 Створити
@@ -168,9 +360,7 @@ export default function Xrays() {
                 {matches.length > 0 ? (
                   <ScrollArea className="h-[260px]"><div className="space-y-2 pr-2">{matches.map((patient) => <button key={patient.id} type="button" onClick={() => pickPatient(patient)} className="w-full rounded-[18px] border border-transparent bg-background px-4 py-3 text-left transition-colors hover:border-border hover:bg-muted/40"><p className="font-medium">{formatPatientName(patient)}</p><p className="mt-1 text-xs text-muted-foreground">{patient.phone || 'Телефон не вказано'}</p></button>)}</div></ScrollArea>
                 ) : (
-                  <div className="rounded-[18px] bg-background px-4 py-5 text-sm text-muted-foreground">
-                    Збігів не знайдено. Можна створити нового пацієнта кнопкою вище.
-                  </div>
+                  <div className="rounded-[18px] bg-background px-4 py-5 text-sm text-muted-foreground">Збігів не знайдено. Можна створити нового пацієнта кнопкою вище.</div>
                 )}
               </div>
             )}
@@ -179,7 +369,7 @@ export default function Xrays() {
 
         {step === 'tooth' && (
           <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-            <div className="flex items-start justify-between gap-4"><div><p className="text-sm text-muted-foreground">Пацієнт</p><h1 className="text-2xl font-semibold">{formatPatientName(selectedPatient)}</h1><p className="mt-2 text-sm text-muted-foreground">Оберіть зуб, до якого прив’яжеться знімок.</p></div><Button variant="outline" onClick={() => setStep('patient')}><ArrowLeft className="mr-2 h-4 w-4" />Назад</Button></div>
+            <div className="flex items-start justify-between gap-4"><div><p className="text-sm text-muted-foreground">Пацієнт</p><h1 className="text-2xl font-semibold">{formatPatientName(selectedPatient)}</h1><p className="mt-2 text-sm text-muted-foreground">Оберіть зуб, до якого прив'яжеться знімок.</p></div><Button variant="outline" onClick={() => setStep('patient')}><ArrowLeft className="mr-2 h-4 w-4" />Назад</Button></div>
             <div className="rounded-[24px] border border-border/60 bg-background p-4 sm:p-5">
               <p className="mb-3 text-sm font-semibold">Верхня щелепа</p>
               <div className="overflow-x-auto">
