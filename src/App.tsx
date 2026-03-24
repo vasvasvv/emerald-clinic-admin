@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import { isAdminAuthenticated } from "./lib/auth";
+import { loader } from "@/assets/222.gif"
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Appointments = lazy(() => import("./pages/Appointments"));
@@ -22,11 +23,16 @@ const queryClient = new QueryClient();
 
 function AppLoader() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-      Завантаження...
+    <div className="fixed inset-0 bg-background">
+      <img
+        src={loader}
+        alt="loading"
+        className="h-full w-full object-cover"
+      />
     </div>
   );
 }
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuth = isAdminAuthenticated();
