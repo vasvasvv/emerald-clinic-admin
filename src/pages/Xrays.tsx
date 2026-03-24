@@ -180,7 +180,24 @@ export default function Xrays() {
         {step === 'tooth' && (
           <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
             <div className="flex items-start justify-between gap-4"><div><p className="text-sm text-muted-foreground">Пацієнт</p><h1 className="text-2xl font-semibold">{formatPatientName(selectedPatient)}</h1><p className="mt-2 text-sm text-muted-foreground">Оберіть зуб, до якого прив’яжеться знімок.</p></div><Button variant="outline" onClick={() => setStep('patient')}><ArrowLeft className="mr-2 h-4 w-4" />Назад</Button></div>
-            <div className="rounded-[24px] border border-border/60 bg-background p-4 sm:p-5"><p className="mb-3 text-sm font-semibold">Верхня щелепа</p><div className="grid grid-cols-8 gap-2">{UPPER_TEETH.map((tooth) => <ToothButton key={tooth} tooth={tooth} isUpper selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />)}</div><p className="mb-3 mt-6 text-sm font-semibold">Нижня щелепа</p><div className="grid grid-cols-8 gap-2">{LOWER_TEETH.map((tooth) => <ToothButton key={tooth} tooth={tooth} isUpper={false} selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />)}</div></div>
+            <div className="rounded-[24px] border border-border/60 bg-background p-4 sm:p-5">
+              <p className="mb-3 text-sm font-semibold">Верхня щелепа</p>
+              <div className="overflow-x-auto">
+                <div className="flex min-w-[720px] justify-between gap-2">
+                  {UPPER_TEETH.map((tooth) => (
+                    <ToothButton key={tooth} tooth={tooth} isUpper selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />
+                  ))}
+                </div>
+              </div>
+              <p className="mb-3 mt-6 text-sm font-semibold">Нижня щелепа</p>
+              <div className="overflow-x-auto">
+                <div className="flex min-w-[720px] justify-between gap-2">
+                  {LOWER_TEETH.map((tooth) => (
+                    <ToothButton key={tooth} tooth={tooth} isUpper={false} selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3"><p className="text-sm text-muted-foreground">{selectedTooth ? `Обраний зуб: FDI ${selectedTooth}` : 'Оберіть зуб для знімка'}</p><Button onClick={startCapture} disabled={!selectedTooth || isStarting} className="h-12 rounded-2xl px-6 text-base">{isStarting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}Почати знімок</Button></div>
           </section>
         )}
