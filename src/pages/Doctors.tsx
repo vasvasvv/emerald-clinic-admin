@@ -156,7 +156,8 @@ export default function Doctors() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
             <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
-          ) : doctors.map((doctor, i) => (
+          ) : doctors.map((doctor, i) => {
+            return (
             <motion.div
               key={doctor.id}
               initial={{ opacity: 0, y: 20 }}
@@ -197,7 +198,8 @@ export default function Doctors() {
                 {doctor.description && <p className="text-muted-foreground text-xs mt-2">{doctor.description}</p>}
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         <AnimatePresence>
