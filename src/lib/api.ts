@@ -5,6 +5,7 @@ const API_URLS = {
 
 const isDev = import.meta.env.DEV;
 export const API_URL = isDev ? API_URLS.development : API_URLS.production;
+const DOCTOR_PHOTO_UPLOAD_ENDPOINT = import.meta.env.VITE_DOCTOR_PHOTO_UPLOAD_ENDPOINT as string | undefined;
 const GET_CACHE_TTL_MS = 15_000;
 const getResponseCache = new Map<string, { expiresAt: number; value: unknown }>();
 const getInFlightRequests = new Map<string, Promise<unknown>>();
@@ -148,6 +149,39 @@ export const api = {
     apiCall<any>(`/api/site/doctors/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
   deleteSiteDoctor: (token: string, id: number) =>
     apiCall<{ ok: boolean }>(`/api/site/doctors/${id}`, { method: 'DELETE' }, token),
+  uploadDoctorPhoto: async (token: string, file: File) => {
+    if (!DOCTOR_PHOTO_UPLOAD_ENDPOINT) {
+      throw new Error('Photo upload endpoint is not configured. Set VITE_DOCTOR_PHOTO_UPLOAD_ENDPOINT.');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiFetch(
+      DOCTOR_PHOTO_UPLOAD_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body: formData,
+      },
+      token,
+    );
+
+    const data = await response.json().catch(() => ({})) as {
+      url?: string;
+      photo_url?: string;
+      result?: { url?: string; variants?: string[] };
+    };
+
+    const uploadedUrl = data.url ?? data.photo_url ?? data.result?.url ?? data.result?.variants?.[0];
+    if (!uploadedUrl) {
+      throw new Error('Upload succeeded but photo URL is missing in response.');
+    }
+
+    return uploadedUrl;
+  },
 
   getSystemDoctors: (token: string) =>
     apiCall<any[]>('/api/doctors', {}, token),

@@ -17,6 +17,7 @@ interface Doctor {
 }
 
 const emptyForm = { fullName: '', position: '', specialization: '', experience: 0, description: '', photo: '' };
+const MAX_DOCTOR_PHOTO_SIZE_MB = 5;
 
 export default function Doctors() {
   const { t } = useI18n();
@@ -27,6 +28,7 @@ export default function Doctors() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState('');
 
   const load = async () => {
@@ -102,6 +104,31 @@ export default function Doctors() {
     }
   };
 
+  const handlePhotoUpload = async (file: File | null) => {
+    if (!token || !file) return;
+    setError('');
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file.');
+      return;
+    }
+
+    if (file.size > MAX_DOCTOR_PHOTO_SIZE_MB * 1024 * 1024) {
+      setError(`Photo is too large. Max size is ${MAX_DOCTOR_PHOTO_SIZE_MB}MB.`);
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const photoUrl = await api.uploadDoctorPhoto(token, file);
+      setForm((prev) => ({ ...prev, photo: photoUrl }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (!token) return;
     setError('');
@@ -129,7 +156,8 @@ export default function Doctors() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
             <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
-          ) : doctors.map((doctor, i) => (
+          ) : doctors.map((doctor, i) => {
+            return (
             <motion.div
               key={doctor.id}
               initial={{ opacity: 0, y: 20 }}
@@ -139,9 +167,17 @@ export default function Doctors() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
-                    <User className="w-6 h-6 text-primary" />
-                  </div>
+                  {doctor.photo ? (
+                    <img
+                      src={doctor.photo}
+                      alt={doctor.fullName}
+                      className="w-12 h-12 rounded-xl object-cover border border-border/50"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
+                      <User className="w-6 h-6 text-primary" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-heading font-semibold text-sm">{doctor.fullName}</h3>
                     <p className="text-xs text-primary">{doctor.position}</p>
@@ -162,7 +198,8 @@ export default function Doctors() {
                 {doctor.description && <p className="text-muted-foreground text-xs mt-2">{doctor.description}</p>}
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
 
         <AnimatePresence>
@@ -202,6 +239,27 @@ export default function Doctors() {
                     <label className="text-sm text-muted-foreground">{t('photo')} (URL)</label>
                     <input className="input-glass w-full" value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} />
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm text-muted-foreground">{t('photo')} ({t('upload')})</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="input-glass w-full file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary/15 file:text-primary file:text-xs"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        void handlePhotoUpload(file);
+                        e.currentTarget.value = '';
+                      }}
+                      disabled={uploadingPhoto}
+                    />
+                    {uploadingPhoto && <p className="text-xs text-muted-foreground">{t('loading')}</p>}
+                  </div>
+                  {form.photo && (
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <p className="text-sm text-muted-foreground">{t('photo')} {t('preview').toLowerCase()}</p>
+                      <img src={form.photo} alt="Doctor preview" className="h-40 w-full rounded-xl object-cover border border-border/50" />
+                    </div>
+                  )}
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('description')}</label>
                     <textarea className="input-glass w-full resize-none" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

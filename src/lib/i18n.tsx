@@ -95,6 +95,8 @@ const translations = {
 
     search: 'Пошук...',
     loading: 'Завантаження...',
+    upload: 'Завантажити',
+    preview: 'Превʼю',
     confirm: 'Підтвердити',
     confirmDelete: 'Ви впевнені, що хочете видалити?',
     yes: 'Так',
@@ -192,6 +194,8 @@ const translations = {
 
     search: 'Search...',
     loading: 'Loading...',
+    upload: 'Upload',
+    preview: 'Preview',
     confirm: 'Confirm',
     confirmDelete: 'Are you sure you want to delete?',
     yes: 'Yes',
