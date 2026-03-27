@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { format } from 'date-fns';
+import { enUS, uk } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import {
@@ -29,6 +31,8 @@ import {
   useTelegramPending,
   useTriggerTelegramCron,
 } from '@/hooks/use-notifications';
+import { Calendar as DateCalendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDateKey } from '@/lib/date-utils';
 import { extractFirstName, normalizePhone } from '@/lib/patient-utils';
 import type {
@@ -46,6 +50,7 @@ type DeferredInstallPrompt = Event & {
 export default function Notifications() {
   const { t, lang } = useI18n();
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
+  const dateLocale = lang === 'uk' ? uk : enUS;
   const [section, setSection] = useState<'push' | 'telegram' | 'pwa'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
@@ -212,6 +217,30 @@ export default function Notifications() {
       setInstallingPwa(false);
     }
   };
+
+  const filterDateValue = filterDate ? new Date(`${filterDate}T00:00:00`) : undefined;
+
+  const FilterDateField = () => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="input-glass flex h-11 min-w-[220px] items-center justify-between rounded-2xl border-border/70 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
+          <span className={filterDate ? 'text-foreground' : 'text-muted-foreground'}>
+            {filterDateValue ? format(filterDateValue, 'dd MMMM yyyy', { locale: dateLocale }) : t('date')}
+          </span>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto overflow-hidden border-glass-border p-0 glass-panel" align="start">
+        <DateCalendar
+          mode="single"
+          selected={filterDateValue}
+          onSelect={(date) => setFilterDate(date ? format(date, 'yyyy-MM-dd') : formatDateKey(new Date()))}
+          className="bg-card/95"
+          locale={dateLocale}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 
   const StatCard = ({
     icon,
@@ -443,12 +472,7 @@ export default function Notifications() {
               >
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
-                    <input
-                      type="date"
-                      className="input-glass"
-                      value={filterDate}
-                      onChange={(e) => setFilterDate(e.target.value)}
-                    />
+                    <FilterDateField />
                     <button
                       onClick={() => void telegramAppointmentsQuery.refetch()}
                       className="p-2 rounded-xl hover:bg-secondary/60"

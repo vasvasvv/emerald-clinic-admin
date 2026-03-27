@@ -1,20 +1,21 @@
 import { useMemo, useState } from 'react';
-import { format } from 'date-fns';
-import { uk, enUS } from 'date-fns/locale';
-import { useI18n } from '@/lib/i18n';
+import { format, type Locale } from 'date-fns';
+import { enUS, uk } from 'date-fns/locale';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock3, Edit2, Phone, Plus, Search, Trash2, UserRound, X } from 'lucide-react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { Plus, Edit2, Trash2, X, Search, Calendar, Clock3, Phone, ChevronDown, UserRound } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSystemDoctors } from '@/hooks/use-doctors';
 import {
   useAppointments,
   useCreateAppointment,
   useDeleteAppointment,
   useUpdateAppointment,
 } from '@/hooks/use-appointments';
-import { useSystemDoctors } from '@/hooks/use-doctors';
+import { useI18n } from '@/lib/i18n';
 import { buildPatientName, splitPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -43,7 +44,7 @@ const emptyForm: Omit<Appointment, 'id'> = {
   status: 'scheduled',
 };
 
-const statusColors: Record<string, string> = {
+const statusColors: Record<Appointment['status'], string> = {
   scheduled: 'bg-info/20 text-info',
   completed: 'bg-success/20 text-success',
   cancelled: 'bg-destructive/20 text-destructive',
@@ -54,30 +55,79 @@ const parseDateValue = (value: string) => (value ? new Date(`${value}T00:00:00`)
 function SelectField({
   value,
   onChange,
-  children,
+  placeholder,
+  options,
 }: {
   value: string;
   onChange: (value: string) => void;
-  children: React.ReactNode;
+  placeholder: string;
+  options: Array<{ value: string; label: string }>;
 }) {
   return (
-    <div className="relative">
-      <select
-        className="input-glass w-full appearance-none pr-11 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-    </div>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="input-glass h-11 w-full rounded-2xl border-border/70 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)] focus:ring-0 focus:ring-offset-0">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className="glass-panel rounded-2xl border-glass-border bg-[linear-gradient(180deg,rgba(24,56,53,0.96)_0%,rgba(16,39,37,0.98)_100%)] text-foreground shadow-[0_22px_50px_rgba(0,0,0,0.28)]">
+        {options.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={option.value}
+            className="rounded-xl py-2.5 text-sm focus:bg-secondary/70 focus:text-foreground"
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function DateField({
+  value,
+  onChange,
+  locale,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  locale: Locale;
+  placeholder: string;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="input-glass flex h-11 w-full items-center justify-between rounded-2xl bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
+          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+            {value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : placeholder}
+          </span>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto overflow-hidden border-glass-border p-0 glass-panel" align="start">
+        <DateCalendar
+          mode="single"
+          selected={parseDateValue(value)}
+          onSelect={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+          className="bg-card/95"
+          locale={locale}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
 export default function Appointments() {
   const { t, lang } = useI18n();
   const locale = lang === 'uk' ? uk : enUS;
-  const patientLabel = lang === 'uk' ? 'РџР°С†С–С”РЅС‚' : 'Patient';
+  const patientLabel = lang === 'uk' ? 'Пацієнт' : 'Patient';
+  const noDoctorLabel = lang === 'uk' ? 'Без лікаря' : 'No doctor';
+  const subtitle =
+    lang === 'uk' ? 'Керування прийомами за лікарями та датами.' : 'Manage appointments by doctor and date.';
+  const saveErrorText = lang === 'uk' ? 'Не вдалося зберегти прийом' : 'Failed to save appointment';
+  const deleteErrorText = lang === 'uk' ? 'Не вдалося видалити прийом' : 'Failed to delete appointment';
+  const loadErrorText = lang === 'uk' ? 'Не вдалося завантажити прийоми' : 'Failed to load appointments';
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -100,6 +150,7 @@ export default function Appointments() {
         const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
         const [date = '', timeWithZone = ''] = normalized.split('T');
         const split = splitPatientName(item.patient_name ?? '');
+
         return {
           id: Number(item.id),
           firstName: split.firstName,
@@ -108,17 +159,33 @@ export default function Appointments() {
           phone: item.phone ?? '',
           date,
           time: timeWithZone.slice(0, 5),
-          doctor: item.doctor_name ?? 'Р‘РµР· Р»С–РєР°СЂСЏ',
+          doctor: item.doctor_name ?? noDoctorLabel,
           comment: item.notes ?? '',
           status: item.status ?? 'scheduled',
         };
       }),
-    [appointmentItems],
+    [appointmentItems, noDoctorLabel],
   );
 
   const doctorOptions = useMemo<DoctorOption[]>(
     () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
     [doctorItems],
+  );
+
+  const filterDoctorOptions = useMemo(
+    () => [
+      { value: '__all__', label: t('allDoctors') },
+      ...doctorOptions.map((doctor) => ({ value: doctor.name, label: doctor.name })),
+    ],
+    [doctorOptions, t],
+  );
+
+  const formDoctorOptions = useMemo(
+    () => [
+      { value: '__placeholder__', label: t('chooseDoctor') },
+      ...doctorOptions.map((doctor) => ({ value: doctor.name, label: doctor.name })),
+    ],
+    [doctorOptions, t],
   );
 
   const loadError = appointmentsError ?? doctorsError;
@@ -129,11 +196,29 @@ export default function Appointments() {
         .filter((appointment) => {
           if (filterDate && appointment.date !== filterDate) return false;
           if (selectedDoctor && appointment.doctor !== selectedDoctor) return false;
-          if (searchQuery && !appointment.clientName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+          if (searchQuery) {
+            const normalizedQuery = searchQuery.trim().toLowerCase();
+            const searchTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+            const searchableValues = [
+              appointment.clientName,
+              appointment.firstName,
+              appointment.lastName,
+              appointment.phone,
+              appointment.doctor,
+              appointment.comment,
+              appointment.date,
+              appointment.time,
+            ]
+              .join(' ')
+              .toLowerCase();
+
+            const hasAllMatches = searchTokens.every((token) => searchableValues.includes(token));
+            if (!hasAllMatches) return false;
+          }
           return true;
         })
         .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
-    [appointments, filterDate, selectedDoctor, searchQuery],
+    [appointments, filterDate, searchQuery, selectedDoctor],
   );
 
   const openNew = () => {
@@ -172,7 +257,7 @@ export default function Appointments() {
       }
       setShowForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save appointment');
+      setError(err instanceof Error ? err.message : saveErrorText);
     } finally {
       setSaving(false);
     }
@@ -183,30 +268,9 @@ export default function Appointments() {
     try {
       await deleteAppointment.mutateAsync(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete appointment');
+      setError(err instanceof Error ? err.message : deleteErrorText);
     }
   };
-
-  const DateField = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="input-glass flex w-full items-center justify-between bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
-          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-            {value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : t('date')}
-          </span>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto overflow-hidden border-glass-border p-0 glass-panel" align="start">
-        <DateCalendar
-          mode="single"
-          selected={parseDateValue(value)}
-          onSelect={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-          className="bg-card/95"
-        />
-      </PopoverContent>
-    </Popover>
-  );
 
   return (
     <AdminLayout>
@@ -214,9 +278,7 @@ export default function Appointments() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              РљРµСЂСѓРІР°РЅРЅСЏ РїСЂРёР№РѕРјР°РјРё РїРѕ Р»С–РєР°СЂСЏС… С‚Р° РґР°С‚Р°С….
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
             <Plus className="h-4 w-4" />
@@ -226,7 +288,7 @@ export default function Appointments() {
 
         {(error || loadError) && (
           <p className="text-sm text-destructive">
-            {error || (loadError instanceof Error ? loadError.message : 'Failed to load appointments')}
+            {error || (loadError instanceof Error ? loadError.message : loadErrorText)}
           </p>
         )}
 
@@ -242,15 +304,16 @@ export default function Appointments() {
                 className="input-glass w-full pl-10"
               />
             </div>
-            <SelectField value={selectedDoctor} onChange={setSelectedDoctor}>
-              <option value="">{t('allDoctors')}</option>
-              {doctorOptions.map((doctor) => (
-                <option key={doctor.id} value={doctor.name}>
-                  {doctor.name}
-                </option>
-              ))}
-            </SelectField>
-            <DateField value={filterDate} onChange={setFilterDate} />
+
+            <SelectField
+              value={selectedDoctor || '__all__'}
+              onChange={(value) => setSelectedDoctor(value === '__all__' ? '' : value)}
+              placeholder={t('allDoctors')}
+              options={filterDoctorOptions}
+            />
+
+            <DateField value={filterDate} onChange={setFilterDate} locale={locale} placeholder={t('date')} />
+
             <button
               onClick={() => {
                 setSearchQuery('');
@@ -293,12 +356,14 @@ export default function Appointments() {
                       <Clock3 className="h-4 w-4" />
                       {appointment.time}
                     </div>
+
                     <div className="space-y-1">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('doctor')}
                       </p>
                       <p className="text-sm font-medium text-foreground">{appointment.doctor}</p>
                     </div>
+
                     <div className="space-y-1">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {patientLabel}
@@ -308,6 +373,7 @@ export default function Appointments() {
                         <p className="text-sm font-medium text-foreground">{appointment.clientName}</p>
                       </div>
                     </div>
+
                     <div className="space-y-1">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('phone')}
@@ -317,6 +383,7 @@ export default function Appointments() {
                         {appointment.phone}
                       </div>
                     </div>
+
                     <div className="space-y-1">
                       <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('status')}
@@ -327,6 +394,7 @@ export default function Appointments() {
                         {t(appointment.status)}
                       </span>
                     </div>
+
                     <div className="flex items-center gap-2 lg:justify-end">
                       <button
                         onClick={() => openEdit(appointment)}
@@ -342,6 +410,7 @@ export default function Appointments() {
                       </button>
                     </div>
                   </div>
+
                   {appointment.comment && <p className="mt-3 text-sm text-muted-foreground">{appointment.comment}</p>}
                 </div>
               ))}
@@ -390,6 +459,7 @@ export default function Appointments() {
                       }
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('firstName')}</label>
                     <input
@@ -404,6 +474,7 @@ export default function Appointments() {
                       }
                     />
                   </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('phone')}</label>
                     <div className="relative">
@@ -415,10 +486,17 @@ export default function Appointments() {
                       />
                     </div>
                   </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('date')}</label>
-                    <DateField value={form.date} onChange={(value) => setForm({ ...form, date: value })} />
+                    <DateField
+                      value={form.date}
+                      onChange={(value) => setForm({ ...form, date: value })}
+                      locale={locale}
+                      placeholder={t('date')}
+                    />
                   </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('time')}</label>
                     <input
@@ -428,17 +506,17 @@ export default function Appointments() {
                       onChange={(e) => setForm({ ...form, time: e.target.value })}
                     />
                   </div>
+
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('doctor')}</label>
-                    <SelectField value={form.doctor} onChange={(value) => setForm({ ...form, doctor: value })}>
-                      <option value="">-</option>
-                      {doctorOptions.map((doctor) => (
-                        <option key={doctor.id} value={doctor.name}>
-                          {doctor.name}
-                        </option>
-                      ))}
-                    </SelectField>
+                    <SelectField
+                      value={form.doctor || '__placeholder__'}
+                      onChange={(value) => setForm({ ...form, doctor: value === '__placeholder__' ? '' : value })}
+                      placeholder={t('chooseDoctor')}
+                      options={formDoctorOptions}
+                    />
                   </div>
+
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('comment')}</label>
                     <textarea
@@ -473,9 +551,13 @@ export default function Appointments() {
             if (deletingId === null) return;
             void handleDelete(deletingId).finally(() => setDeletingId(null));
           }}
-          title="Видалити запис"
-          description="Ви впевнені, що хочете видалити цей запис? Цю дію неможливо скасувати."
-          confirmLabel="Так, видалити"
+          title={lang === 'uk' ? 'Видалити прийом' : 'Delete appointment'}
+          description={
+            lang === 'uk'
+              ? 'Ви впевнені, що хочете видалити цей прийом? Цю дію неможливо скасувати.'
+              : 'Are you sure you want to delete this appointment? This action cannot be undone.'
+          }
+          confirmLabel={lang === 'uk' ? 'Так, видалити' : 'Yes, delete'}
         />
       </div>
     </AdminLayout>
