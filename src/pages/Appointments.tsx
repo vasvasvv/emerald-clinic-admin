@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
@@ -7,8 +7,13 @@ import { Plus, Edit2, Trash2, X, Search, Calendar, Clock3, Phone, ChevronDown, U
 import { motion, AnimatePresence } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
-import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import {
+  useAppointments,
+  useCreateAppointment,
+  useDeleteAppointment,
+  useUpdateAppointment,
+} from '@/hooks/use-appointments';
+import { useSystemDoctors } from '@/hooks/use-doctors';
 import { buildPatientName, splitPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -70,57 +75,51 @@ function SelectField({
 
 export default function Appointments() {
   const { t, lang } = useI18n();
-  const token = getAdminToken();
   const locale = lang === 'uk' ? uk : enUS;
-  const patientLabel = lang === 'uk' ? 'Пацієнт' : 'Patient';
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
+  const patientLabel = lang === 'uk' ? 'РџР°С†С–С”РЅС‚' : 'Patient';
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterDate, setFilterDate] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const load = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [items, doctors] = await Promise.all([api.getAppointments(token), api.getSystemDoctors(token)]);
-      setAppointments(
-        items.map((item) => {
-          const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
-          const [date = '', timeWithZone = ''] = normalized.split('T');
-          const split = splitPatientName(item.patient_name ?? '');
-          return {
-            id: Number(item.id),
-            firstName: split.firstName,
-            lastName: split.lastName,
-            clientName: item.patient_name ?? '',
-            phone: item.phone ?? '',
-            date,
-            time: timeWithZone.slice(0, 5),
-            doctor: item.doctor_name ?? 'Без лікаря',
-            comment: item.notes ?? '',
-            status: item.status ?? 'scheduled',
-          };
-        }),
-      );
-      setDoctorOptions(doctors.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load appointments');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
+  const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
+  const createAppointment = useCreateAppointment();
+  const updateAppointment = useUpdateAppointment();
+  const deleteAppointment = useDeleteAppointment();
 
-  useEffect(() => {
-    void load();
-  }, [token]);
+  const appointments = useMemo<Appointment[]>(
+    () =>
+      appointmentItems.map((item) => {
+        const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
+        const [date = '', timeWithZone = ''] = normalized.split('T');
+        const split = splitPatientName(item.patient_name ?? '');
+        return {
+          id: Number(item.id),
+          firstName: split.firstName,
+          lastName: split.lastName,
+          clientName: item.patient_name ?? '',
+          phone: item.phone ?? '',
+          date,
+          time: timeWithZone.slice(0, 5),
+          doctor: item.doctor_name ?? 'Р‘РµР· Р»С–РєР°СЂСЏ',
+          comment: item.notes ?? '',
+          status: item.status ?? 'scheduled',
+        };
+      }),
+    [appointmentItems],
+  );
+
+  const doctorOptions = useMemo<DoctorOption[]>(
+    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
+    [doctorItems],
+  );
+
+  const loadError = appointmentsError ?? doctorsError;
 
   const filtered = useMemo(
     () =>
@@ -149,7 +148,8 @@ export default function Appointments() {
   };
 
   const handleSave = async () => {
-    if (!token || !form.firstName || !form.lastName || !form.phone || !form.date || !form.time || !form.doctor) return;
+    if (!form.firstName || !form.lastName || !form.phone || !form.date || !form.time || !form.doctor) return;
+
     setSaving(true);
     setError('');
     const doctor = doctorOptions.find((item) => item.name === form.doctor);
@@ -161,10 +161,13 @@ export default function Appointments() {
       notes: form.comment,
       status: form.status,
     };
+
     try {
-      if (editingId !== null) await api.updateAppointment(token, editingId, payload);
-      else await api.createAppointment(token, payload);
-      await load();
+      if (editingId !== null) {
+        await updateAppointment.mutateAsync({ id: editingId, data: payload });
+      } else {
+        await createAppointment.mutateAsync(payload);
+      }
       setShowForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save appointment');
@@ -174,11 +177,9 @@ export default function Appointments() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
     setError('');
     try {
-      await api.deleteAppointment(token, id);
-      await load();
+      await deleteAppointment.mutateAsync(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete appointment');
     }
@@ -188,7 +189,9 @@ export default function Appointments() {
     <Popover>
       <PopoverTrigger asChild>
         <button className="input-glass flex w-full items-center justify-between bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
-          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>{value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : t('date')}</span>
+          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
+            {value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : t('date')}
+          </span>
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </button>
       </PopoverTrigger>
@@ -209,7 +212,7 @@ export default function Appointments() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Керування прийомами по лікарях та датах.</p>
+            <p className="mt-1 text-sm text-muted-foreground">РљРµСЂСѓРІР°РЅРЅСЏ РїСЂРёР№РѕРјР°РјРё РїРѕ Р»С–РєР°СЂСЏС… С‚Р° РґР°С‚Р°С….</p>
           </div>
           <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
             <Plus className="h-4 w-4" />
@@ -217,13 +220,23 @@ export default function Appointments() {
           </button>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {(error || loadError) && (
+          <p className="text-sm text-destructive">
+            {error || (loadError instanceof Error ? loadError.message : 'Failed to load appointments')}
+          </p>
+        )}
 
         <div className="glass-panel p-4 md:p-5">
           <div className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input type="text" placeholder={t('search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="input-glass w-full pl-10" />
+              <input
+                type="text"
+                placeholder={t('search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-glass w-full pl-10"
+              />
             </div>
             <SelectField value={selectedDoctor} onChange={setSelectedDoctor}>
               <option value="">{t('allDoctors')}</option>
@@ -313,8 +326,20 @@ export default function Appointments() {
 
         <AnimatePresence>
           {showForm && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setShowForm(false)}>
-              <motion.div initial={{ scale: 0.97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.97, opacity: 0 }} className="glass-panel w-full max-w-xl space-y-5 p-6" onClick={(e) => e.stopPropagation()}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+              onClick={() => setShowForm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.97, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.97, opacity: 0 }}
+                className="glass-panel w-full max-w-xl space-y-5 p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newAppointment')}</h2>
                   <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60">
@@ -325,11 +350,19 @@ export default function Appointments() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('lastName')}</label>
-                    <input className="input-glass w-full" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value, clientName: buildPatientName(e.target.value, form.firstName) })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.lastName}
+                      onChange={(e) => setForm({ ...form, lastName: e.target.value, clientName: buildPatientName(e.target.value, form.firstName) })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('firstName')}</label>
-                    <input className="input-glass w-full" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value, clientName: buildPatientName(form.lastName, e.target.value) })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.firstName}
+                      onChange={(e) => setForm({ ...form, firstName: e.target.value, clientName: buildPatientName(form.lastName, e.target.value) })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('phone')}</label>

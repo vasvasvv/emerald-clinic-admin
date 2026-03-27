@@ -4,9 +4,9 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { ChevronLeft, ChevronRight, Users, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NewRecordForm } from '@/components/NewRecordForm';
-import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
 import { formatDateKey, getDaysInMonth, getMonday } from '@/lib/date-utils';
+import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
+import { useSystemDoctors } from '@/hooks/use-doctors';
 import { buildPatientName, extractFirstName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -27,51 +27,41 @@ const dayNames: Record<string, string[]> = {
 
 export default function Records() {
   const { t, lang } = useI18n();
-  const token = getAdminToken();
-  const [records, setRecords] = useState<AppointmentRecord[]>([]);
-  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [showNewForm, setShowNewForm] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
+  const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
+  const createAppointment = useCreateAppointment();
 
   const monday = getMonday(currentDate);
+  const records = useMemo<AppointmentRecord[]>(
+    () =>
+      appointmentItems.map((item) => {
+        const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
+        const [date = '', time = ''] = normalized.split('T');
+        return {
+          id: Number(item.id),
+          clientName: item.patient_name ?? '',
+          phone: item.phone ?? '',
+          date,
+          time: time.slice(0, 5),
+          doctor: item.doctor_name ?? '',
+          comment: item.notes ?? '',
+        };
+      }),
+    [appointmentItems],
+  );
 
-  const load = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [items, doctors] = await Promise.all([api.getAppointments(token), api.getSystemDoctors(token)]);
-      setRecords(
-        items.map((item) => {
-          const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
-          const [date = '', time = ''] = normalized.split('T');
-          return {
-            id: Number(item.id),
-            clientName: item.patient_name ?? '',
-            phone: item.phone ?? '',
-            date,
-            time: time.slice(0, 5),
-            doctor: item.doctor_name ?? '',
-            comment: item.notes ?? '',
-          };
-        }),
-      );
-      setDoctorOptions(doctors.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load records');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const doctorOptions = useMemo<DoctorOption[]>(
+    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
+    [doctorItems],
+  );
 
-  useEffect(() => {
-    void load();
-  }, [token]);
+  const loadError = appointmentsError ?? doctorsError;
 
   const weekDays = useMemo(
     () =>
@@ -122,12 +112,11 @@ export default function Records() {
     doctor: string;
     comment: string;
   }) => {
-    if (!token) return;
     setSaving(true);
     setError('');
     try {
       const doctor = doctorOptions.find((item) => item.name === record.doctor);
-      await api.createAppointment(token, {
+      await createAppointment.mutateAsync({
         patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
@@ -135,7 +124,6 @@ export default function Records() {
         notes: record.comment,
         status: 'scheduled',
       });
-      await load();
       setShowNewForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create record');
@@ -195,7 +183,7 @@ export default function Records() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {(error || loadError) && <p className="text-sm text-destructive">{error || (loadError instanceof Error ? loadError.message : 'Failed to load records')}</p>}
 
           <div className="flex items-center justify-between">
             <button

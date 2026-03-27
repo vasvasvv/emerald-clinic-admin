@@ -222,6 +222,8 @@ export const api = {
 
   getPatients: (token: string, query?: string) =>
     apiCall<ApiPatient[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
+  createPatient: (token: string, data: Record<string, unknown>) =>
+    apiCall<ApiPatient>('/api/patients', { method: 'POST', body: JSON.stringify(data) }, token),
   searchPatients: (token: string, query: string, limit = 20, signal?: AbortSignal) =>
     apiCall<ApiPatient[]>(
       `/api/patients/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`,

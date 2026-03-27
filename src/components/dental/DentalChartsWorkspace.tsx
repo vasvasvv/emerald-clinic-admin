@@ -46,6 +46,59 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 
+type RawVisit = Partial<Visit> & {
+  visit_at?: string;
+  visitDate?: string;
+  visit_type?: string;
+  reason?: string;
+  doctor_user_id?: string | number;
+  doctor_id?: string | number;
+  doctor_name?: string;
+};
+
+type RawToothRecord = Partial<ToothRecord> & {
+  tooth_number?: number | string;
+  status?: string;
+};
+
+type RawChangeHistoryEntry = Partial<ChangeHistoryEntry> & {
+  changed_at?: string;
+  changed_by_user_id?: string | number;
+  changed_by_name?: string;
+  entity_type?: string;
+};
+
+type RawPatient = Partial<Patient> & {
+  first_name?: string;
+  last_name?: string;
+  middle_name?: string;
+  date_of_birth?: string;
+  primary_doctor_user_id?: string | number;
+  primary_doctor_name?: string;
+  doctor_id?: string | number;
+  dentalChart?: unknown[];
+  visits?: unknown[];
+  changeHistory?: unknown[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function normalizeStringId(value: unknown): string {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  return '';
+}
+
 function normalizeRole(role: string | undefined): User['role'] {
   if (role === 'superuser' || role === 'superadmin') return 'super-admin';
   if (role === 'manager' || role === 'admin') return 'admin';
@@ -98,14 +151,16 @@ function canPerformAction(
   return permissions[user.role][resource]?.includes(action) ?? false;
 }
 
-function normalizeVisit(value: any): Visit {
+function normalizeVisit(value: unknown): Visit {
+  const record = asRecord(value) as RawVisit;
+
   return {
-    id: String(value.id ?? ''),
-    date: value.visit_at ?? value.visitDate ?? value.date ?? '',
-    type: (value.visit_type ?? value.type) === 'past' ? 'past' : 'future',
-    notes: value.notes ?? value.reason ?? '',
-    doctorId: String(value.doctor_user_id ?? value.doctor_id ?? value.doctorId ?? ''),
-    doctorName: value.doctor_name ?? value.doctorName ?? '',
+    id: normalizeStringId(record.id),
+    date: normalizeString(record.visit_at ?? record.visitDate ?? record.date),
+    type: (record.visit_type ?? record.type) === 'past' ? 'past' : 'future',
+    notes: normalizeString(record.notes ?? record.reason),
+    doctorId: normalizeStringId(record.doctor_user_id ?? record.doctor_id ?? record.doctorId),
+    doctorName: normalizeString(record.doctor_name ?? record.doctorName),
   };
 }
 
@@ -122,52 +177,56 @@ function resolveToothTemplateId(value: string | undefined): string {
   return matched?.id ?? '';
 }
 
-function normalizeTooth(value: any): ToothRecord {
-  const description = value.description ?? value.status ?? '';
-  const files = Array.isArray(value.files) ? value.files : [];
-  const templateId = value.templateId ?? (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
+function normalizeTooth(value: unknown): ToothRecord {
+  const record = asRecord(value) as RawToothRecord;
+  const description = normalizeString(record.description ?? record.status);
+  const files = Array.isArray(record.files) ? record.files : [];
+  const templateId = normalizeString(record.templateId) || (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
 
   return {
-    toothNumber: Number(value.toothNumber ?? value.tooth_number ?? 0),
+    toothNumber: Number(record.toothNumber ?? record.tooth_number ?? 0),
     description,
     templateId,
     files,
-    notes: value.notes ?? '',
-    updatedAt: value.updatedAt ?? value.updated_at ?? new Date().toISOString(),
+    notes: normalizeString(record.notes),
+    updatedAt: normalizeString(record.updatedAt) || normalizeString(record.updated_at) || new Date().toISOString(),
   };
 }
 
-function normalizeChangeHistory(value: any): ChangeHistoryEntry {
+function normalizeChangeHistory(value: unknown): ChangeHistoryEntry {
+  const record = asRecord(value) as RawChangeHistoryEntry;
+
   return {
-    id: String(value.id ?? ''),
-    timestamp: value.timestamp ?? value.changed_at ?? '',
-    userId: String(value.userId ?? value.changed_by_user_id ?? ''),
-    userName: value.userName ?? value.changed_by_name ?? 'Unknown',
-    action: value.action === 'update' ? 'edit' : value.action ?? 'edit',
-    target: value.target ?? value.entity_type ?? 'patient',
-    details: value.details ?? `${value.entity_type ?? 'patient'}: ${value.action ?? 'edit'}`,
+    id: normalizeStringId(record.id),
+    timestamp: normalizeString(record.timestamp ?? record.changed_at),
+    userId: normalizeStringId(record.userId ?? record.changed_by_user_id),
+    userName: normalizeString(record.userName ?? record.changed_by_name, 'Unknown'),
+    action: record.action === 'update' ? 'edit' : (record.action ?? 'edit'),
+    target: (record.target ?? record.entity_type ?? 'patient') as ChangeHistoryEntry['target'],
+    details: normalizeString(record.details) || `${record.entity_type ?? 'patient'}: ${record.action ?? 'edit'}`,
   };
 }
 
-function normalizePatient(value: any): Patient {
+function normalizePatient(value: unknown): Patient {
+  const record = asRecord(value) as RawPatient;
   const hasDetailedCollections =
-    Array.isArray(value.dentalChart) || Array.isArray(value.visits) || Array.isArray(value.changeHistory);
+    Array.isArray(record.dentalChart) || Array.isArray(record.visits) || Array.isArray(record.changeHistory);
 
   return {
-    id: String(value.id ?? ''),
-    firstName: value.firstName ?? value.first_name ?? '',
-    lastName: value.lastName ?? value.last_name ?? '',
-    middleName: value.middleName ?? value.middle_name ?? '',
-    gender: value.gender ?? undefined,
-    phone: value.phone ?? '',
-    dateOfBirth: value.dateOfBirth ?? value.date_of_birth ?? '',
-    doctorId: String(value.primary_doctor_user_id ?? value.doctor_id ?? value.doctorId ?? ''),
-    doctorName: value.primary_doctor_name ?? value.doctor_name ?? value.doctorName ?? '',
-    dentalChart: Array.isArray(value.dentalChart) ? value.dentalChart.map(normalizeTooth) : [],
-    visits: Array.isArray(value.visits) ? value.visits.map(normalizeVisit) : [],
-    changeHistory: Array.isArray(value.changeHistory) ? value.changeHistory.map(normalizeChangeHistory) : [],
-    createdAt: value.createdAt ?? value.created_at ?? new Date().toISOString(),
-    updatedAt: value.updatedAt ?? value.updated_at ?? new Date().toISOString(),
+    id: normalizeStringId(record.id),
+    firstName: normalizeString(record.firstName ?? record.first_name),
+    lastName: normalizeString(record.lastName ?? record.last_name),
+    middleName: normalizeString(record.middleName ?? record.middle_name),
+    gender: record.gender ?? undefined,
+    phone: normalizeString(record.phone),
+    dateOfBirth: normalizeString(record.dateOfBirth ?? record.date_of_birth),
+    doctorId: normalizeStringId(record.primary_doctor_user_id ?? record.doctor_id ?? record.doctorId),
+    doctorName: normalizeString(record.primary_doctor_name ?? record.doctor_name ?? record.doctorName),
+    dentalChart: Array.isArray(record.dentalChart) ? record.dentalChart.map(normalizeTooth) : [],
+    visits: Array.isArray(record.visits) ? record.visits.map(normalizeVisit) : [],
+    changeHistory: Array.isArray(record.changeHistory) ? record.changeHistory.map(normalizeChangeHistory) : [],
+    createdAt: normalizeString(record.createdAt ?? record.created_at) || new Date().toISOString(),
+    updatedAt: normalizeString(record.updatedAt ?? record.updated_at) || new Date().toISOString(),
     detailsLoaded: hasDetailedCollections,
   };
 }

@@ -3,8 +3,18 @@ import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle, MessageSquareShare, TimerReset, Siren, Download, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import {
+  useLinkTelegramPhone,
+  useNotificationLogs,
+  usePushCounts,
+  useSendPushToAll,
+  useSendPushToPhone,
+  useSendTelegramMessage,
+  useTelegramAppointments,
+  useTelegramDebug,
+  useTelegramPending,
+  useTriggerTelegramCron,
+} from '@/hooks/use-notifications';
 import { formatDateKey } from '@/lib/date-utils';
 import { extractFirstName, normalizePhone } from '@/lib/patient-utils';
 import type { ApiNotificationLog, ApiTelegramAppointment, ApiTelegramDebugResult, ApiTelegramPending } from '@/types/api';
@@ -16,83 +26,56 @@ type DeferredInstallPrompt = Event & {
 
 export default function Notifications() {
   const { t, lang } = useI18n();
-  const token = getAdminToken();
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const [section, setSection] = useState<'push' | 'telegram' | 'pwa'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
-  const [logs, setLogs] = useState<ApiNotificationLog[]>([]);
-  const [pushSubscriptions, setPushSubscriptions] = useState(0);
-  const [telegramContacts, setTelegramContacts] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState('');
   const [telegramTab, setTelegramTab] = useState<'appointments' | 'pending' | 'settings'>('appointments');
   const [filterDate, setFilterDate] = useState(() => formatDateKey(new Date()));
-  const [telegramAppointments, setTelegramAppointments] = useState<ApiTelegramAppointment[]>([]);
-  const [telegramPending, setTelegramPending] = useState<ApiTelegramPending[]>([]);
-  const [loadingTelegramAppointments, setLoadingTelegramAppointments] = useState(false);
-  const [loadingTelegramPending, setLoadingTelegramPending] = useState(false);
-  const [sendModal, setSendModal] = useState<TelegramAppointment | null>(null);
+  const [sendModal, setSendModal] = useState<ApiTelegramAppointment | null>(null);
   const [sendText, setSendText] = useState('');
-  const [sendingTelegram, setSendingTelegram] = useState(false);
-  const [linkModal, setLinkModal] = useState<TelegramPending | null>(null);
+  const [linkModal, setLinkModal] = useState<ApiTelegramPending | null>(null);
   const [linkPhone, setLinkPhone] = useState('');
-  const [linking, setLinking] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [debugData, setDebugData] = useState<TelegramDebugResult | null>(null);
-  const [loadingDebug, setLoadingDebug] = useState(false);
-  const [triggeringCron, setTriggeringCron] = useState(false);
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [installingPwa, setInstallingPwa] = useState(false);
   const [pwaInstalled, setPwaInstalled] = useState(typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches);
 
-  const loadBase = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [counts, history] = await Promise.all([api.getPushCounts(token), api.getNotificationLogs(token)]);
-      setPushSubscriptions(counts.pushSubscriptions);
-      setTelegramContacts(counts.telegramContacts);
-      setLogs(history);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
-  const loadTelegramAppointments = async () => {
-    if (!token) return;
-    setLoadingTelegramAppointments(true);
-    setError('');
-    try { setTelegramAppointments(await api.getTelegramAppointments(token, filterDate)); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Failed to load telegram appointments'); }
-    finally { setLoadingTelegramAppointments(false); }
-  };
-  const loadTelegramPending = async () => {
-    if (!token) return;
-    setLoadingTelegramPending(true);
-    setError('');
-    try { setTelegramPending(await api.getTelegramPending(token)); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Failed to load telegram pending list'); }
-    finally { setLoadingTelegramPending(false); }
-  };
-  const loadTelegramDebug = async () => {
-    if (!token) return;
-    setLoadingDebug(true);
-    setError('');
-    try { setDebugData(await api.getTelegramUpcoming(token)); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Failed to load telegram debug info'); }
-    finally { setLoadingDebug(false); }
-  };
+  const pushCountsQuery = usePushCounts();
+  const notificationLogsQuery = useNotificationLogs();
+  const telegramAppointmentsQuery = useTelegramAppointments(filterDate, section === 'telegram' && telegramTab === 'appointments');
+  const telegramPendingQuery = useTelegramPending(section === 'telegram' && telegramTab === 'pending');
+  const telegramDebugQuery = useTelegramDebug(section === 'telegram' && telegramTab === 'settings');
+  const sendPushToAll = useSendPushToAll();
+  const sendPushToPhone = useSendPushToPhone();
+  const sendTelegramMessage = useSendTelegramMessage();
+  const linkTelegramPhone = useLinkTelegramPhone();
+  const triggerTelegramCron = useTriggerTelegramCron();
 
-  useEffect(() => { void loadBase(); }, [token]);
-  useEffect(() => { if (section === 'telegram' && telegramTab === 'appointments') void loadTelegramAppointments(); }, [section, telegramTab, filterDate, token]);
-  useEffect(() => { if (section === 'telegram' && telegramTab === 'pending') void loadTelegramPending(); }, [section, telegramTab, token]);
-  useEffect(() => { if (section === 'telegram' && telegramTab === 'settings') void loadTelegramDebug(); }, [section, telegramTab, token]);
+  const logs = notificationLogsQuery.data ?? [];
+  const pushSubscriptions = pushCountsQuery.data?.pushSubscriptions ?? 0;
+  const telegramContacts = pushCountsQuery.data?.telegramContacts ?? 0;
+  const loading = pushCountsQuery.isLoading || notificationLogsQuery.isLoading;
+  const telegramAppointments = telegramAppointmentsQuery.data ?? [];
+  const telegramPending = telegramPendingQuery.data ?? [];
+  const loadingTelegramAppointments = telegramAppointmentsQuery.isLoading || telegramAppointmentsQuery.isFetching;
+  const loadingTelegramPending = telegramPendingQuery.isLoading || telegramPendingQuery.isFetching;
+  const debugData: ApiTelegramDebugResult | null = triggerTelegramCron.data ?? telegramDebugQuery.data ?? null;
+  const loadingDebug = telegramDebugQuery.isLoading || telegramDebugQuery.isFetching;
+  const sending = sendPushToAll.isPending || sendPushToPhone.isPending;
+  const sendingTelegram = sendTelegramMessage.isPending;
+  const linking = linkTelegramPhone.isPending;
+  const triggeringCron = triggerTelegramCron.isPending;
+  const queryError =
+    pushCountsQuery.error ??
+    notificationLogsQuery.error ??
+    telegramAppointmentsQuery.error ??
+    telegramPendingQuery.error ??
+    telegramDebugQuery.error;
+  const errorMessage = error || (queryError instanceof Error ? queryError.message : '');
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -111,53 +94,50 @@ export default function Notifications() {
     };
   }, []);
 
-  const filteredLogs = useMemo(() => logs.filter((log) => (section === 'push' ? log.channel === 'push' : log.channel === 'telegram')), [logs, section]);
+  const filteredLogs = useMemo(
+    () => logs.filter((log: ApiNotificationLog) => (section === 'push' ? log.channel === 'push' : log.channel === 'telegram')),
+    [logs, section],
+  );
 
   const handlePushSend = async () => {
-    if (!token || !pushMessage.trim()) return;
+    if (!pushMessage.trim()) return;
     if (pushTarget === 'targeted' && !pushPhone.trim()) return setError('Вкажи номер телефону для цільового push.');
-    setSending(true); setError(''); setResult('');
+    setError(''); setResult('');
     try {
       const response = pushTarget === 'all'
-        ? await api.sendPushToAll(token, { body: pushMessage.trim() })
-        : await api.sendPushToPhone(token, { phone: pushPhone.trim(), body: pushMessage.trim() });
+        ? await sendPushToAll.mutateAsync({ body: pushMessage.trim() })
+        : await sendPushToPhone.mutateAsync({ phone: pushPhone.trim(), body: pushMessage.trim() });
       setResult(`Надіслано: ${response.sent}, помилки: ${response.failed}`);
-      setPushMessage(''); setPushPhone(''); await loadBase();
+      setPushMessage(''); setPushPhone('');
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to send push notification'); }
-    finally { setSending(false); }
   };
   const handleSendTelegram = async () => {
-    if (!token || !sendModal?.telegram_chat_id || !sendText.trim()) return;
-    setSendingTelegram(true); setError(''); setResult('');
+    if (!sendModal?.telegram_chat_id || !sendText.trim()) return;
+    setError(''); setResult('');
     try {
-      await api.sendTelegramMessage(token, { chat_id: sendModal.telegram_chat_id, text: sendText.trim() });
+      await sendTelegramMessage.mutateAsync({ chat_id: sendModal.telegram_chat_id, text: sendText.trim() });
       setResult('Повідомлення в Telegram надіслано.');
-      setSendModal(null); setSendText(''); await loadBase();
+      setSendModal(null); setSendText('');
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to send telegram message'); }
-    finally { setSendingTelegram(false); }
   };
   const handleLinkTelegram = async () => {
-    if (!token || !linkModal) return;
+    if (!linkModal) return;
     const phone = normalizePhone(linkPhone);
     if (!phone) return setError('Формат телефону: +380XXXXXXXXX або 0XXXXXXXXX');
-    setLinking(true); setError(''); setResult('');
+    setError(''); setResult('');
     try {
-      const response = await api.linkTelegramPhone(token, { phone, telegram_chat_id: linkModal.chat_id });
+      const response = await linkTelegramPhone.mutateAsync({ phone, telegram_chat_id: linkModal.chat_id });
       setResult(response.updated > 0 ? `Прив'язано до ${response.updated} записів.` : 'Записів з таким номером не знайдено.');
       setLinkModal(null); setLinkPhone('');
-      await Promise.all([loadTelegramPending(), loadTelegramAppointments(), loadBase(), loadTelegramDebug()]);
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to link telegram phone'); }
-    finally { setLinking(false); }
   };
   const handleTriggerCron = async () => {
-    if (!token) return;
-    setTriggeringCron(true); setError(''); setResult('');
+    setError(''); setResult('');
     try {
-      const data = await api.triggerTelegramCron(token);
-      setDebugData(data); setResult(`Cron запущено вручну. 24h: ${data.remind24}, 1h: ${data.remind1}`); await loadBase();
+      const data = await triggerTelegramCron.mutateAsync();
+      setResult(`Cron ???????????????? ????????????. 24h: ${data.remind24}, 1h: ${data.remind1}`);
     } catch (err) { setError(err instanceof Error ? err.message : 'Failed to trigger telegram cron'); }
-    finally { setTriggeringCron(false); }
-  };
+      };
 
   const handleInstallPwa = async () => {
     if (!deferredInstallPrompt) {
@@ -209,7 +189,7 @@ export default function Notifications() {
     <AdminLayout>
       <div className="space-y-6">
         <h1 className="text-2xl font-heading font-bold">{t('notifications')}</h1>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
         {result && <p className="text-sm text-success">{result}</p>}
 
         <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
@@ -285,7 +265,7 @@ export default function Notifications() {
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
                     <input type="date" className="input-glass" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-                    <button onClick={() => void loadTelegramAppointments()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} /></button>
+                    <button onClick={() => void telegramAppointmentsQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} /></button>
                   </div>
                   <span className="text-sm text-muted-foreground">Стан Telegram для записів на {filterDate}</span>
                 </div>
@@ -326,7 +306,7 @@ export default function Notifications() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-sm text-muted-foreground">Користувачі, які написали боту, але ще не прив'язані до телефону.</p>
-                  <button onClick={() => void loadTelegramPending()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} /></button>
+                  <button onClick={() => void telegramPendingQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} /></button>
                 </div>
                 {loadingTelegramPending ? (
                   <div className="text-sm text-muted-foreground">{t('loading')}</div>
@@ -372,7 +352,7 @@ export default function Notifications() {
                       <p className="text-sm text-muted-foreground">Найближчі кандидати на 24h і 1h та ручний запуск cron.</p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={() => void loadTelegramDebug()} className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium" disabled={loadingDebug}>
+                      <button onClick={() => void telegramDebugQuery.refetch()} className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium" disabled={loadingDebug}>
                         <RefreshCw className={`w-4 h-4 inline mr-2 ${loadingDebug ? 'animate-spin' : ''}`} />
                         Оновити
                       </button>

@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Plus, Edit2, Trash2, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import {
+  useCreateSiteDoctor,
+  useDeleteSiteDoctor,
+  useSiteDoctors,
+  useUpdateSiteDoctor,
+} from '@/hooks/use-doctors';
+import type { ApiSiteDoctor } from '@/types/api';
 
 interface Doctor {
   id: number;
@@ -21,41 +26,33 @@ const MAX_DOCTOR_PHOTO_SIZE_MB = 5;
 
 export default function Doctors() {
   const { t } = useI18n();
-  const token = getAdminToken();
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState('');
 
-  const load = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const items = await api.getSiteDoctors(token);
-      setDoctors(items.map((item) => ({
-        id: Number(item.id),
-        fullName: item.full_name ?? '',
-        position: item.position ?? '',
-        specialization: item.specialization ?? '',
-        experience: Number(item.experience_years ?? 0),
-        description: item.description ?? '',
-        photo: item.photo_url ?? '',
-      })));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load doctors');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: items = [], isLoading: loading, error: doctorsError } = useSiteDoctors();
+  const createDoctor = useCreateSiteDoctor();
+  const updateDoctor = useUpdateSiteDoctor();
+  const deleteDoctor = useDeleteSiteDoctor();
 
-  useEffect(() => {
-    void load();
-  }, [token]);
+  const doctors = useMemo<Doctor[]>(
+    () =>
+      items.map((item: ApiSiteDoctor & Record<string, unknown>) => ({
+        id: Number(item.id),
+        fullName: String(item.full_name ?? item.name ?? ''),
+        position: String(item.position ?? ''),
+        specialization: String(item.specialization ?? ''),
+        experience: Number(item.experience_years ?? item.experience ?? 0),
+        description: String(item.description ?? ''),
+        photo: String(item.photo_url ?? ''),
+      })),
+    [items],
+  );
+
+  const loadError = doctorsError;
 
   const openNew = () => {
     setForm(emptyForm);
@@ -77,7 +74,7 @@ export default function Doctors() {
   };
 
   const handleSave = async () => {
-    if (!token || !form.fullName || !form.position) return;
+    if (!form.fullName || !form.position) return;
     setSaving(true);
     setError('');
     const payload = {
@@ -91,11 +88,10 @@ export default function Doctors() {
     };
     try {
       if (editingId !== null) {
-        await api.updateSiteDoctor(token, editingId, payload);
+        await updateDoctor.mutateAsync({ id: editingId, data: payload });
       } else {
-        await api.createSiteDoctor(token, payload);
+        await createDoctor.mutateAsync(payload);
       }
-      await load();
       setShowForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save doctor');
@@ -105,7 +101,7 @@ export default function Doctors() {
   };
 
   const handlePhotoUpload = async (file: File | null) => {
-    if (!token || !file) return;
+    if (!file) return;
     setError('');
 
     if (!file.type.startsWith('image/')) {
@@ -120,7 +116,11 @@ export default function Doctors() {
 
     setUploadingPhoto(true);
     try {
-      const photoUrl = await api.uploadDoctorPhoto(token, file);
+      const photoUrl = await import('@/lib/api').then(({ api }) => {
+        const token = localStorage.getItem('dental_admin_token');
+        if (!token) throw new Error('Missing auth token');
+        return api.uploadDoctorPhoto(token, file);
+      });
       setForm((prev) => ({ ...prev, photo: photoUrl }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload photo');
@@ -130,11 +130,9 @@ export default function Doctors() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
     setError('');
     try {
-      await api.deleteSiteDoctor(token, id);
-      await load();
+      await deleteDoctor.mutateAsync(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete doctor');
     }
@@ -143,7 +141,7 @@ export default function Doctors() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-heading font-bold">{t('doctors')}</h1>
           <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
             <Plus className="w-4 h-4" />
@@ -151,19 +149,22 @@ export default function Doctors() {
           </button>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {(error || loadError) && (
+          <p className="text-sm text-destructive">
+            {error || (loadError instanceof Error ? loadError.message : 'Failed to load doctors')}
+          </p>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {loading ? (
             <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
-          ) : doctors.map((doctor, i) => {
-            return (
+          ) : doctors.map((doctor, i) => (
             <motion.div
               key={doctor.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="glass-panel-sm p-5 space-y-4"
+              className="glass-panel-sm space-y-4 p-5"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -171,54 +172,57 @@ export default function Doctors() {
                     <img
                       src={doctor.photo}
                       alt={doctor.fullName}
-                      className="w-12 h-12 rounded-xl object-cover border border-border/50"
+                      className="h-12 w-12 rounded-xl border border-border/50 object-cover"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
-                      <User className="w-6 h-6 text-primary" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+                      <User className="h-6 w-6 text-primary" />
                     </div>
                   )}
                   <div>
-                    <h3 className="font-heading font-semibold text-sm">{doctor.fullName}</h3>
+                    <h3 className="font-heading text-sm font-semibold">{doctor.fullName}</h3>
                     <p className="text-xs text-primary">{doctor.position}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => openEdit(doctor)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
-                    <Edit2 className="w-3.5 h-3.5" />
+                  <button onClick={() => openEdit(doctor)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
+                    <Edit2 className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => void handleDelete(doctor.id)} className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <button onClick={() => void handleDelete(doctor.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
               <div className="space-y-1.5 text-sm">
                 <p className="text-muted-foreground"><span className="text-foreground/70">{t('specialization')}:</span> {doctor.specialization}</p>
                 <p className="text-muted-foreground"><span className="text-foreground/70">{t('experience')}:</span> {doctor.experience} {t('years')}</p>
-                {doctor.description && <p className="text-muted-foreground text-xs mt-2">{doctor.description}</p>}
+                {doctor.description && <p className="mt-2 text-xs text-muted-foreground">{doctor.description}</p>}
               </div>
             </motion.div>
-            );
-          })}
+          ))}
         </div>
 
         <AnimatePresence>
           {showForm && (
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
               onClick={() => setShowForm(false)}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                className="glass-panel w-full max-w-lg p-6 space-y-5"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="glass-panel w-full max-w-lg space-y-5 p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-heading font-semibold text-lg">{editingId ? t('edit') : t('newDoctor')}</h2>
-                  <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-secondary/60 text-muted-foreground"><X className="w-5 h-5" /></button>
+                  <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newDoctor')}</h2>
+                  <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"><X className="w-5 h-5" /></button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('fullName')}</label>
                     <input className="input-glass w-full" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
@@ -244,7 +248,7 @@ export default function Doctors() {
                     <input
                       type="file"
                       accept="image/*"
-                      className="input-glass w-full file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary/15 file:text-primary file:text-xs"
+                      className="input-glass w-full file:mr-3 file:rounded-lg file:border-0 file:bg-primary/15 file:px-3 file:py-1.5 file:text-xs file:text-primary"
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
                         void handlePhotoUpload(file);
@@ -257,7 +261,7 @@ export default function Doctors() {
                   {form.photo && (
                     <div className="space-y-1.5 sm:col-span-2">
                       <p className="text-sm text-muted-foreground">{t('photo')} {t('preview').toLowerCase()}</p>
-                      <img src={form.photo} alt="Doctor preview" className="h-40 w-full rounded-xl object-cover border border-border/50" />
+                      <img src={form.photo} alt="Doctor preview" className="h-40 w-full rounded-xl border border-border/50 object-cover" />
                     </div>
                   )}
                   <div className="space-y-1.5 sm:col-span-2">
@@ -265,8 +269,8 @@ export default function Doctors() {
                     <textarea className="input-glass w-full resize-none" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
                   </div>
                 </div>
-                <div className="flex gap-3 justify-end">
-                  <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">{t('cancel')}</button>
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setShowForm(false)} className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60">{t('cancel')}</button>
                   <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>{t('save')}</button>
                 </div>
               </motion.div>

@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { api, apiCall } from '@/lib/api';
+import { useSystemDoctors } from '@/hooks/use-doctors';
+import { useCreatePatient, useSearchPatients } from '@/hooks/use-patients';
+import { useActiveXraySession, useStartXraySession } from '@/hooks/use-xray';
+import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
 import { normalizePhone } from '@/lib/patient-utils';
 import { cn } from '@/lib/utils';
@@ -249,7 +252,6 @@ export default function Xrays() {
   const navigate = useNavigate();
   const token = getAdminToken();
   const [step, setStep] = useState<Step>('patient');
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
@@ -258,37 +260,39 @@ export default function Xrays() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientSummary | null>(null);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
-  const [session, setSession] = useState<ApiXraySession | null>(null);
+  const [sessionState, setSessionState] = useState<ApiXraySession | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isCreatingPatient, setIsCreatingPatient] = useState(false);
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(1);
   const [isFullResOpen, setIsFullResOpen] = useState(false);
+  const systemDoctorsQuery = useSystemDoctors();
+  const searchPatientsMutation = useSearchPatients();
+  const createPatientMutation = useCreatePatient();
+  const startXraySessionMutation = useStartXraySession();
+  const activeSessionQuery = useActiveXraySession(
+    sessionState?.id,
+    step === 'capture' && Boolean(sessionState?.id) && sessionState?.status !== 'completed',
+  );
+  const doctors = useMemo<Doctor[]>(
+    () =>
+      Array.isArray(systemDoctorsQuery.data)
+        ? systemDoctorsQuery.data.map((doctor) => ({
+            id: String(doctor.id ?? ''),
+            name: doctor.name ?? doctor.fullName ?? '',
+            specialty: doctor.specialty ?? '??????????',
+          }))
+        : [],
+    [systemDoctorsQuery.data],
+  );
+  const session = activeSessionQuery.data ?? sessionState;
   const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
   const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
   const searchAbortRef = useRef<AbortController | null>(null);
   const canCreate = hasSearched && matches.length === 0 && lastName.trim().length > 0 && firstName.trim().length > 0 && phone.trim().length > 0;
 
-  useEffect(() => {
-    if (!token) return;
-    void api
-      .getSystemDoctors(token)
-      .then((data) =>
-        setDoctors(
-          Array.isArray(data)
-            ? data.map((doctor) => ({
-                id: String(doctor.id ?? ''),
-                name: doctor.name ?? doctor.fullName ?? '',
-                specialty: doctor.specialty ?? 'Лікар',
-              }))
-            : [],
-        ),
-      )
-      .catch((fetchError) => setError(fetchError instanceof Error ? fetchError.message : 'Не вдалося завантажити лікарів'));
-  }, [token]);
 
   useEffect(() => {
     const currentQuery = buildPatientSearchQuery(lastName, firstName, phone);
@@ -300,18 +304,10 @@ export default function Xrays() {
   }, [lastName, firstName, phone]);
 
   useEffect(() => {
-    if (!token || !session?.id || step !== 'capture' || session.status === 'completed') return;
-    const intervalId = window.setInterval(async () => {
-      try {
-        const next = await api.getActiveXraySession(token, session.id);
-        if (next) setSession(next);
-      } catch (refreshError) {
-        setError(refreshError instanceof Error ? refreshError.message : 'Не вдалося оновити статус');
-      }
-    }, 3000);
-
-    return () => window.clearInterval(intervalId);
-  }, [token, session?.id, session?.status, step]);
+    if (activeSessionQuery.data) {
+      setSessionState(activeSessionQuery.data);
+    }
+  }, [activeSessionQuery.data]);
 
   useEffect(() => {
     if (!token || !session?.xray) return;
@@ -345,10 +341,12 @@ export default function Xrays() {
     };
   }, [token, session?.xray?.id]);
 
+  const queryError = systemDoctorsQuery.error ?? activeSessionQuery.error;
+  const errorMessage = error || (queryError instanceof Error ? queryError.message : '');
+
   useEffect(() => () => searchAbortRef.current?.abort(), []);
 
   const runSearch = async (query: string) => {
-    if (!token) return;
     const trimmedQuery = query.trim();
     if (!trimmedQuery) {
       setHasSearched(false);
@@ -372,7 +370,7 @@ export default function Xrays() {
     setError('');
 
     try {
-      const results = mergePatients(await api.searchPatients(token, trimmedQuery, 20, controller.signal));
+      const results = mergePatients(await searchPatientsMutation.mutateAsync({ query: trimmedQuery, limit: 20, signal: controller.signal }));
       patientSearchCache.set(cacheKey, results);
       setMatches(results);
       setHasSearched(true);
@@ -401,7 +399,6 @@ export default function Xrays() {
   };
 
   const createPatient = async (payload: PatientFormPayload) => {
-    if (!token) return;
     try {
       const requestBody: ApiPatientPayload = {
         ...payload,
@@ -409,11 +406,7 @@ export default function Xrays() {
         gender: payload.gender ?? null,
       };
 
-      const created = await apiCall<ApiPatient>(
-        '/api/patients',
-        { method: 'POST', body: JSON.stringify(requestBody) },
-        token,
-      );
+      const created = await createPatientMutation.mutateAsync(requestBody);
 
       pickPatient({
         id: Number(created.id),
@@ -430,28 +423,25 @@ export default function Xrays() {
   };
 
   const startCapture = async () => {
-    if (!token || !selectedPatient || !selectedTooth) return;
+    if (!selectedPatient || !selectedTooth) return;
     setError('');
     setPreviewUrl(null);
     setOriginalUrl(null);
     setZoom(1);
-    setIsStarting(true);
     try {
-      const nextSession = await api.startXraySession(token, { patientId: selectedPatient.id, toothId: selectedTooth });
-      setSession(nextSession);
+      const nextSession = await startXraySessionMutation.mutateAsync({ patientId: selectedPatient.id, toothId: selectedTooth });
+      setSessionState(nextSession);
       setStep('capture');
     } catch (sessionError) {
       setError(sessionError instanceof Error ? sessionError.message : 'Не вдалося створити сесію');
-    } finally {
-      setIsStarting(false);
     }
   };
 
   const refreshCapture = async () => {
-    if (!token || !session?.id) return;
+    if (!session?.id) return;
     try {
-      const nextSession = await api.getActiveXraySession(token, session.id);
-      if (nextSession) setSession(nextSession);
+      const result = await activeSessionQuery.refetch();
+      if (result.data) setSessionState(result.data);
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : 'Не вдалося оновити статус');
     }
@@ -459,7 +449,7 @@ export default function Xrays() {
 
   const resetCapture = () => {
     setStep('patient');
-    setSession(null);
+    setSessionState(null);
     setPreviewUrl(null);
     setOriginalUrl(null);
     setSelectedPatient(null);
@@ -476,7 +466,7 @@ export default function Xrays() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {error && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
+        {errorMessage && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{errorMessage}</div>}
 
         {step === 'patient' && (
           <section className="mx-auto max-w-3xl rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
@@ -586,8 +576,8 @@ export default function Xrays() {
 
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3">
               <p className="text-sm text-muted-foreground">{selectedTooth ? `Обраний зуб: FDI ${selectedTooth}` : 'Оберіть зуб для знімка'}</p>
-              <Button onClick={startCapture} disabled={!selectedTooth || isStarting} className="h-12 rounded-2xl px-6 text-base">
-                {isStarting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+              <Button onClick={startCapture} disabled={!selectedTooth || startXraySessionMutation.isPending} className="h-12 rounded-2xl px-6 text-base">
+                {startXraySessionMutation.isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
                 Почати знімок
               </Button>
             </div>
@@ -626,7 +616,7 @@ export default function Xrays() {
                 Змінити зуб
               </Button>
               <Button variant="outline" onClick={refreshCapture}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className={`mr-2 h-4 w-4 ${activeSessionQuery.isFetching ? 'animate-spin' : ''}`} />
                 Оновити зараз
               </Button>
             </div>

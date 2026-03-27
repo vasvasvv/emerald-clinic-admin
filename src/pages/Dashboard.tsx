@@ -5,9 +5,9 @@ import { Clock, CalendarPlus, ScanSearch, Stethoscope, Phone } from 'lucide-reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { NewRecordForm } from '@/components/NewRecordForm';
-import { api } from '@/lib/api';
 import { formatDateKey } from '@/lib/date-utils';
-import { getAdminToken } from '@/lib/auth';
+import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
+import { useSystemDoctors } from '@/hooks/use-doctors';
 import { buildPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -37,52 +37,43 @@ function toAppointmentDate(date: string, time: string) {
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const token = getAdminToken();
   const [activeView, setActiveView] = useState<ViewMode>('today');
   const [showNewForm, setShowNewForm] = useState(false);
-  const [appointments, setAppointments] = useState<AppointmentCard[]>([]);
-  const [doctors, setDoctors] = useState<DoctorOption[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => new Date());
-
-  const load = async () => {
-    if (!token) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [items, doctorItems] = await Promise.all([api.getAppointments(token), api.getSystemDoctors(token)]);
-      setAppointments(
-        items.map((item) => {
-          const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
-          const [date = '', time = ''] = normalized.split('T');
-          return {
-            id: Number(item.id),
-            client: item.patient_name ?? '',
-            doctor: item.doctor_name ?? '',
-            time: time.slice(0, 5),
-            phone: item.phone ?? '',
-            date,
-          };
-        }),
-      );
-      setDoctors(doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, [token]);
+  const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
+  const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
+  const createAppointment = useCreateAppointment();
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(interval);
   }, []);
+
+  const appointments = useMemo<AppointmentCard[]>(
+    () =>
+      appointmentItems.map((item) => {
+        const normalized = String(item.appointment_at ?? '').replace(' ', 'T');
+        const [date = '', time = ''] = normalized.split('T');
+        return {
+          id: Number(item.id),
+          client: item.patient_name ?? '',
+          doctor: item.doctor_name ?? '',
+          time: time.slice(0, 5),
+          phone: item.phone ?? '',
+          date,
+        };
+      }),
+    [appointmentItems],
+  );
+
+  const doctors = useMemo<DoctorOption[]>(
+    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
+    [doctorItems],
+  );
+
+  const loadError = appointmentsError ?? doctorsError;
 
   const today = now;
   const tomorrow = new Date(now);
@@ -121,12 +112,11 @@ export default function Dashboard() {
     doctor: string;
     comment: string;
   }) => {
-    if (!token) return;
     setSaving(true);
     setError('');
     try {
       const doctor = doctors.find((item) => item.name === record.doctor);
-      await api.createAppointment(token, {
+      await createAppointment.mutateAsync({
         patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
@@ -134,7 +124,6 @@ export default function Dashboard() {
         notes: record.comment,
         status: 'scheduled',
       });
-      await load();
       setShowNewForm(false);
       setActiveView(record.date === tomorrowKey ? 'tomorrow' : 'today');
     } catch (err) {
@@ -156,7 +145,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {(error || loadError) && <p className="text-sm text-destructive">{error || (loadError instanceof Error ? loadError.message : 'Failed to load dashboard')}</p>}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <motion.button
