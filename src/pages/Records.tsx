@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { NewRecordForm } from '@/components/NewRecordForm';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
+import { formatDateKey, getDaysInMonth, getMonday } from '@/lib/date-utils';
+import { buildPatientName, extractFirstName } from '@/lib/patient-utils';
+import type { DoctorOption } from '@/types/api';
 
 interface AppointmentRecord {
   id: number;
@@ -15,43 +18,6 @@ interface AppointmentRecord {
   time: string;
   doctor: string;
   comment?: string;
-}
-
-interface DoctorOption {
-  id: number;
-  name: string;
-}
-
-function getMonday(date: Date): Date {
-  const value = new Date(date);
-  const day = value.getDay();
-  const diff = value.getDate() - day + (day === 0 ? -6 : 1);
-  value.setDate(diff);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
-function buildPatientName(lastName: string, firstName: string) {
-  return `${lastName.trim()} ${firstName.trim()}`.trim();
-}
-
-function extractFirstName(fullName: string) {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  return parts.length > 1 ? parts[1] : parts[0] || '';
-}
-
-function getDaysInMonth(year: number, month: number): Date[] {
-  const days: Date[] = [];
-  const cursor = new Date(year, month, 1);
-  while (cursor.getMonth() === month) {
-    days.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return days;
 }
 
 const dayNames: Record<string, string[]> = {
@@ -145,7 +111,7 @@ export default function Records() {
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const weekRangeLabel = `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'short' })} - ${weekDays[5].toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}`;
   const monthLabel = currentDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  const today = formatDate(new Date());
+  const today = formatDateKey(new Date());
 
   const handleNewRecord = async (record: {
     firstName: string;
@@ -250,7 +216,7 @@ export default function Records() {
           {viewMode === 'week' ? (
             <motion.div key={monday.getTime()} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {weekDays.map((day, index) => {
-                const dateStr = formatDate(day);
+                const dateStr = formatDateKey(day);
                 const dayRecords = getRecordsForDate(dateStr);
                 const isToday = dateStr === today;
 
@@ -302,7 +268,7 @@ export default function Records() {
                   <div key={`empty-${index}`} className="border-b border-r border-border/30 min-h-[80px]" />
                 ))}
                 {monthDays.map((day) => {
-                  const dateStr = formatDate(day);
+                  const dateStr = formatDateKey(day);
                   const dayRecords = getRecordsForDate(dateStr);
                   const isToday = dateStr === today;
                   const isSunday = day.getDay() === 0;

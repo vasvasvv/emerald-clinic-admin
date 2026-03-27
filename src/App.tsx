@@ -1,13 +1,10 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
 import { isAdminAuthenticated } from "./lib/auth";
-import loader from "./assets/222.gif"
-
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Appointments = lazy(() => import("./pages/Appointments"));
 const Records = lazy(() => import("./pages/Records"));
@@ -25,7 +22,7 @@ function AppLoader() {
   return (
     <div className="fixed inset-0 bg-background">
       <img
-        src={loader}
+        src="/222.gif"
         alt="loading"
         className="h-full w-full object-cover"
       />
@@ -45,7 +42,6 @@ const App = () => (
     <I18nProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<AppLoader />}>
             <Routes>

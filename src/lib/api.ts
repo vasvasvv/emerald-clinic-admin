@@ -1,3 +1,20 @@
+import type {
+  ApiAppointment,
+  ApiAppointmentPayload,
+  ApiDoctor,
+  ApiLoginResponse,
+  ApiNewsItem,
+  ApiNotificationLog,
+  ApiPatient,
+  ApiPushCounts,
+  ApiSiteDoctor,
+  ApiTelegramAppointment,
+  ApiTelegramDebugResult,
+  ApiTelegramPending,
+  ApiUser,
+  ApiXraySession,
+} from '@/types/api';
+
 const API_URLS = {
   production: 'https://dentis-univ-api.nesterenkovasil9.workers.dev',
   development: '/proxy-api',
@@ -51,6 +68,13 @@ export async function apiCall<T>(
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        const { clearAdminSession } = await import('./auth');
+        clearAdminSession();
+        window.location.href = '/login';
+        throw new Error('Session expired');
+      }
+
       const error = await response.json().catch(() => ({ error: 'Unknown error' }));
       throw new Error(error.error || `HTTP ${response.status}`);
     }
@@ -90,6 +114,13 @@ export async function apiFetch(
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      const { clearAdminSession } = await import('./auth');
+      clearAdminSession();
+      window.location.href = '/login';
+      throw new Error('Session expired');
+    }
+
     let message = `HTTP ${response.status}`;
     try {
       const error = await response.clone().json();
@@ -114,7 +145,7 @@ export async function apiBlob(
 
 export const api = {
   login: (email: string, password: string) =>
-    apiCall<{ token: string; user: { id: number; email: string; fullName: string; role: string } }>(
+    apiCall<ApiLoginResponse>(
       '/api/auth/login',
       {
         method: 'POST',
@@ -123,121 +154,71 @@ export const api = {
     ),
 
   getAppointments: (token: string, date?: string) =>
-    apiCall<any[]>(`/api/appointments${date ? `?date=${date}` : ''}`, {}, token),
-  createAppointment: (token: string, data: any) =>
-    apiCall<any>('/api/appointments', { method: 'POST', body: JSON.stringify(data) }, token),
-  updateAppointment: (token: string, id: number, data: any) =>
-    apiCall<any>(`/api/appointments/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+    apiCall<ApiAppointment[]>(`/api/appointments${date ? `?date=${date}` : ''}`, {}, token),
+  createAppointment: (token: string, data: ApiAppointmentPayload) =>
+    apiCall<ApiAppointment>('/api/appointments', { method: 'POST', body: JSON.stringify(data) }, token),
+  updateAppointment: (token: string, id: number, data: ApiAppointmentPayload) =>
+    apiCall<ApiAppointment>(`/api/appointments/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
   deleteAppointment: (token: string, id: number) =>
     apiCall<{ ok: boolean }>(`/api/appointments/${id}`, { method: 'DELETE' }, token),
 
   getNews: (token: string) =>
-    apiCall<any[]>('/api/news', {}, token),
-  createNews: (token: string, data: any) =>
-    apiCall<any>('/api/news', { method: 'POST', body: JSON.stringify(data) }, token),
-  updateNews: (token: string, id: number, data: any) =>
-    apiCall<any>(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+    apiCall<ApiNewsItem[]>('/api/news', {}, token),
+  createNews: (token: string, data: Record<string, unknown>) =>
+    apiCall<ApiNewsItem>('/api/news', { method: 'POST', body: JSON.stringify(data) }, token),
+  updateNews: (token: string, id: number, data: Record<string, unknown>) =>
+    apiCall<ApiNewsItem>(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
   deleteNews: (token: string, id: number) =>
     apiCall<{ ok: boolean }>(`/api/news/${id}`, { method: 'DELETE' }, token),
 
   getSiteDoctors: (token: string) =>
-    apiCall<any[]>('/api/site/doctors', {}, token),
-  createSiteDoctor: (token: string, data: any) =>
-    apiCall<any>('/api/site/doctors', { method: 'POST', body: JSON.stringify(data) }, token),
-  updateSiteDoctor: (token: string, id: number, data: any) =>
-    apiCall<any>(`/api/site/doctors/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
+    apiCall<ApiSiteDoctor[]>('/api/site/doctors', {}, token),
+  createSiteDoctor: (token: string, data: Record<string, unknown>) =>
+    apiCall<ApiSiteDoctor>('/api/site/doctors', { method: 'POST', body: JSON.stringify(data) }, token),
+  updateSiteDoctor: (token: string, id: number, data: Record<string, unknown>) =>
+    apiCall<ApiSiteDoctor>(`/api/site/doctors/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
   deleteSiteDoctor: (token: string, id: number) =>
     apiCall<{ ok: boolean }>(`/api/site/doctors/${id}`, { method: 'DELETE' }, token),
 
   getSystemDoctors: (token: string) =>
-    apiCall<any[]>('/api/doctors', {}, token),
+    apiCall<ApiDoctor[]>('/api/doctors', {}, token),
 
   getUsers: (token: string) =>
-    apiCall<any[]>('/api/users', {}, token),
+    apiCall<ApiUser[]>('/api/users', {}, token),
 
   getPatients: (token: string, query?: string) =>
-    apiCall<any[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
+    apiCall<ApiPatient[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
   searchPatients: (token: string, query: string, limit = 20, signal?: AbortSignal) =>
-    apiCall<any[]>(
+    apiCall<ApiPatient[]>(
       `/api/patients/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`,
       { signal },
       token,
     ),
 
   startXraySession: (token: string, data: { patientId: number; toothId: number }) =>
-    apiCall<{
-      id: number;
-      patientId: number;
-      patientName: string;
-      toothId: number;
-      status: 'waiting' | 'completed';
-      createdAt: string;
-      updatedAt: string;
-      completedAt: string | null;
-      xray: null | {
-        id: number;
-        previewUrl: string;
-        originalUrl: string;
-        previewContentType: string;
-        originalContentType: string;
-      };
-    }>('/api/sessions/start', { method: 'POST', body: JSON.stringify(data) }, token),
+    apiCall<ApiXraySession>('/api/sessions/start', { method: 'POST', body: JSON.stringify(data) }, token),
   getActiveXraySession: (token: string, sessionId?: number) =>
-    apiCall<null | {
-      id: number;
-      patientId: number;
-      patientName: string;
-      toothId: number;
-      status: 'waiting' | 'completed';
-      createdAt: string;
-      updatedAt: string;
-      completedAt: string | null;
-      xray: null | {
-        id: number;
-        previewUrl: string;
-        originalUrl: string;
-        previewContentType: string;
-        originalContentType: string;
-      };
-    }>(`/api/sessions/active${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, token),
+    apiCall<ApiXraySession | null>(`/api/sessions/active${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, token),
   getProtectedImageBlob: (token: string, url: string) =>
     apiBlob(url.startsWith('/api/') ? url.slice(4) : url, token),
 
   getPushCounts: (token: string) =>
-    apiCall<{ pushSubscriptions: number; telegramContacts: number }>('/api/push/count', {}, token),
+    apiCall<ApiPushCounts>('/api/push/count', {}, token),
   getNotificationLogs: (token: string) =>
-    apiCall<any[]>('/api/notifications/logs', {}, token),
+    apiCall<ApiNotificationLog[]>('/api/notifications/logs', {}, token),
   sendPushToAll: (token: string, data: { title?: string; body: string; url?: string }) =>
     apiCall<{ sent: number; failed: number; total: number }>('/api/push/send', { method: 'POST', body: JSON.stringify(data) }, token),
   sendPushToPhone: (token: string, data: { phone: string; title?: string; body: string; url?: string }) =>
     apiCall<{ sent: number; failed: number; total: number }>('/api/push/send-to', { method: 'POST', body: JSON.stringify(data) }, token),
 
   getTelegramAppointments: (token: string, date?: string) =>
-    apiCall<any[]>(`/api/telegram/appointments${date ? `?date=${date}` : ''}`, {}, token),
+    apiCall<ApiTelegramAppointment[]>(`/api/telegram/appointments${date ? `?date=${date}` : ''}`, {}, token),
   getTelegramPending: (token: string) =>
-    apiCall<any[]>('/api/telegram/pending', {}, token),
+    apiCall<ApiTelegramPending[]>('/api/telegram/pending', {}, token),
   getTelegramUpcoming: (token: string) =>
-    apiCall<{
-      log: string[];
-      offsetHours: number;
-      windows: { from24: string; to24: string; from1: string; to1: string };
-      remind24: number;
-      remind1: number;
-      appointments24: Array<{ id: number; patient_name: string; appointment_at: string }>;
-      appointments1: Array<{ id: number; patient_name: string; appointment_at: string }>;
-      dryRun: boolean;
-    }>('/api/telegram/debug/upcoming', {}, token),
+    apiCall<ApiTelegramDebugResult>('/api/telegram/debug/upcoming', {}, token),
   triggerTelegramCron: (token: string) =>
-    apiCall<{
-      log: string[];
-      offsetHours: number;
-      windows: { from24: string; to24: string; from1: string; to1: string };
-      remind24: number;
-      remind1: number;
-      appointments24: Array<{ id: number; patient_name: string; appointment_at: string }>;
-      appointments1: Array<{ id: number; patient_name: string; appointment_at: string }>;
-      dryRun: boolean;
-    }>('/api/telegram/debug/trigger', { method: 'POST' }, token),
+    apiCall<ApiTelegramDebugResult>('/api/telegram/debug/trigger', { method: 'POST' }, token),
   linkTelegramPhone: (token: string, data: { phone: string; telegram_chat_id: string }) =>
     apiCall<{ updated: number }>('/api/telegram/link', { method: 'POST', body: JSON.stringify(data) }, token),
   sendTelegramMessage: (token: string, data: { chat_id: string; text: string }) =>

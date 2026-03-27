@@ -5,36 +5,13 @@ import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle,
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
-
-interface NotificationLog { id: number; channel: 'push' | 'telegram'; body: string; target_type: 'all' | 'phone' | 'chat'; target_value: string | null; created_at: string; sent_count: number; failed_count: number; }
-interface TelegramAppointment { id: number; patient_name: string; phone: string; appointment_at: string; doctor_name: string | null; status: 'scheduled' | 'completed' | 'cancelled'; telegram_chat_id: string | null; }
-interface TelegramPending { id: number; chat_id: string; first_name: string | null; created_at: string; }
-interface TelegramDebugResult {
-  log: string[];
-  offsetHours: number;
-  windows: { from24: string; to24: string; from1: string; to1: string };
-  remind24: number;
-  remind1: number;
-  appointments24: Array<{ id: number; patient_name: string; appointment_at: string }>;
-  appointments1: Array<{ id: number; patient_name: string; appointment_at: string }>;
-  dryRun: boolean;
-}
+import { formatDateKey } from '@/lib/date-utils';
+import { extractFirstName, normalizePhone } from '@/lib/patient-utils';
+import type { ApiNotificationLog, ApiTelegramAppointment, ApiTelegramDebugResult, ApiTelegramPending } from '@/types/api';
 
 type DeferredInstallPrompt = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-};
-
-const normalizeDateKey = (date: Date) => date.toISOString().split('T')[0];
-const normalizePhone = (raw: string) => {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.startsWith('380') && digits.length === 12) return `+${digits}`;
-  if (digits.startsWith('0') && digits.length === 10) return `+38${digits}`;
-  return null;
-};
-const extractFirstName = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  return parts.length > 1 ? parts[1] : parts[0] || '';
 };
 
 export default function Notifications() {
@@ -45,7 +22,7 @@ export default function Notifications() {
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
-  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [logs, setLogs] = useState<ApiNotificationLog[]>([]);
   const [pushSubscriptions, setPushSubscriptions] = useState(0);
   const [telegramContacts, setTelegramContacts] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -53,9 +30,9 @@ export default function Notifications() {
   const [error, setError] = useState('');
   const [result, setResult] = useState('');
   const [telegramTab, setTelegramTab] = useState<'appointments' | 'pending' | 'settings'>('appointments');
-  const [filterDate, setFilterDate] = useState(() => normalizeDateKey(new Date()));
-  const [telegramAppointments, setTelegramAppointments] = useState<TelegramAppointment[]>([]);
-  const [telegramPending, setTelegramPending] = useState<TelegramPending[]>([]);
+  const [filterDate, setFilterDate] = useState(() => formatDateKey(new Date()));
+  const [telegramAppointments, setTelegramAppointments] = useState<ApiTelegramAppointment[]>([]);
+  const [telegramPending, setTelegramPending] = useState<ApiTelegramPending[]>([]);
   const [loadingTelegramAppointments, setLoadingTelegramAppointments] = useState(false);
   const [loadingTelegramPending, setLoadingTelegramPending] = useState(false);
   const [sendModal, setSendModal] = useState<TelegramAppointment | null>(null);

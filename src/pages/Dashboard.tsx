@@ -6,7 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { NewRecordForm } from '@/components/NewRecordForm';
 import { api } from '@/lib/api';
+import { formatDateKey } from '@/lib/date-utils';
 import { getAdminToken } from '@/lib/auth';
+import { buildPatientName } from '@/lib/patient-utils';
+import type { DoctorOption } from '@/types/api';
 
 type ViewMode = 'today' | 'tomorrow';
 
@@ -19,11 +22,6 @@ interface AppointmentCard {
   date: string;
 }
 
-interface DoctorOption {
-  id: number;
-  name: string;
-}
-
 const doctorBadgePalette = [
   'border-l-[#f4c95d] bg-[#f4c95d]/10 text-[#f8d985]',
   'border-l-[#6ccff6] bg-[#6ccff6]/10 text-[#9fddfa]',
@@ -31,14 +29,6 @@ const doctorBadgePalette = [
   'border-l-[#ff9f6e] bg-[#ff9f6e]/10 text-[#ffc19c]',
   'border-l-[#d0a6ff] bg-[#d0a6ff]/10 text-[#e2c9ff]',
 ];
-
-function formatDateKey(date: Date) {
-  return date.toISOString().split('T')[0];
-}
-
-function buildPatientName(lastName: string, firstName: string) {
-  return `${lastName.trim()} ${firstName.trim()}`.trim();
-}
 
 function toAppointmentDate(date: string, time: string) {
   return new Date(`${date}T${time}:00`);

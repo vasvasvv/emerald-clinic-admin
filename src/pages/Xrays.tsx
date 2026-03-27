@@ -10,7 +10,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { api, apiCall } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
+import { normalizePhone } from '@/lib/patient-utils';
 import { cn } from '@/lib/utils';
+import type { ApiPatient, ApiPatientPayload, ApiXraySession } from '@/types/api';
 import type { Doctor } from '@/types/dental';
 
 type PatientSummary = {
@@ -20,24 +22,6 @@ type PatientSummary = {
   middleName?: string;
   phone?: string;
   doctorId?: string;
-};
-
-type XraySession = {
-  id: number;
-  patientId: number;
-  patientName: string;
-  toothId: number;
-  status: 'waiting' | 'completed';
-  createdAt: string;
-  updatedAt: string;
-  completedAt: string | null;
-  xray: null | {
-    id: number;
-    previewUrl: string;
-    originalUrl: string;
-    previewContentType: string;
-    originalContentType: string;
-  };
 };
 
 type Step = 'patient' | 'tooth' | 'capture';
@@ -65,14 +49,6 @@ const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37,
 const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {18:{imageNumber:1,mirrored:false},17:{imageNumber:2,mirrored:false},16:{imageNumber:3,mirrored:false},15:{imageNumber:4,mirrored:false},14:{imageNumber:5,mirrored:false},13:{imageNumber:6,mirrored:false},12:{imageNumber:7,mirrored:false},11:{imageNumber:8,mirrored:false},21:{imageNumber:8,mirrored:true},22:{imageNumber:7,mirrored:true},23:{imageNumber:6,mirrored:true},24:{imageNumber:5,mirrored:true},25:{imageNumber:4,mirrored:true},26:{imageNumber:3,mirrored:true},27:{imageNumber:2,mirrored:true},28:{imageNumber:1,mirrored:true},48:{imageNumber:24,mirrored:false},47:{imageNumber:23,mirrored:false},46:{imageNumber:22,mirrored:false},45:{imageNumber:22,mirrored:false},44:{imageNumber:21,mirrored:false},43:{imageNumber:20,mirrored:false},42:{imageNumber:19,mirrored:false},41:{imageNumber:18,mirrored:false},31:{imageNumber:18,mirrored:true},32:{imageNumber:19,mirrored:true},33:{imageNumber:20,mirrored:true},34:{imageNumber:21,mirrored:true},35:{imageNumber:22,mirrored:true},36:{imageNumber:22,mirrored:true},37:{imageNumber:23,mirrored:true},38:{imageNumber:24,mirrored:true}};
 const patientSearchCache = new Map<string, PatientSummary[]>();
 
-const normalizePhone = (phone: string) => {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('380') && digits.length === 12) return `+${digits}`;
-  if (digits.startsWith('0') && digits.length === 10) return `+38${digits}`;
-  if (digits.length === 9) return `+380${digits}`;
-  return phone.trim();
-};
-
 const buildPatientSearchQuery = (lastName: string, firstName: string, phone: string) => {
   const tokens = [lastName.trim(), firstName.trim()].filter(Boolean);
   if (tokens.length) return tokens.join(' ');
@@ -89,10 +65,10 @@ const buildDraft = (lastName: string, firstName: string, phone: string): Patient
   lastName: lastName.trim(),
   firstName: firstName.trim(),
   middleName: '',
-  phone: normalizePhone(phone),
+  phone: normalizePhone(phone) ?? phone.trim(),
 });
 
-const mergePatients = (items: any[]) => {
+const mergePatients = (items: ApiPatient[]) => {
   const unique = new Map<number, PatientSummary>();
 
   items.forEach((item) => {
@@ -104,7 +80,7 @@ const mergePatients = (items: any[]) => {
       lastName: item.last_name ?? item.lastName ?? '',
       middleName: item.middle_name ?? item.middleName ?? '',
       phone: item.phone ?? '',
-      doctorId: String(item.primary_doctor_user_id ?? item.doctorId ?? ''),
+      doctorId: String(item.primary_doctor_user_id ?? ''),
     });
   });
 
@@ -178,7 +154,7 @@ function PatientModal({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         middleName: middleName.trim() || undefined,
-        phone: normalizePhone(phone),
+        phone: normalizePhone(phone) ?? phone.trim(),
         dateOfBirth,
         doctorId,
         gender: (gender || undefined) as 'male' | 'female' | undefined,
@@ -282,7 +258,7 @@ export default function Xrays() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientSummary | null>(null);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
-  const [session, setSession] = useState<XraySession | null>(null);
+  const [session, setSession] = useState<ApiXraySession | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -427,9 +403,15 @@ export default function Xrays() {
   const createPatient = async (payload: PatientFormPayload) => {
     if (!token) return;
     try {
-      const created = await apiCall<any>(
+      const requestBody: ApiPatientPayload = {
+        ...payload,
+        middleName: payload.middleName ?? null,
+        gender: payload.gender ?? null,
+      };
+
+      const created = await apiCall<ApiPatient>(
         '/api/patients',
-        { method: 'POST', body: JSON.stringify({ ...payload, middleName: payload.middleName ?? null, gender: payload.gender ?? null }) },
+        { method: 'POST', body: JSON.stringify(requestBody) },
         token,
       );
 

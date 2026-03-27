@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
+import { buildPatientName, splitPatientName } from '@/lib/patient-utils';
+import type { DoctorOption } from '@/types/api';
 
 interface Appointment {
   id: number;
@@ -21,11 +23,6 @@ interface Appointment {
   doctor: string;
   comment: string;
   status: 'scheduled' | 'completed' | 'cancelled';
-}
-
-interface DoctorOption {
-  id: number;
-  name: string;
 }
 
 const emptyForm: Omit<Appointment, 'id'> = {
@@ -46,12 +43,6 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-destructive/20 text-destructive',
 };
 
-const splitPatientName = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  return { lastName: parts[0] ?? '', firstName: parts.slice(1).join(' ') };
-};
-
-const buildPatientName = (lastName: string, firstName: string) => `${lastName.trim()} ${firstName.trim()}`.trim();
 const parseDateValue = (value: string) => (value ? new Date(`${value}T00:00:00`) : undefined);
 
 function SelectField({
