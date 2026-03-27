@@ -47,7 +47,13 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="visit-date">Дата</Label>
-            <Input id="visit-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
+            <Input
+              id="visit-date"
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              required
+            />
           </div>
 
           <div className="space-y-2">
@@ -55,11 +61,15 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
             <RadioGroup value={type} onValueChange={(value) => setType(value as 'past' | 'future')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="future" id="future-visit" />
-                <Label htmlFor="future-visit" className="cursor-pointer font-normal">Запланований</Label>
+                <Label htmlFor="future-visit" className="cursor-pointer font-normal">
+                  Запланований
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="past" id="past-visit" />
-                <Label htmlFor="past-visit" className="cursor-pointer font-normal">Завершений</Label>
+                <Label htmlFor="past-visit" className="cursor-pointer font-normal">
+                  Завершений
+                </Label>
               </div>
             </RadioGroup>
           </div>
@@ -72,7 +82,9 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>{doctor.name}</SelectItem>
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -80,12 +92,22 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
 
           <div className="space-y-2">
             <Label htmlFor="visit-notes">Примітки</Label>
-            <Textarea id="visit-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Додайте примітки до візиту..." rows={3} />
+            <Textarea
+              id="visit-notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Додайте примітки до візиту..."
+              rows={3}
+            />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Скасувати</Button>
-            <Button type="submit" disabled={!doctorId || !date}>Додати візит</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Скасувати
+            </Button>
+            <Button type="submit" disabled={!doctorId || !date}>
+              Додати візит
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

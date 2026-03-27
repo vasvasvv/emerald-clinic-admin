@@ -75,9 +75,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   };
 
   const getOccupiedSlots = (dateStr: string) => {
-    return existingRecords
-      .filter((r) => r.date === dateStr && r.doctor === selectedDoctor)
-      .map((r) => r.time);
+    return existingRecords.filter((r) => r.date === dateStr && r.doctor === selectedDoctor).map((r) => r.time);
   };
 
   const getFreeSlots = (dateStr: string) => {
@@ -105,7 +103,15 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
     if (!firstName || !lastName || !phone) return;
     setSaving(true);
     try {
-      await onSave({ firstName, lastName, phone, date: selectedDate, time: selectedTime, doctor: selectedDoctor, comment });
+      await onSave({
+        firstName,
+        lastName,
+        phone,
+        date: selectedDate,
+        time: selectedTime,
+        doctor: selectedDoctor,
+        comment,
+      });
     } finally {
       setSaving(false);
     }
@@ -134,7 +140,10 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
             {/* Header with doctor selector */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <button onClick={onClose} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
@@ -150,7 +159,9 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                   className="input-glass text-sm py-1.5 pr-8"
                 >
                   {doctors.map((d) => (
-                    <option key={d} value={d}>{d}</option>
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -158,11 +169,17 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
 
             {/* Week navigation */}
             <div className="flex items-center justify-between">
-              <button onClick={() => navigateWeek(-1)} className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => navigateWeek(-1)}
+                className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="font-heading font-semibold text-sm capitalize">{weekLabel}</span>
-              <button onClick={() => navigateWeek(1)} className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                onClick={() => navigateWeek(1)}
+                className="p-2 rounded-xl border border-border hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -182,13 +199,22 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
                 const isPast = dateStr < today;
 
                 return (
-                  <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''} ${isPast ? 'opacity-50' : ''}`}>
-                    <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
-                      <span className="text-xs text-muted-foreground font-medium">{dayNamesMap[lang]?.[i] || dayNamesMap.en[i]}</span>
+                  <div
+                    key={dateStr}
+                    className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''} ${isPast ? 'opacity-50' : ''}`}
+                  >
+                    <div
+                      className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}
+                    >
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {dayNamesMap[lang]?.[i] || dayNamesMap.en[i]}
+                      </span>
                       <span className={`font-heading font-semibold text-sm ${isToday ? 'text-primary' : ''}`}>
                         {day.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-auto">{freeSlots.length} {t('available')}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        {freeSlots.length} {t('available')}
+                      </span>
                     </div>
                     <div className="p-3 flex flex-wrap gap-1.5">
                       {workHours.map((hour) => {
@@ -253,7 +279,10 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
           >
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <button onClick={() => setStep(1)} className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
+                <button
+                  onClick={() => setStep(1)}
+                  className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
@@ -307,7 +336,10 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
               </div>
 
               <div className="flex gap-3 justify-end">
-                <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors">
+                <button
+                  onClick={onClose}
+                  className="px-5 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60 transition-colors"
+                >
                   {t('cancel')}
                 </button>
                 <button

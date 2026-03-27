@@ -50,7 +50,40 @@ type PatientFormPayload = {
 const DEFAULT_DOCTOR_NAME = 'Верховський Олександр';
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
-const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {18:{imageNumber:1,mirrored:false},17:{imageNumber:2,mirrored:false},16:{imageNumber:3,mirrored:false},15:{imageNumber:4,mirrored:false},14:{imageNumber:5,mirrored:false},13:{imageNumber:6,mirrored:false},12:{imageNumber:7,mirrored:false},11:{imageNumber:8,mirrored:false},21:{imageNumber:8,mirrored:true},22:{imageNumber:7,mirrored:true},23:{imageNumber:6,mirrored:true},24:{imageNumber:5,mirrored:true},25:{imageNumber:4,mirrored:true},26:{imageNumber:3,mirrored:true},27:{imageNumber:2,mirrored:true},28:{imageNumber:1,mirrored:true},48:{imageNumber:24,mirrored:false},47:{imageNumber:23,mirrored:false},46:{imageNumber:22,mirrored:false},45:{imageNumber:22,mirrored:false},44:{imageNumber:21,mirrored:false},43:{imageNumber:20,mirrored:false},42:{imageNumber:19,mirrored:false},41:{imageNumber:18,mirrored:false},31:{imageNumber:18,mirrored:true},32:{imageNumber:19,mirrored:true},33:{imageNumber:20,mirrored:true},34:{imageNumber:21,mirrored:true},35:{imageNumber:22,mirrored:true},36:{imageNumber:22,mirrored:true},37:{imageNumber:23,mirrored:true},38:{imageNumber:24,mirrored:true}};
+const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {
+  18: { imageNumber: 1, mirrored: false },
+  17: { imageNumber: 2, mirrored: false },
+  16: { imageNumber: 3, mirrored: false },
+  15: { imageNumber: 4, mirrored: false },
+  14: { imageNumber: 5, mirrored: false },
+  13: { imageNumber: 6, mirrored: false },
+  12: { imageNumber: 7, mirrored: false },
+  11: { imageNumber: 8, mirrored: false },
+  21: { imageNumber: 8, mirrored: true },
+  22: { imageNumber: 7, mirrored: true },
+  23: { imageNumber: 6, mirrored: true },
+  24: { imageNumber: 5, mirrored: true },
+  25: { imageNumber: 4, mirrored: true },
+  26: { imageNumber: 3, mirrored: true },
+  27: { imageNumber: 2, mirrored: true },
+  28: { imageNumber: 1, mirrored: true },
+  48: { imageNumber: 24, mirrored: false },
+  47: { imageNumber: 23, mirrored: false },
+  46: { imageNumber: 22, mirrored: false },
+  45: { imageNumber: 22, mirrored: false },
+  44: { imageNumber: 21, mirrored: false },
+  43: { imageNumber: 20, mirrored: false },
+  42: { imageNumber: 19, mirrored: false },
+  41: { imageNumber: 18, mirrored: false },
+  31: { imageNumber: 18, mirrored: true },
+  32: { imageNumber: 19, mirrored: true },
+  33: { imageNumber: 20, mirrored: true },
+  34: { imageNumber: 21, mirrored: true },
+  35: { imageNumber: 22, mirrored: true },
+  36: { imageNumber: 22, mirrored: true },
+  37: { imageNumber: 23, mirrored: true },
+  38: { imageNumber: 24, mirrored: true },
+};
 const patientSearchCache = new Map<string, PatientSummary[]>();
 
 const buildPatientSearchQuery = (lastName: string, firstName: string, phone: string) => {
@@ -63,7 +96,9 @@ const formatPatientName = (patient: PatientSummary | null) =>
   [patient?.lastName, patient?.firstName, patient?.middleName].filter(Boolean).join(' ').trim();
 
 const findDefaultDoctor = (doctors: Doctor[]) =>
-  doctors.find((doctor) => doctor.name.trim().toLowerCase() === DEFAULT_DOCTOR_NAME.toLowerCase()) ?? doctors[0] ?? null;
+  doctors.find((doctor) => doctor.name.trim().toLowerCase() === DEFAULT_DOCTOR_NAME.toLowerCase()) ??
+  doctors[0] ??
+  null;
 
 const buildDraft = (lastName: string, firstName: string, phone: string): PatientDraft => ({
   lastName: lastName.trim(),
@@ -91,7 +126,17 @@ const mergePatients = (items: ApiPatient[]) => {
   return Array.from(unique.values());
 };
 
-function ToothButton({ tooth, selected, isUpper, onClick }: { tooth: number; selected: boolean; isUpper: boolean; onClick: () => void }) {
+function ToothButton({
+  tooth,
+  selected,
+  isUpper,
+  onClick,
+}: {
+  tooth: number;
+  selected: boolean;
+  isUpper: boolean;
+  onClick: () => void;
+}) {
   const mapped = TOOTH_IMAGE_MAP[tooth];
 
   return (
@@ -100,7 +145,9 @@ function ToothButton({ tooth, selected, isUpper, onClick }: { tooth: number; sel
       onClick={onClick}
       className={cn(
         'flex min-w-0 flex-col items-center rounded-[18px] border px-1 py-2 transition-all',
-        selected ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_10px_24px_rgba(16,185,129,0.18)]' : 'border-border/60 bg-background hover:border-emerald-400/50 hover:bg-muted/30',
+        selected
+          ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_10px_24px_rgba(16,185,129,0.18)]'
+          : 'border-border/60 bg-background hover:border-emerald-400/50 hover:bg-muted/30',
       )}
     >
       {isUpper && <span className="mb-1 text-[11px] font-medium text-muted-foreground">{tooth}</span>}
@@ -181,18 +228,32 @@ function PatientModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="patient-last-name">{t('lastName')}</Label>
-              <Input id="patient-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
+              <Input
+                id="patient-last-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="patient-first-name">{t('firstName')}</Label>
-              <Input id="patient-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
+              <Input
+                id="patient-first-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-[1fr_130px] gap-4">
             <div className="space-y-2">
               <Label htmlFor="patient-middle-name">{t('middleName')}</Label>
-              <Input id="patient-middle-name" value={middleName} onChange={(event) => setMiddleName(event.target.value)} />
+              <Input
+                id="patient-middle-name"
+                value={middleName}
+                onChange={(event) => setMiddleName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t('gender')}</Label>
@@ -215,7 +276,12 @@ function PatientModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="patient-date">{t('dateOfBirth')}</Label>
-              <Input id="patient-date" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} />
+              <Input
+                id="patient-date"
+                type="date"
+                value={dateOfBirth}
+                onChange={(event) => setDateOfBirth(event.target.value)}
+              />
             </div>
           </div>
 
@@ -295,8 +361,12 @@ export default function Xrays() {
   const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
   const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
   const searchAbortRef = useRef<AbortController | null>(null);
-  const canCreate = hasSearched && matches.length === 0 && lastName.trim().length > 0 && firstName.trim().length > 0 && phone.trim().length > 0;
-
+  const canCreate =
+    hasSearched &&
+    matches.length === 0 &&
+    lastName.trim().length > 0 &&
+    firstName.trim().length > 0 &&
+    phone.trim().length > 0;
 
   useEffect(() => {
     const currentQuery = buildPatientSearchQuery(lastName, firstName, phone);
@@ -374,7 +444,9 @@ export default function Xrays() {
     setError('');
 
     try {
-      const results = mergePatients(await searchPatientsMutation.mutateAsync({ query: trimmedQuery, limit: 20, signal: controller.signal }));
+      const results = mergePatients(
+        await searchPatientsMutation.mutateAsync({ query: trimmedQuery, limit: 20, signal: controller.signal }),
+      );
       patientSearchCache.set(cacheKey, results);
       setMatches(results);
       setHasSearched(true);
@@ -433,7 +505,10 @@ export default function Xrays() {
     setOriginalUrl(null);
     setZoom(1);
     try {
-      const nextSession = await startXraySessionMutation.mutateAsync({ patientId: selectedPatient.id, toothId: selectedTooth });
+      const nextSession = await startXraySessionMutation.mutateAsync({
+        patientId: selectedPatient.id,
+        toothId: selectedTooth,
+      });
       setSessionState(nextSession);
       setStep('capture');
     } catch (sessionError) {
@@ -470,37 +545,61 @@ export default function Xrays() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {errorMessage && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{errorMessage}</div>}
+        {errorMessage && (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        )}
 
         {step === 'patient' && (
           <section className="mx-auto max-w-3xl rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold">{t('xraySelectPatientTitle')}</h1>
-              <p className="text-sm text-muted-foreground">
-                {t('xraySelectPatientDescription')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('xraySelectPatientDescription')}</p>
             </div>
 
             <form onSubmit={handleSearchSubmit}>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="xray-last-name">{t('lastName')}</Label>
-                  <Input id="xray-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} onBlur={triggerSearch} placeholder={t('lastName')} />
+                  <Input
+                    id="xray-last-name"
+                    value={lastName}
+                    onChange={(event) => setLastName(event.target.value)}
+                    onBlur={triggerSearch}
+                    placeholder={t('lastName')}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="xray-first-name">{t('firstName')}</Label>
-                  <Input id="xray-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} onBlur={triggerSearch} placeholder={t('firstName')} />
+                  <Input
+                    id="xray-first-name"
+                    value={firstName}
+                    onChange={(event) => setFirstName(event.target.value)}
+                    onBlur={triggerSearch}
+                    placeholder={t('firstName')}
+                  />
                 </div>
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-[1fr_auto]">
                 <div className="space-y-2">
                   <Label htmlFor="xray-phone">{t('phone')}</Label>
-                  <Input id="xray-phone" value={phone} onChange={(event) => setPhone(event.target.value)} onBlur={triggerSearch} placeholder="+380..." />
+                  <Input
+                    id="xray-phone"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    onBlur={triggerSearch}
+                    placeholder="+380..."
+                  />
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" variant="outline">
-                    {isSearching ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                    {isSearching ? (
+                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="mr-2 h-4 w-4" />
+                    )}
                     {t('xraySearchButton')}
                   </Button>
                 </div>
@@ -517,7 +616,9 @@ export default function Xrays() {
 
             {hasSearched && (
               <div className="mt-4 rounded-[24px] border border-border/60 bg-muted/20 p-3">
-                <p className="mb-3 text-sm font-medium">{matches.length > 0 ? t('xrayMatchesFound') : t('xrayNoMatches')}</p>
+                <p className="mb-3 text-sm font-medium">
+                  {matches.length > 0 ? t('xrayMatchesFound') : t('xrayNoMatches')}
+                </p>
                 {matches.length > 0 ? (
                   <ScrollArea className="h-[260px]">
                     <div className="space-y-2 pr-2">
@@ -563,7 +664,13 @@ export default function Xrays() {
               <div className="overflow-x-auto">
                 <div className="flex min-w-[720px] justify-between gap-2">
                   {UPPER_TEETH.map((tooth) => (
-                    <ToothButton key={tooth} tooth={tooth} isUpper selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />
+                    <ToothButton
+                      key={tooth}
+                      tooth={tooth}
+                      isUpper
+                      selected={selectedTooth === tooth}
+                      onClick={() => setSelectedTooth(tooth)}
+                    />
                   ))}
                 </div>
               </div>
@@ -572,16 +679,32 @@ export default function Xrays() {
               <div className="overflow-x-auto">
                 <div className="flex min-w-[720px] justify-between gap-2">
                   {LOWER_TEETH.map((tooth) => (
-                    <ToothButton key={tooth} tooth={tooth} isUpper={false} selected={selectedTooth === tooth} onClick={() => setSelectedTooth(tooth)} />
+                    <ToothButton
+                      key={tooth}
+                      tooth={tooth}
+                      isUpper={false}
+                      selected={selectedTooth === tooth}
+                      onClick={() => setSelectedTooth(tooth)}
+                    />
                   ))}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">{selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}</p>
-              <Button onClick={startCapture} disabled={!selectedTooth || startXraySessionMutation.isPending} className="h-12 rounded-2xl px-6 text-base">
-                {startXraySessionMutation.isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+              <p className="text-sm text-muted-foreground">
+                {selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}
+              </p>
+              <Button
+                onClick={startCapture}
+                disabled={!selectedTooth || startXraySessionMutation.isPending}
+                className="h-12 rounded-2xl px-6 text-base"
+              >
+                {startXraySessionMutation.isPending ? (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="mr-2 h-4 w-4" />
+                )}
                 {t('xrayStartCapture')}
               </Button>
             </div>
@@ -637,7 +760,9 @@ export default function Xrays() {
               </div>
               <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-3">
                 <p className="text-sm font-medium">{session.patientName}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{t('xrayToothLabel')} FDI {session.toothId}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('xrayToothLabel')} FDI {session.toothId}
+                </p>
               </div>
             </div>
 
@@ -645,17 +770,33 @@ export default function Xrays() {
               <label className="flex items-center gap-3 text-sm">
                 <ZoomIn className="h-4 w-4 text-muted-foreground" />
                 {t('xrayZoom')}
-                <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="w-40" />
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(event) => setZoom(Number(event.target.value))}
+                  className="w-40"
+                />
                 <span className="w-10 text-right text-muted-foreground">{zoom.toFixed(1)}x</span>
               </label>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => navigate('/dental-charts')}>{t('xrayGoToDentalCharts')}</Button>
-                <Button variant="outline" onClick={resetCapture}>{t('xrayNewCapture')}</Button>
+                <Button variant="outline" onClick={() => navigate('/dental-charts')}>
+                  {t('xrayGoToDentalCharts')}
+                </Button>
+                <Button variant="outline" onClick={resetCapture}>
+                  {t('xrayNewCapture')}
+                </Button>
               </div>
             </div>
 
             <div className="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(180deg,rgba(15,23,42,0.04),rgba(15,23,42,0.01))]">
-              <button type="button" onClick={() => setIsFullResOpen(true)} className="flex min-h-[68vh] w-full items-center justify-center overflow-auto p-6">
+              <button
+                type="button"
+                onClick={() => setIsFullResOpen(true)}
+                className="flex min-h-[68vh] w-full items-center justify-center overflow-auto p-6"
+              >
                 {isImageLoading || !previewUrl ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -698,7 +839,9 @@ export default function Xrays() {
                 style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
               />
             ) : (
-              <div className="flex min-h-[420px] items-center justify-center text-sm text-muted-foreground">{t('xrayOriginalLoading')}</div>
+              <div className="flex min-h-[420px] items-center justify-center text-sm text-muted-foreground">
+                {t('xrayOriginalLoading')}
+              </div>
             )}
           </div>
         </DialogContent>

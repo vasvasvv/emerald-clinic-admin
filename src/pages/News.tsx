@@ -17,7 +17,14 @@ interface NewsItem {
   hotOffer: boolean;
 }
 
-const emptyForm: Omit<NewsItem, 'id'> = { type: 'news', label: 'info', title: '', description: '', expiryDate: '', hotOffer: false };
+const emptyForm: Omit<NewsItem, 'id'> = {
+  type: 'news',
+  label: 'info',
+  title: '',
+  description: '',
+  expiryDate: '',
+  hotOffer: false,
+};
 
 const labelColors: Record<string, string> = {
   info: 'bg-info/20 text-info',
@@ -129,48 +136,56 @@ export default function News() {
         <div className="space-y-3">
           {loading ? (
             <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
-          ) : news.map((item, i) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="glass-panel-sm p-5"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${labelColors[item.label]}`}>
-                      {t(`${item.label}Label` as 'infoLabel' | 'newsLabel' | 'updateLabel')}
-                    </span>
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">
-                      {item.type === 'news' ? t('newsType') : t('promoType')}
-                    </span>
-                    {item.hotOffer && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                        <Flame className="w-3 h-3" /> {t('hotOffer')}
+          ) : (
+            news.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="glass-panel-sm p-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${labelColors[item.label]}`}>
+                        {t(`${item.label}Label` as 'infoLabel' | 'newsLabel' | 'updateLabel')}
                       </span>
+                      <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground">
+                        {item.type === 'news' ? t('newsType') : t('promoType')}
+                      </span>
+                      {item.hotOffer && (
+                        <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                          <Flame className="w-3 h-3" /> {t('hotOffer')}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-heading font-semibold">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                    {item.expiryDate && (
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Tag className="w-3 h-3" /> {t('expiryDate')}: {item.expiryDate}
+                      </p>
                     )}
                   </div>
-                  <h3 className="font-heading font-semibold">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                  {item.expiryDate && (
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Tag className="w-3 h-3" /> {t('expiryDate')}: {item.expiryDate}
-                    </p>
-                  )}
+                  <div className="flex flex-shrink-0 gap-1">
+                    <button
+                      onClick={() => openEdit(item)}
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(item.id)}
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-shrink-0 gap-1">
-                  <button onClick={() => openEdit(item)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => setDeletingId(item.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))
+          )}
         </div>
 
         <AnimatePresence>
@@ -191,19 +206,32 @@ export default function News() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newArticle')}</h2>
-                  <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"><X className="w-5 h-5" /></button>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('type')}</label>
-                    <select className="input-glass w-full" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'news' | 'promo' })}>
+                    <select
+                      className="input-glass w-full"
+                      value={form.type}
+                      onChange={(e) => setForm({ ...form, type: e.target.value as 'news' | 'promo' })}
+                    >
                       <option value="news">{t('newsType')}</option>
                       <option value="promo">{t('promoType')}</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('label')}</label>
-                    <select className="input-glass w-full" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value as 'info' | 'news' | 'update' })}>
+                    <select
+                      className="input-glass w-full"
+                      value={form.label}
+                      onChange={(e) => setForm({ ...form, label: e.target.value as 'info' | 'news' | 'update' })}
+                    >
                       <option value="info">{t('infoLabel')}</option>
                       <option value="news">{t('newsLabel')}</option>
                       <option value="update">{t('updateLabel')}</option>
@@ -211,15 +239,29 @@ export default function News() {
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('title')}</label>
-                    <input className="input-glass w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('description')}</label>
-                    <textarea className="input-glass w-full resize-none" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                    <textarea
+                      className="input-glass w-full resize-none"
+                      rows={4}
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('expiryDate')}</label>
-                    <input type="date" className="input-glass w-full" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} />
+                    <input
+                      type="date"
+                      className="input-glass w-full"
+                      value={form.expiryDate}
+                      onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                    />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
@@ -227,7 +269,9 @@ export default function News() {
                       onClick={() => setForm({ ...form, hotOffer: !form.hotOffer })}
                       className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${form.hotOffer ? 'bg-primary' : 'bg-muted'}`}
                     >
-                      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ${form.hotOffer ? 'left-[22px]' : 'left-0.5'}`} />
+                      <span
+                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-foreground transition-transform duration-200 ${form.hotOffer ? 'left-[22px]' : 'left-0.5'}`}
+                      />
                     </button>
                     <label className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Flame className="h-3.5 w-3.5" /> {t('hotOffer')}
@@ -235,8 +279,15 @@ export default function News() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setShowForm(false)} className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60">{t('cancel')}</button>
-                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>{t('save')}</button>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>
+                    {t('save')}
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

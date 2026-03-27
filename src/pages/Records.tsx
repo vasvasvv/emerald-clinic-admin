@@ -81,10 +81,7 @@ export default function Records() {
   const getRecordsForDate = (dateStr: string) =>
     filteredRecords.filter((record) => record.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
 
-  const monthDays = useMemo(
-    () => getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth()),
-    [currentDate],
-  );
+  const monthDays = useMemo(() => getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth()), [currentDate]);
 
   const navigateWeek = (direction: number) => {
     const next = new Date(currentDate);
@@ -141,7 +138,11 @@ export default function Records() {
             <h1 className="text-2xl font-heading font-bold">{t('records')}</h1>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <button onClick={() => setShowNewForm(true)} className="btn-accent flex items-center gap-2" disabled={saving}>
+              <button
+                onClick={() => setShowNewForm(true)}
+                className="btn-accent flex items-center gap-2"
+                disabled={saving}
+              >
                 <Plus className="w-4 h-4" />
                 {t('newRecord')}
               </button>
@@ -166,7 +167,9 @@ export default function Records() {
                 <button
                   onClick={() => setViewMode('week')}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    viewMode === 'week' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary/60'
+                    viewMode === 'week'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/60'
                   }`}
                 >
                   {t('week')}
@@ -174,7 +177,9 @@ export default function Records() {
                 <button
                   onClick={() => setViewMode('month')}
                   className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                    viewMode === 'month' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary/60'
+                    viewMode === 'month'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-secondary/60'
                   }`}
                 >
                   {t('month')}
@@ -183,7 +188,11 @@ export default function Records() {
             </div>
           </div>
 
-          {(error || loadError) && <p className="text-sm text-destructive">{error || (loadError instanceof Error ? loadError.message : 'Failed to load records')}</p>}
+          {(error || loadError) && (
+            <p className="text-sm text-destructive">
+              {error || (loadError instanceof Error ? loadError.message : 'Failed to load records')}
+            </p>
+          )}
 
           <div className="flex items-center justify-between">
             <button
@@ -192,7 +201,9 @@ export default function Records() {
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="font-heading font-semibold text-lg capitalize">{viewMode === 'week' ? weekRangeLabel : monthLabel}</span>
+            <span className="font-heading font-semibold text-lg capitalize">
+              {viewMode === 'week' ? weekRangeLabel : monthLabel}
+            </span>
             <button
               onClick={() => (viewMode === 'week' ? navigateWeek(1) : navigateMonth(1))}
               className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
@@ -202,16 +213,28 @@ export default function Records() {
           </div>
 
           {viewMode === 'week' ? (
-            <motion.div key={monday.getTime()} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.div
+              key={monday.getTime()}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
               {weekDays.map((day, index) => {
                 const dateStr = formatDateKey(day);
                 const dayRecords = getRecordsForDate(dateStr);
                 const isToday = dateStr === today;
 
                 return (
-                  <div key={dateStr} className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}>
-                    <div className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}>
-                      <span className="text-xs text-muted-foreground font-medium">{dayNames[lang]?.[index] || dayNames.en[index]}</span>
+                  <div
+                    key={dateStr}
+                    className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}
+                  >
+                    <div
+                      className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}
+                    >
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {dayNames[lang]?.[index] || dayNames.en[index]}
+                      </span>
                       <span className={`font-heading font-semibold ${isToday ? 'text-primary' : ''}`}>
                         {day.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                       </span>
@@ -228,7 +251,10 @@ export default function Records() {
                     ) : (
                       <div className="divide-y divide-border/40">
                         {dayRecords.map((record) => (
-                          <div key={record.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/30 transition-colors">
+                          <div
+                            key={record.id}
+                            className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
+                          >
                             <span className="text-sm font-semibold text-accent w-12 shrink-0">{record.time}</span>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium truncate">{record.clientName}</p>
@@ -243,7 +269,12 @@ export default function Records() {
               })}
             </motion.div>
           ) : (
-            <motion.div key={currentDate.getMonth()} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-panel overflow-hidden">
+            <motion.div
+              key={currentDate.getMonth()}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="glass-panel overflow-hidden"
+            >
               <div className="grid grid-cols-7 border-b border-border">
                 {(dayNames[lang] || dayNames.en).concat(lang === 'uk' ? 'Нд' : 'Sun').map((name) => (
                   <div key={name} className="px-2 py-2 text-center text-xs text-muted-foreground font-medium">
@@ -266,16 +297,23 @@ export default function Records() {
                       key={dateStr}
                       className={`border-b border-r border-border/30 min-h-[80px] p-1.5 ${isToday ? 'bg-primary/5' : ''} ${isSunday ? 'opacity-50' : ''}`}
                     >
-                      <span className={`text-xs font-medium ${isToday ? 'bg-primary text-primary-foreground px-1.5 py-0.5 rounded-md' : 'text-muted-foreground'}`}>
+                      <span
+                        className={`text-xs font-medium ${isToday ? 'bg-primary text-primary-foreground px-1.5 py-0.5 rounded-md' : 'text-muted-foreground'}`}
+                      >
                         {day.getDate()}
                       </span>
                       <div className="mt-1 space-y-0.5">
                         {dayRecords.slice(0, 3).map((record) => (
-                          <div key={record.id} className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate">
+                          <div
+                            key={record.id}
+                            className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate"
+                          >
                             {record.time} {extractFirstName(record.clientName)}
                           </div>
                         ))}
-                        {dayRecords.length > 3 && <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>}
+                        {dayRecords.length > 3 && (
+                          <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>
+                        )}
                       </div>
                     </div>
                   );

@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, LogOut, Stethoscope, ChevronLeft, ScanLine } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Calendar,
+  ClipboardList,
+  Users,
+  Newspaper,
+  Bell,
+  LogOut,
+  Stethoscope,
+  ChevronLeft,
+  ScanLine,
+} from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
@@ -33,24 +44,24 @@ const SIDEBAR_COLLAPSED_KEY = 'emerald-sidebar-collapsed';
 function Brand({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div className={`flex min-w-0 items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-      <img src={logoSrc} alt="Дентіс адмін" className={`${collapsed ? 'h-14 w-14' : 'h-16 w-16'} rounded-[1.4rem] object-cover shadow-[0_12px_24px_rgba(0,0,0,0.24)]`} />
+      <img
+        src={logoSrc}
+        alt="Дентіс адмін"
+        className={`${collapsed ? 'h-14 w-14' : 'h-16 w-16'} rounded-[1.4rem] object-cover shadow-[0_12px_24px_rgba(0,0,0,0.24)]`}
+      />
       {!collapsed && (
         <div className="min-w-0 leading-none">
           <p className="truncate font-heading text-[1.5rem] font-bold tracking-[-0.02em] text-foreground">Дентіс</p>
-          <p className="mt-1 truncate text-[0.78rem] font-light uppercase tracking-[0.28em] text-muted-foreground">Адмін</p>
+          <p className="mt-1 truncate text-[0.78rem] font-light uppercase tracking-[0.28em] text-muted-foreground">
+            Адмін
+          </p>
         </div>
       )}
     </div>
   );
 }
 
-function SidebarContent({
-  collapsed = false,
-  onCollapse,
-}: {
-  collapsed?: boolean;
-  onCollapse?: () => void;
-}) {
+function SidebarContent({ collapsed = false, onCollapse }: { collapsed?: boolean; onCollapse?: () => void }) {
   const { t } = useI18n();
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -81,7 +92,13 @@ function SidebarContent({
       <nav className="flex-1 px-2 py-4">
         <div className="space-y-1.5">
           {primaryNavItems.map((item) => (
-            <NavLink key={item.key} to={item.url} end={item.url === '/'} className={linkClass} activeClassName={activeClass}>
+            <NavLink
+              key={item.key}
+              to={item.url}
+              end={item.url === '/'}
+              className={linkClass}
+              activeClassName={activeClass}
+            >
               <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
               {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key)}</span>}
             </NavLink>
@@ -113,7 +130,9 @@ function SidebarContent({
 }
 
 export function AppSidebar() {
-  const [compactMode, setCompactMode] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1200 : false));
+  const [compactMode, setCompactMode] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 1200 : false,
+  );
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     if (window.innerWidth >= 1200) return false;

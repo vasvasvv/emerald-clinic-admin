@@ -111,9 +111,11 @@ export function resolveToothTemplateId(value: string | undefined): string {
   if (!normalized) return '';
 
   const matched = DENTAL_TEMPLATES.find((item) => {
-    return item.id.toLowerCase() === normalized
-      || item.label.toLowerCase() === normalized
-      || item.description.toLowerCase() === normalized;
+    return (
+      item.id.toLowerCase() === normalized ||
+      item.label.toLowerCase() === normalized ||
+      item.description.toLowerCase() === normalized
+    );
   });
 
   return matched?.id ?? '';
@@ -136,7 +138,8 @@ export function normalizeTooth(value: unknown): ToothRecord {
   const record = asRecord(value) as RawToothRecord;
   const description = normalizeString(record.description ?? record.status);
   const files = Array.isArray(record.files) ? record.files : [];
-  const templateId = normalizeString(record.templateId) || (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
+  const templateId =
+    normalizeString(record.templateId) || (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
 
   return {
     toothNumber: Number(record.toothNumber ?? record.tooth_number ?? 0),
@@ -202,7 +205,9 @@ export function normalizeDoctors(items: unknown): Doctor[] {
 
 export function resolveDoctorFilter(normalized: Doctor[], currentUser: User | null): string {
   if (currentUser?.role === 'doctor' && currentUser.name) {
-    const matched = normalized.find((doctor) => doctor.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase());
+    const matched = normalized.find(
+      (doctor) => doctor.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
+    );
     return matched?.id ?? normalized[0]?.id ?? 'all';
   }
 

@@ -1,11 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-  AUTH_CHANGED_EVENT,
-  clearAdminSession,
-  getAdminToken,
-  getAdminUser,
-  setAdminSession,
-} from '@/lib/auth';
+import { AUTH_CHANGED_EVENT, clearAdminSession, getAdminToken, getAdminUser, setAdminSession } from '@/lib/auth';
 
 interface AuthContextValue {
   token: string | null;

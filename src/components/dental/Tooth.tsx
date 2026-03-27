@@ -158,7 +158,16 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
         alignBottom ? 'justify-end' : 'justify-start',
       )}
     >
-      {isUpper && <span className={cn('w-full text-center font-medium leading-none text-muted-foreground', compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]')}>{number}</span>}
+      {isUpper && (
+        <span
+          className={cn(
+            'w-full text-center font-medium leading-none text-muted-foreground',
+            compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
+          )}
+        >
+          {number}
+        </span>
+      )}
       <canvas
         ref={canvasRef}
         width={canvasWidth}
@@ -172,7 +181,16 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
         )}
         style={{ imageRendering: 'auto' }}
       />
-      {!isUpper && <span className={cn('w-full text-center font-medium leading-none text-muted-foreground', compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]')}>{number}</span>}
+      {!isUpper && (
+        <span
+          className={cn(
+            'w-full text-center font-medium leading-none text-muted-foreground',
+            compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
+          )}
+        >
+          {number}
+        </span>
+      )}
     </div>
   );
 }

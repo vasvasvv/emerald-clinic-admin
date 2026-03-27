@@ -10,15 +10,10 @@ import { ToothModal } from '@/components/dental/ToothModal';
 import { VisitModal } from '@/components/dental/VisitModal';
 import { useDentalCharts } from '@/hooks/use-dental-charts';
 import { useI18n } from '@/lib/i18n';
-import {
-  canPerformAction,
-  getStoredAdminUser,
-} from '@/lib/dental-charts-utils';
+import { canPerformAction, getStoredAdminUser } from '@/lib/dental-charts-utils';
 import { cn } from '@/lib/utils';
 import type { ToothRecord } from '@/types/dental';
-import {
-  Printer,
-} from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 function useRecentSearches() {
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -85,7 +80,9 @@ export function DentalChartsWorkspace() {
   });
 
   useEffect(() => {
-    setSelectedPatientId((current) => (patients.some((patient) => patient.id === current) ? current : patients[0]?.id ?? ''));
+    setSelectedPatientId((current) =>
+      patients.some((patient) => patient.id === current) ? current : (patients[0]?.id ?? ''),
+    );
   }, [patients]);
 
   useEffect(() => {
@@ -127,10 +124,14 @@ export function DentalChartsWorkspace() {
   }, [patients, selectedDoctorId, genderFilter, newOldFilter]);
 
   const sortedVisits = useMemo(
-    () => [...(selectedPatient?.visits ?? [])].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
+    () =>
+      [...(selectedPatient?.visits ?? [])].sort(
+        (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime(),
+      ),
     [selectedPatient],
   );
-  const issueCount = selectedPatient?.dentalChart.filter((item) => item.description || item.notes || item.files.length > 0).length ?? 0;
+  const issueCount =
+    selectedPatient?.dentalChart.filter((item) => item.description || item.notes || item.files.length > 0).length ?? 0;
   const pastVisits = sortedVisits.filter((visit) => visit.type === 'past');
   const futureVisits = sortedVisits.filter((visit) => visit.type === 'future');
   const displayedPatients = isCompactLayout ? filteredPatients.slice(0, 10) : filteredPatients;
@@ -157,7 +158,12 @@ export function DentalChartsWorkspace() {
     await saveTooth(selectedPatient.id, selectedTooth, payload);
   };
 
-  const handleCreateVisit = async (payload: { date: string; type: 'past' | 'future'; notes: string; doctorId: string }) => {
+  const handleCreateVisit = async (payload: {
+    date: string;
+    type: 'past' | 'future';
+    notes: string;
+    doctorId: string;
+  }) => {
     if (!selectedPatient) return;
     await createVisit(selectedPatient.id, payload);
   };
@@ -196,7 +202,11 @@ export function DentalChartsWorkspace() {
           <h1 className="text-2xl font-heading font-bold">{t('dentalCharts')}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!shouldShowCompactPatientDetails && <Button variant="outline" onClick={() => void refresh()} disabled={loading || saving}>{t('refresh')}</Button>}
+          {!shouldShowCompactPatientDetails && (
+            <Button variant="outline" onClick={() => void refresh()} disabled={loading || saving}>
+              {t('refresh')}
+            </Button>
+          )}
           {selectedPatient && !shouldShowCompactPatientDetails && (
             <Button onClick={() => setShowForm043(true)} className="gap-2">
               <Printer className="h-4 w-4" />
@@ -206,7 +216,11 @@ export function DentalChartsWorkspace() {
         </div>
       </div>
 
-      {error && <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>}
+      {error && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className={cn('grid gap-4', !isCompactLayout && 'xl:grid-cols-[320px_minmax(0,1fr)]')}>
         <PatientList
@@ -301,7 +315,11 @@ export function DentalChartsWorkspace() {
         onSave={handleSaveTooth}
       />
 
-      <HistoryModal isOpen={Boolean(historyPatient)} onClose={() => setHistoryPatientId(null)} patient={historyPatient} />
+      <HistoryModal
+        isOpen={Boolean(historyPatient)}
+        onClose={() => setHistoryPatientId(null)}
+        patient={historyPatient}
+      />
 
       <ConfirmDialog
         open={Boolean(deletingPatientId)}

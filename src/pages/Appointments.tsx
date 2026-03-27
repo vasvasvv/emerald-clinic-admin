@@ -214,7 +214,9 @@ export default function Appointments() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">РљРµСЂСѓРІР°РЅРЅСЏ РїСЂРёР№РѕРјР°РјРё РїРѕ Р»С–РєР°СЂСЏС… С‚Р° РґР°С‚Р°С….</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              РљРµСЂСѓРІР°РЅРЅСЏ РїСЂРёР№РѕРјР°РјРё РїРѕ Р»С–РєР°СЂСЏС… С‚Р° РґР°С‚Р°С….
+            </p>
           </div>
           <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
             <Plus className="h-4 w-4" />
@@ -282,39 +284,60 @@ export default function Appointments() {
               </div>
 
               {filtered.map((appointment) => (
-                <div key={appointment.id} className="px-4 py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5">
+                <div
+                  key={appointment.id}
+                  className="px-4 py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5"
+                >
                   <div className="grid gap-3 lg:grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] lg:items-center">
                     <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                       <Clock3 className="h-4 w-4" />
                       {appointment.time}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('doctor')}</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                        {t('doctor')}
+                      </p>
                       <p className="text-sm font-medium text-foreground">{appointment.doctor}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{patientLabel}</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                        {patientLabel}
+                      </p>
                       <div className="flex items-center gap-2">
                         <UserRound className="h-4 w-4 text-muted-foreground" />
                         <p className="text-sm font-medium text-foreground">{appointment.clientName}</p>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('phone')}</p>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                        {t('phone')}
+                      </p>
                       <div className="flex items-center gap-2 text-sm text-foreground">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         {appointment.phone}
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">{t('status')}</p>
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[appointment.status]}`}>{t(appointment.status)}</span>
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                        {t('status')}
+                      </p>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[appointment.status]}`}
+                      >
+                        {t(appointment.status)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 lg:justify-end">
-                      <button onClick={() => openEdit(appointment)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
+                      <button
+                        onClick={() => openEdit(appointment)}
+                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button onClick={() => setDeletingId(appointment.id)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                      <button
+                        onClick={() => setDeletingId(appointment.id)}
+                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -344,7 +367,10 @@ export default function Appointments() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newAppointment')}</h2>
-                  <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60">
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"
+                  >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
@@ -355,7 +381,13 @@ export default function Appointments() {
                     <input
                       className="input-glass w-full"
                       value={form.lastName}
-                      onChange={(e) => setForm({ ...form, lastName: e.target.value, clientName: buildPatientName(e.target.value, form.firstName) })}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          lastName: e.target.value,
+                          clientName: buildPatientName(e.target.value, form.firstName),
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -363,14 +395,24 @@ export default function Appointments() {
                     <input
                       className="input-glass w-full"
                       value={form.firstName}
-                      onChange={(e) => setForm({ ...form, firstName: e.target.value, clientName: buildPatientName(form.lastName, e.target.value) })}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          firstName: e.target.value,
+                          clientName: buildPatientName(form.lastName, e.target.value),
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('phone')}</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <input className="input-glass w-full pl-10" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                      <input
+                        className="input-glass w-full pl-10"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      />
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -379,7 +421,12 @@ export default function Appointments() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('time')}</label>
-                    <input type="time" className="input-glass w-full" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+                    <input
+                      type="time"
+                      className="input-glass w-full"
+                      value={form.time}
+                      onChange={(e) => setForm({ ...form, time: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('doctor')}</label>
@@ -394,12 +441,20 @@ export default function Appointments() {
                   </div>
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('comment')}</label>
-                    <textarea className="input-glass w-full resize-none" rows={3} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
+                    <textarea
+                      className="input-glass w-full resize-none"
+                      rows={3}
+                      value={form.comment}
+                      onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                    />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setShowForm(false)} className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60">
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60"
+                  >
                     {t('cancel')}
                   </button>
                   <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>

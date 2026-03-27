@@ -1,5 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -109,7 +114,12 @@ export function PatientList({
           )}
         </div>
 
-        <Button variant="ghost" size="sm" className="mt-2 w-full justify-center text-xs text-muted-foreground" onClick={() => onSetAdvancedOpen((current) => !current)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 w-full justify-center text-xs text-muted-foreground"
+          onClick={() => onSetAdvancedOpen((current) => !current)}
+        >
           {isAdvancedOpen ? <ChevronUp className="mr-1 h-3 w-3" /> : <ChevronDown className="mr-1 h-3 w-3" />}
           Розширений фільтр
         </Button>
@@ -123,7 +133,9 @@ export function PatientList({
               <SelectContent>
                 <SelectItem value="all">Всі лікарі</SelectItem>
                 {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>{doctor.name}</SelectItem>
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

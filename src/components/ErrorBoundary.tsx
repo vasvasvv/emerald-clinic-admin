@@ -24,9 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="flex min-h-screen items-center justify-center bg-background p-8">
             <div className="glass-panel max-w-md p-8 text-center">
               <h2 className="mb-3 font-heading text-xl font-bold text-destructive">Щось пішло не так</h2>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {this.state.error?.message ?? 'Невідома помилка'}
-              </p>
+              <p className="mb-4 text-sm text-muted-foreground">{this.state.error?.message ?? 'Невідома помилка'}</p>
               <button onClick={() => window.location.reload()} className="btn-accent">
                 Перезавантажити
               </button>

@@ -90,13 +90,19 @@ export default function Dashboard() {
     () =>
       appointments
         .filter((appointment) => appointment.date === todayKey)
-        .filter((appointment) => toAppointmentDate(appointment.date, appointment.time).getTime() + 17 * 60 * 1000 > now.getTime())
+        .filter(
+          (appointment) =>
+            toAppointmentDate(appointment.date, appointment.time).getTime() + 17 * 60 * 1000 > now.getTime(),
+        )
         .sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, todayKey, now],
   );
 
   const tomorrowAppointments = useMemo(
-    () => appointments.filter((appointment) => appointment.date === tomorrowKey).sort((a, b) => a.time.localeCompare(b.time)),
+    () =>
+      appointments
+        .filter((appointment) => appointment.date === tomorrowKey)
+        .sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, tomorrowKey],
   );
 
@@ -141,11 +147,20 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-heading font-bold">{t('dashboard')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {new Date().toLocaleDateString('uk-UA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('uk-UA', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
             </p>
           </div>
 
-          {(error || loadError) && <p className="text-sm text-destructive">{error || (loadError instanceof Error ? loadError.message : 'Failed to load dashboard')}</p>}
+          {(error || loadError) && (
+            <p className="text-sm text-destructive">
+              {error || (loadError instanceof Error ? loadError.message : 'Failed to load dashboard')}
+            </p>
+          )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <motion.button
@@ -205,10 +220,17 @@ export default function Dashboard() {
             </motion.button>
           </div>
 
-          <motion.div key={activeView} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-panel">
+          <motion.div
+            key={activeView}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-panel"
+          >
             <div className="border-b border-border p-5">
               <h2 className="font-heading text-lg font-semibold">
-                {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} - {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
+                {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} -{' '}
+                {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
               </h2>
             </div>
             {loading ? (
@@ -220,7 +242,10 @@ export default function Dashboard() {
                 {displayedAppointments.map((appointment) => {
                   const doctorAccent = doctorAccentMap.get(appointment.doctor || 'Без лікаря') ?? doctorBadgePalette[0];
                   return (
-                    <div key={appointment.id} className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-colors duration-300 hover:bg-secondary/24">
+                    <div
+                      key={appointment.id}
+                      className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-colors duration-300 hover:bg-secondary/24"
+                    >
                       <div className="grid gap-3 lg:grid-cols-[90px_1fr_1.2fr_1fr] lg:items-center">
                         <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                           <Clock className="h-4 w-4" />
@@ -228,7 +253,9 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Лікар</p>
-                          <div className={`mt-1 inline-flex items-center gap-2 rounded-full border border-white/5 border-l-4 px-3 py-1.5 text-xs font-semibold ${doctorAccent}`}>
+                          <div
+                            className={`mt-1 inline-flex items-center gap-2 rounded-full border border-white/5 border-l-4 px-3 py-1.5 text-xs font-semibold ${doctorAccent}`}
+                          >
                             <Stethoscope className="h-3.5 w-3.5" />
                             {appointment.doctor || 'Без лікаря'}
                           </div>

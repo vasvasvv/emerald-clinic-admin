@@ -31,11 +31,7 @@ function buildRequestKey(endpoint: string, token?: string | null) {
   return `${token ?? 'anon'}:${endpoint}`;
 }
 
-export async function apiCall<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  token?: string | null
-): Promise<T> {
+export async function apiCall<T>(endpoint: string, options: RequestInit = {}, token?: string | null): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase();
   const canUseGetCache = method === 'GET' && !options.signal;
   const requestKey = canUseGetCache ? buildRequestKey(endpoint, token) : null;
@@ -54,7 +50,7 @@ export async function apiCall<T>(
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
     ...options.headers,
   };
 
@@ -96,11 +92,7 @@ export async function apiCall<T>(
   return pending;
 }
 
-export async function apiFetch(
-  endpoint: string,
-  options: RequestInit = {},
-  token?: string | null
-): Promise<Response> {
+export async function apiFetch(endpoint: string, options: RequestInit = {}, token?: string | null): Promise<Response> {
   const headers: HeadersInit = {
     ...options.headers,
   };
@@ -136,23 +128,17 @@ export async function apiFetch(
   return response;
 }
 
-export async function apiBlob(
-  endpoint: string,
-  token?: string | null
-): Promise<Blob> {
+export async function apiBlob(endpoint: string, token?: string | null): Promise<Blob> {
   const response = await apiFetch(endpoint, {}, token);
   return response.blob();
 }
 
 export const api = {
   login: (email: string, password: string) =>
-    apiCall<ApiLoginResponse>(
-      '/api/auth/login',
-      {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      }
-    ),
+    apiCall<ApiLoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
 
   getAppointments: (token: string, date?: string) =>
     apiCall<ApiAppointment[]>(`/api/appointments${date ? `?date=${date}` : ''}`, {}, token),
@@ -163,17 +149,14 @@ export const api = {
   deleteAppointment: (token: string, id: number) =>
     apiCall<{ ok: boolean }>(`/api/appointments/${id}`, { method: 'DELETE' }, token),
 
-  getNews: (token: string) =>
-    apiCall<ApiNewsItem[]>('/api/news', {}, token),
+  getNews: (token: string) => apiCall<ApiNewsItem[]>('/api/news', {}, token),
   createNews: (token: string, data: Record<string, unknown>) =>
     apiCall<ApiNewsItem>('/api/news', { method: 'POST', body: JSON.stringify(data) }, token),
   updateNews: (token: string, id: number, data: Record<string, unknown>) =>
     apiCall<ApiNewsItem>(`/api/news/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token),
-  deleteNews: (token: string, id: number) =>
-    apiCall<{ ok: boolean }>(`/api/news/${id}`, { method: 'DELETE' }, token),
+  deleteNews: (token: string, id: number) => apiCall<{ ok: boolean }>(`/api/news/${id}`, { method: 'DELETE' }, token),
 
-  getSiteDoctors: (token: string) =>
-    apiCall<ApiSiteDoctor[]>('/api/site/doctors', {}, token),
+  getSiteDoctors: (token: string) => apiCall<ApiSiteDoctor[]>('/api/site/doctors', {}, token),
   createSiteDoctor: (token: string, data: Record<string, unknown>) =>
     apiCall<ApiSiteDoctor>('/api/site/doctors', { method: 'POST', body: JSON.stringify(data) }, token),
   updateSiteDoctor: (token: string, id: number, data: Record<string, unknown>) =>
@@ -200,7 +183,7 @@ export const api = {
       token,
     );
 
-    const data = await response.json().catch(() => ({})) as {
+    const data = (await response.json().catch(() => ({}))) as {
       url?: string;
       photo_url?: string;
       result?: { url?: string; variants?: string[] };
@@ -214,11 +197,9 @@ export const api = {
     return uploadedUrl;
   },
 
-  getSystemDoctors: (token: string) =>
-    apiCall<ApiDoctor[]>('/api/doctors', {}, token),
+  getSystemDoctors: (token: string) => apiCall<ApiDoctor[]>('/api/doctors', {}, token),
 
-  getUsers: (token: string) =>
-    apiCall<ApiUser[]>('/api/users', {}, token),
+  getUsers: (token: string) => apiCall<ApiUser[]>('/api/users', {}, token),
 
   getPatients: (token: string, query?: string) =>
     apiCall<ApiPatient[]>(`/api/patients${query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`, {}, token),
@@ -235,24 +216,27 @@ export const api = {
     apiCall<ApiXraySession>('/api/sessions/start', { method: 'POST', body: JSON.stringify(data) }, token),
   getActiveXraySession: (token: string, sessionId?: number) =>
     apiCall<ApiXraySession | null>(`/api/sessions/active${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, token),
-  getProtectedImageBlob: (token: string, url: string) =>
-    apiBlob(url.startsWith('/api/') ? url.slice(4) : url, token),
+  getProtectedImageBlob: (token: string, url: string) => apiBlob(url.startsWith('/api/') ? url.slice(4) : url, token),
 
-  getPushCounts: (token: string) =>
-    apiCall<ApiPushCounts>('/api/push/count', {}, token),
-  getNotificationLogs: (token: string) =>
-    apiCall<ApiNotificationLog[]>('/api/notifications/logs', {}, token),
+  getPushCounts: (token: string) => apiCall<ApiPushCounts>('/api/push/count', {}, token),
+  getNotificationLogs: (token: string) => apiCall<ApiNotificationLog[]>('/api/notifications/logs', {}, token),
   sendPushToAll: (token: string, data: { title?: string; body: string; url?: string }) =>
-    apiCall<{ sent: number; failed: number; total: number }>('/api/push/send', { method: 'POST', body: JSON.stringify(data) }, token),
+    apiCall<{ sent: number; failed: number; total: number }>(
+      '/api/push/send',
+      { method: 'POST', body: JSON.stringify(data) },
+      token,
+    ),
   sendPushToPhone: (token: string, data: { phone: string; title?: string; body: string; url?: string }) =>
-    apiCall<{ sent: number; failed: number; total: number }>('/api/push/send-to', { method: 'POST', body: JSON.stringify(data) }, token),
+    apiCall<{ sent: number; failed: number; total: number }>(
+      '/api/push/send-to',
+      { method: 'POST', body: JSON.stringify(data) },
+      token,
+    ),
 
   getTelegramAppointments: (token: string, date?: string) =>
     apiCall<ApiTelegramAppointment[]>(`/api/telegram/appointments${date ? `?date=${date}` : ''}`, {}, token),
-  getTelegramPending: (token: string) =>
-    apiCall<ApiTelegramPending[]>('/api/telegram/pending', {}, token),
-  getTelegramUpcoming: (token: string) =>
-    apiCall<ApiTelegramDebugResult>('/api/telegram/debug/upcoming', {}, token),
+  getTelegramPending: (token: string) => apiCall<ApiTelegramPending[]>('/api/telegram/pending', {}, token),
+  getTelegramUpcoming: (token: string) => apiCall<ApiTelegramDebugResult>('/api/telegram/debug/upcoming', {}, token),
   triggerTelegramCron: (token: string) =>
     apiCall<ApiTelegramDebugResult>('/api/telegram/debug/trigger', { method: 'POST' }, token),
   linkTelegramPhone: (token: string, data: { phone: string; telegram_chat_id: string }) =>

@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Send, Bell, Clock, CheckCircle, Phone, RefreshCw, Link2, MessageCircle, MessageSquareShare, TimerReset, Siren, Download, Smartphone } from 'lucide-react';
+import {
+  Send,
+  Bell,
+  Clock,
+  CheckCircle,
+  Phone,
+  RefreshCw,
+  Link2,
+  MessageCircle,
+  MessageSquareShare,
+  TimerReset,
+  Siren,
+  Download,
+  Smartphone,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   useLinkTelegramPhone,
@@ -17,7 +31,12 @@ import {
 } from '@/hooks/use-notifications';
 import { formatDateKey } from '@/lib/date-utils';
 import { extractFirstName, normalizePhone } from '@/lib/patient-utils';
-import type { ApiNotificationLog, ApiTelegramAppointment, ApiTelegramDebugResult, ApiTelegramPending } from '@/types/api';
+import type {
+  ApiNotificationLog,
+  ApiTelegramAppointment,
+  ApiTelegramDebugResult,
+  ApiTelegramPending,
+} from '@/types/api';
 
 type DeferredInstallPrompt = Event & {
   prompt: () => Promise<void>;
@@ -42,11 +61,16 @@ export default function Notifications() {
   const [copied, setCopied] = useState(false);
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<DeferredInstallPrompt | null>(null);
   const [installingPwa, setInstallingPwa] = useState(false);
-  const [pwaInstalled, setPwaInstalled] = useState(typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches);
+  const [pwaInstalled, setPwaInstalled] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches,
+  );
 
   const pushCountsQuery = usePushCounts();
   const notificationLogsQuery = useNotificationLogs();
-  const telegramAppointmentsQuery = useTelegramAppointments(filterDate, section === 'telegram' && telegramTab === 'appointments');
+  const telegramAppointmentsQuery = useTelegramAppointments(
+    filterDate,
+    section === 'telegram' && telegramTab === 'appointments',
+  );
   const telegramPendingQuery = useTelegramPending(section === 'telegram' && telegramTab === 'pending');
   const telegramDebugQuery = useTelegramDebug(section === 'telegram' && telegramTab === 'settings');
   const sendPushToAll = useSendPushToAll();
@@ -104,49 +128,75 @@ export default function Notifications() {
   const handlePushSend = async () => {
     if (!pushMessage.trim()) return;
     if (pushTarget === 'targeted' && !pushPhone.trim()) return setError('Вкажи номер телефону для цільового push.');
-    setError(''); setResult('');
+    setError('');
+    setResult('');
     try {
-      const response = pushTarget === 'all'
-        ? await sendPushToAll.mutateAsync({ body: pushMessage.trim() })
-        : await sendPushToPhone.mutateAsync({ phone: pushPhone.trim(), body: pushMessage.trim() });
+      const response =
+        pushTarget === 'all'
+          ? await sendPushToAll.mutateAsync({ body: pushMessage.trim() })
+          : await sendPushToPhone.mutateAsync({ phone: pushPhone.trim(), body: pushMessage.trim() });
       setResult(`Надіслано: ${response.sent}, помилки: ${response.failed}`);
-      setPushMessage(''); setPushPhone('');
-    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedSendPush')); }
+      setPushMessage('');
+      setPushPhone('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('notificationsFailedSendPush'));
+    }
   };
   const handleSendTelegram = async () => {
     if (!sendModal?.telegram_chat_id || !sendText.trim()) return;
-    setError(''); setResult('');
+    setError('');
+    setResult('');
     try {
       await sendTelegramMessage.mutateAsync({ chat_id: sendModal.telegram_chat_id, text: sendText.trim() });
       setResult(t('notificationsTelegramSent'));
-      setSendModal(null); setSendText('');
-    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedSendTelegram')); }
+      setSendModal(null);
+      setSendText('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('notificationsFailedSendTelegram'));
+    }
   };
   const handleLinkTelegram = async () => {
     if (!linkModal) return;
     const phone = normalizePhone(linkPhone);
     if (!phone) return setError('Формат телефону: +380XXXXXXXXX або 0XXXXXXXXX');
-    setError(''); setResult('');
+    setError('');
+    setResult('');
     try {
       const response = await linkTelegramPhone.mutateAsync({ phone, telegram_chat_id: linkModal.chat_id });
-      setResult(response.updated > 0 ? t('notificationsLinkedRecords').replace('{{count}}', String(response.updated)) : t('notificationsNoRecordsForPhone'));
-      setLinkModal(null); setLinkPhone('');
-    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedLinkTelegram')); }
+      setResult(
+        response.updated > 0
+          ? t('notificationsLinkedRecords').replace('{{count}}', String(response.updated))
+          : t('notificationsNoRecordsForPhone'),
+      );
+      setLinkModal(null);
+      setLinkPhone('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('notificationsFailedLinkTelegram'));
+    }
   };
   const handleTriggerCron = async () => {
-    setError(''); setResult('');
+    setError('');
+    setResult('');
     try {
       const data = await triggerTelegramCron.mutateAsync();
-      setResult(t('notificationsCronResult').replace('{{remind24}}', String(data.remind24)).replace('{{remind1}}', String(data.remind1)));
-    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedTriggerCron')); }
-      };
+      setResult(
+        t('notificationsCronResult')
+          .replace('{{remind24}}', String(data.remind24))
+          .replace('{{remind1}}', String(data.remind1)),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('notificationsFailedTriggerCron'));
+    }
+  };
 
   const handleInstallPwa = async () => {
     if (!deferredInstallPrompt) {
       setResult(t('notificationsPwaInstallAvailableLater'));
       return;
     }
-    setInstallingPwa(true); setError(''); setResult('');
+    setInstallingPwa(true);
+    setError('');
+    setResult('');
     try {
       await deferredInstallPrompt.prompt();
       const choice = await deferredInstallPrompt.userChoice;
@@ -156,11 +206,24 @@ export default function Notifications() {
         setResult(t('notificationsPwaInstallDismissed'));
       }
       setDeferredInstallPrompt(null);
-    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsPwaInstallFailed')); }
-    finally { setInstallingPwa(false); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('notificationsPwaInstallFailed'));
+    } finally {
+      setInstallingPwa(false);
+    }
   };
 
-  const StatCard = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string | number; accent: string }) => (
+  const StatCard = ({
+    icon,
+    label,
+    value,
+    accent,
+  }: {
+    icon: React.ReactNode;
+    label: string;
+    value: string | number;
+    accent: string;
+  }) => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stat-card">
       <div className="flex items-center gap-3 mb-3">
         <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${accent}`}>{icon}</div>
@@ -170,11 +233,26 @@ export default function Notifications() {
     </motion.div>
   );
 
-  const DebugColumn = ({ title, subtitle, items, icon }: { title: string; subtitle: string; items: Array<{ id: number; patient_name: string; appointment_at: string }>; icon: React.ReactNode }) => (
+  const DebugColumn = ({
+    title,
+    subtitle,
+    items,
+    icon,
+  }: {
+    title: string;
+    subtitle: string;
+    items: Array<{ id: number; patient_name: string; appointment_at: string }>;
+    icon: React.ReactNode;
+  }) => (
     <div className="rounded-2xl border border-border p-4 space-y-3">
-      <div className="flex items-center gap-2">{icon}<h3 className="font-semibold">{title}</h3></div>
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="font-semibold">{title}</h3>
+      </div>
       <p className="text-xs text-muted-foreground">{subtitle}</p>
-      {items.length === 0 ? <p className="text-sm text-muted-foreground">{t('xrayNoMatches')}</p> : (
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t('xrayNoMatches')}</p>
+      ) : (
         <div className="space-y-2">
           {items.map((item) => (
             <div key={item.id} className="rounded-xl bg-secondary/40 px-3 py-2">
@@ -195,39 +273,108 @@ export default function Notifications() {
         {result && <p className="text-sm text-success">{result}</p>}
 
         <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-          <button onClick={() => setSection('telegram')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Send className="h-4 w-4" />{t('notificationsSectionTelegram')}</button>
-          <button onClick={() => setSection('push')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Bell className="h-4 w-4" />{t('notificationsSectionPush')}</button>
-          <button onClick={() => setSection('pwa')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Smartphone className="h-4 w-4" />{t('notificationsSectionPwa')}</button>
+          <button
+            onClick={() => setSection('telegram')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+          >
+            <Send className="h-4 w-4" />
+            {t('notificationsSectionTelegram')}
+          </button>
+          <button
+            onClick={() => setSection('push')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+          >
+            <Bell className="h-4 w-4" />
+            {t('notificationsSectionPush')}
+          </button>
+          <button
+            onClick={() => setSection('pwa')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+          >
+            <Smartphone className="h-4 w-4" />
+            {t('notificationsSectionPwa')}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StatCard icon={<Send className="w-5 h-5 text-accent" />} label={t('telegramContactsLabel')} value={loading ? '...' : telegramContacts} accent="bg-accent/15" />
-          <StatCard icon={<Phone className="w-5 h-5 text-primary" />} label={t('pushSubscribersLabel')} value={loading ? '...' : pushSubscriptions} accent="bg-primary/15" />
+          <StatCard
+            icon={<Send className="w-5 h-5 text-accent" />}
+            label={t('telegramContactsLabel')}
+            value={loading ? '...' : telegramContacts}
+            accent="bg-accent/15"
+          />
+          <StatCard
+            icon={<Phone className="w-5 h-5 text-primary" />}
+            label={t('pushSubscribersLabel')}
+            value={loading ? '...' : pushSubscriptions}
+            accent="bg-primary/15"
+          />
         </div>
 
         {section === 'push' && (
           <>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-panel p-6 space-y-4"
+            >
               <h2 className="font-heading font-semibold">{t('send')}</h2>
               <div className="flex gap-3 flex-wrap">
-                <button onClick={() => setPushTarget('all')} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${pushTarget === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}><Bell className="w-4 h-4 inline mr-1.5" />{t('sendToAll')}</button>
-                <button onClick={() => setPushTarget('targeted')} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${pushTarget === 'targeted' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}><Send className="w-4 h-4 inline mr-1.5" />{t('sendTargeted')}</button>
+                <button
+                  onClick={() => setPushTarget('all')}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${pushTarget === 'all' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+                >
+                  <Bell className="w-4 h-4 inline mr-1.5" />
+                  {t('sendToAll')}
+                </button>
+                <button
+                  onClick={() => setPushTarget('targeted')}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${pushTarget === 'targeted' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+                >
+                  <Send className="w-4 h-4 inline mr-1.5" />
+                  {t('sendTargeted')}
+                </button>
               </div>
               {pushTarget === 'targeted' && (
                 <div className="space-y-1.5">
                   <label className="text-sm text-muted-foreground">{t('phone')}</label>
-                  <input className="input-glass w-full" value={pushPhone} onChange={(e) => setPushPhone(e.target.value)} placeholder="+380..." />
+                  <input
+                    className="input-glass w-full"
+                    value={pushPhone}
+                    onChange={(e) => setPushPhone(e.target.value)}
+                    placeholder="+380..."
+                  />
                 </div>
               )}
               <div className="space-y-1.5">
                 <label className="text-sm text-muted-foreground">{t('message')}</label>
-                <textarea className="input-glass w-full resize-none" rows={4} value={pushMessage} onChange={(e) => setPushMessage(e.target.value)} placeholder={`${t('message')}...`} />
+                <textarea
+                  className="input-glass w-full resize-none"
+                  rows={4}
+                  value={pushMessage}
+                  onChange={(e) => setPushMessage(e.target.value)}
+                  placeholder={`${t('message')}...`}
+                />
               </div>
-              <button onClick={() => void handlePushSend()} className="btn-accent flex items-center gap-2" disabled={sending}><Send className="w-4 h-4" />{t('send')}</button>
+              <button
+                onClick={() => void handlePushSend()}
+                className="btn-accent flex items-center gap-2"
+                disabled={sending}
+              >
+                <Send className="w-4 h-4" />
+                {t('send')}
+              </button>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-panel">
-              <div className="p-5 border-b border-border"><h2 className="font-heading font-semibold">{t('notificationHistory')}</h2></div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="glass-panel"
+            >
+              <div className="p-5 border-b border-border">
+                <h2 className="font-heading font-semibold">{t('notificationHistory')}</h2>
+              </div>
               {loading ? (
                 <div className="p-5 text-sm text-muted-foreground">{t('loading')}</div>
               ) : filteredLogs.length === 0 ? (
@@ -236,14 +383,25 @@ export default function Notifications() {
                 <div className="divide-y divide-border/50">
                   {filteredLogs.map((log) => (
                     <div key={log.id} className="p-5 flex items-start gap-4">
-                      <div className="w-9 h-9 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0 mt-0.5"><CheckCircle className="w-4 h-4 text-success" /></div>
+                      <div className="w-9 h-9 rounded-xl bg-success/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{log.body}</p>
                         <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span>{log.target_type === 'all' ? t('notificationsAllSubscribers') : log.target_value || '-'}</span>
-                          <span>{t('notificationsSuccessCount')}: {log.sent_count}</span>
-                          <span>{t('notificationsFailedCount')}: {log.failed_count}</span>
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(log.created_at).toLocaleString(locale)}</span>
+                          <span>
+                            {log.target_type === 'all' ? t('notificationsAllSubscribers') : log.target_value || '-'}
+                          </span>
+                          <span>
+                            {t('notificationsSuccessCount')}: {log.sent_count}
+                          </span>
+                          <span>
+                            {t('notificationsFailedCount')}: {log.failed_count}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(log.created_at).toLocaleString(locale)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -257,19 +415,50 @@ export default function Notifications() {
         {section === 'telegram' && (
           <>
             <div className="inline-flex w-full max-w-2xl rounded-2xl border border-border bg-secondary/25 p-1">
-              <button onClick={() => setTelegramTab('appointments')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabAppointments')}</button>
-              <button onClick={() => setTelegramTab('pending')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabPending')}</button>
-              <button onClick={() => setTelegramTab('settings')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabSettings')}</button>
+              <button
+                onClick={() => setTelegramTab('appointments')}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+              >
+                {t('telegramTabAppointments')}
+              </button>
+              <button
+                onClick={() => setTelegramTab('pending')}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+              >
+                {t('telegramTabPending')}
+              </button>
+              <button
+                onClick={() => setTelegramTab('settings')}
+                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+              >
+                {t('telegramTabSettings')}
+              </button>
             </div>
 
             {telegramTab === 'appointments' && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel p-6 space-y-4"
+              >
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-3">
-                    <input type="date" className="input-glass" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-                    <button onClick={() => void telegramAppointmentsQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} /></button>
+                    <input
+                      type="date"
+                      className="input-glass"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                    />
+                    <button
+                      onClick={() => void telegramAppointmentsQuery.refetch()}
+                      className="p-2 rounded-xl hover:bg-secondary/60"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} />
+                    </button>
                   </div>
-                  <span className="text-sm text-muted-foreground">{t('telegramStatusForDate')} {filterDate}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t('telegramStatusForDate')} {filterDate}
+                  </span>
                 </div>
                 {loadingTelegramAppointments ? (
                   <div className="text-sm text-muted-foreground">{t('loading')}</div>
@@ -280,11 +469,18 @@ export default function Notifications() {
                     {telegramAppointments.map((appointment) => {
                       const firstName = extractFirstName(appointment.patient_name);
                       return (
-                        <div key={appointment.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
+                        <div
+                          key={appointment.id}
+                          className="rounded-2xl border border-border p-4 flex items-center gap-3"
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm font-medium">{firstName || appointment.patient_name}</p>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}>{appointment.telegram_chat_id ? t('telegramOk') : t('telegramMissing')}</span>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}
+                              >
+                                {appointment.telegram_chat_id ? t('telegramOk') : t('telegramMissing')}
+                              </span>
                             </div>
                             <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
                               <span>{new Date(appointment.appointment_at).toLocaleString(locale)}</span>
@@ -294,7 +490,18 @@ export default function Notifications() {
                             </div>
                           </div>
                           {appointment.telegram_chat_id && (
-                            <button onClick={() => { setSendModal(appointment); setSendText(`Доброго дня, ${firstName || 'пацієнте'}! Нагадуємо про ваш прийом у Dentis.`); }} className="btn-accent flex items-center gap-2"><MessageCircle className="w-4 h-4" />{t('telegramWrite')}</button>
+                            <button
+                              onClick={() => {
+                                setSendModal(appointment);
+                                setSendText(
+                                  `Доброго дня, ${firstName || 'пацієнте'}! Нагадуємо про ваш прийом у Dentis.`,
+                                );
+                              }}
+                              className="btn-accent flex items-center gap-2"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              {t('telegramWrite')}
+                            </button>
                           )}
                         </div>
                       );
@@ -305,10 +512,19 @@ export default function Notifications() {
             )}
 
             {telegramTab === 'pending' && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-panel p-6 space-y-4"
+              >
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-sm text-muted-foreground">{t('telegramPendingHelp')}</p>
-                  <button onClick={() => void telegramPendingQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} /></button>
+                  <button
+                    onClick={() => void telegramPendingQuery.refetch()}
+                    className="p-2 rounded-xl hover:bg-secondary/60"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} />
+                  </button>
                 </div>
                 {loadingTelegramPending ? (
                   <div className="text-sm text-muted-foreground">{t('loading')}</div>
@@ -318,7 +534,9 @@ export default function Notifications() {
                   <div className="space-y-3">
                     {telegramPending.map((pending) => (
                       <div key={pending.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center"><Send className="w-5 h-5 text-info" /></div>
+                        <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center">
+                          <Send className="w-5 h-5 text-info" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium">{pending.first_name || t('noName')}</p>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -326,7 +544,16 @@ export default function Notifications() {
                             <span>{new Date(pending.created_at).toLocaleString(locale)}</span>
                           </div>
                         </div>
-                        <button onClick={() => { setLinkModal(pending); setLinkPhone(''); }} className="btn-accent flex items-center gap-2"><Link2 className="w-4 h-4" />{t('telegramLinkAction')}</button>
+                        <button
+                          onClick={() => {
+                            setLinkModal(pending);
+                            setLinkPhone('');
+                          }}
+                          className="btn-accent flex items-center gap-2"
+                        >
+                          <Link2 className="w-4 h-4" />
+                          {t('telegramLinkAction')}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -340,7 +567,14 @@ export default function Notifications() {
                   <h2 className="font-heading font-semibold">{t('telegramBotLinkTitle')}</h2>
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="input-glass flex-1 min-w-[280px]">https://t.me/dentis_notif_bot</div>
-                    <button onClick={async () => { await navigator.clipboard.writeText('https://t.me/dentis_notif_bot'); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn-accent">
+                    <button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText('https://t.me/dentis_notif_bot');
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="btn-accent"
+                    >
                       {copied ? t('copied') : t('copy')}
                     </button>
                   </div>
@@ -354,7 +588,11 @@ export default function Notifications() {
                       <p className="text-sm text-muted-foreground">{t('telegramRemindersDescription')}</p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
-                      <button onClick={() => void telegramDebugQuery.refetch()} className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium" disabled={loadingDebug}>
+                      <button
+                        onClick={() => void telegramDebugQuery.refetch()}
+                        className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium"
+                        disabled={loadingDebug}
+                      >
                         <RefreshCw className={`w-4 h-4 inline mr-2 ${loadingDebug ? 'animate-spin' : ''}`} />
                         {t('refresh')}
                       </button>
@@ -370,8 +608,18 @@ export default function Notifications() {
                   ) : debugData ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <DebugColumn title={t('telegramCandidates24h')} subtitle={`Вікно: ${debugData.windows.from24} - ${debugData.windows.to24}`} items={debugData.appointments24} icon={<TimerReset className="w-4 h-4 text-primary" />} />
-                        <DebugColumn title={t('telegramCandidates1h')} subtitle={`Вікно: ${debugData.windows.from1} - ${debugData.windows.to1}`} items={debugData.appointments1} icon={<Clock className="w-4 h-4 text-accent" />} />
+                        <DebugColumn
+                          title={t('telegramCandidates24h')}
+                          subtitle={`Вікно: ${debugData.windows.from24} - ${debugData.windows.to24}`}
+                          items={debugData.appointments24}
+                          icon={<TimerReset className="w-4 h-4 text-primary" />}
+                        />
+                        <DebugColumn
+                          title={t('telegramCandidates1h')}
+                          subtitle={`Вікно: ${debugData.windows.from1} - ${debugData.windows.to1}`}
+                          items={debugData.appointments1}
+                          icon={<Clock className="w-4 h-4 text-accent" />}
+                        />
                       </div>
                       <div className="rounded-2xl border border-border p-4 space-y-2">
                         <p className="text-sm font-medium">{t('debugLogTitle')}</p>
@@ -379,7 +627,9 @@ export default function Notifications() {
                           <p className="text-sm text-muted-foreground">{t('debugLogEmpty')}</p>
                         ) : (
                           <div className="space-y-1 font-mono text-xs text-muted-foreground">
-                            {debugData.log.map((line, index) => <p key={`${line}-${index}`}>{line}</p>)}
+                            {debugData.log.map((line, index) => (
+                              <p key={`${line}-${index}`}>{line}</p>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -402,7 +652,11 @@ export default function Notifications() {
         )}
 
         {section === 'pwa' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel p-6 space-y-5"
+          >
             <div className="space-y-2">
               <h2 className="font-heading font-semibold">{t('pwaInstallTitle')}</h2>
               <p className="text-sm text-muted-foreground">{t('pwaInstallDescription')}</p>
@@ -420,7 +674,11 @@ export default function Notifications() {
                         : t('pwaWaitingToInstall')}
                   </p>
                 </div>
-                <button onClick={() => void handleInstallPwa()} className="btn-accent flex items-center justify-center gap-2 sm:min-w-[220px]" disabled={installingPwa || pwaInstalled || !deferredInstallPrompt}>
+                <button
+                  onClick={() => void handleInstallPwa()}
+                  className="btn-accent flex items-center justify-center gap-2 sm:min-w-[220px]"
+                  disabled={installingPwa || pwaInstalled || !deferredInstallPrompt}
+                >
                   <Download className="w-4 h-4" />
                   {pwaInstalled ? t('pwaInstalledLabel') : installingPwa ? t('pwaLaunching') : t('pwaInstallButton')}
                 </button>
@@ -437,26 +695,63 @@ export default function Notifications() {
 
         <AnimatePresence>
           {sendModal && (
-            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="glass-panel w-full max-w-lg p-6 space-y-4" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
+            <motion.div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="glass-panel w-full max-w-lg p-6 space-y-4"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
                 <h2 className="font-heading font-semibold text-lg">{t('telegramWriteTitle')}</h2>
                 <div className="rounded-xl bg-secondary/50 p-4 text-sm">
                   <p className="font-medium">{extractFirstName(sendModal.patient_name) || sendModal.patient_name}</p>
                   <p className="text-muted-foreground">{sendModal.phone}</p>
                   <p className="text-muted-foreground">chat_id: {sendModal.telegram_chat_id}</p>
                 </div>
-                <textarea className="input-glass w-full resize-none" rows={5} value={sendText} onChange={(e) => setSendText(e.target.value)} />
+                <textarea
+                  className="input-glass w-full resize-none"
+                  rows={5}
+                  value={sendText}
+                  onChange={(e) => setSendText(e.target.value)}
+                />
                 <div className="flex gap-3 justify-end">
-                  <button onClick={() => setSendModal(null)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60">{t('cancel')}</button>
-                  <button onClick={() => void handleSendTelegram()} className="btn-accent flex items-center gap-2" disabled={sendingTelegram || !sendText.trim()}><MessageSquareShare className="w-4 h-4" />{t('send')}</button>
+                  <button
+                    onClick={() => setSendModal(null)}
+                    className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    onClick={() => void handleSendTelegram()}
+                    className="btn-accent flex items-center gap-2"
+                    disabled={sendingTelegram || !sendText.trim()}
+                  >
+                    <MessageSquareShare className="w-4 h-4" />
+                    {t('send')}
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
           )}
 
           {linkModal && (
-            <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className="glass-panel w-full max-w-lg p-6 space-y-4" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
+            <motion.div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="glass-panel w-full max-w-lg p-6 space-y-4"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
                 <h2 className="font-heading font-semibold text-lg">{t('telegramLinkTitle')}</h2>
                 <div className="rounded-xl bg-secondary/50 p-4 text-sm">
                   <p className="font-medium">{linkModal.first_name || t('noName')}</p>
@@ -466,12 +761,29 @@ export default function Notifications() {
                   <label className="text-sm text-muted-foreground">{t('phone')}</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input className="input-glass w-full pl-10" value={linkPhone} onChange={(e) => setLinkPhone(e.target.value)} placeholder="+380..." />
+                    <input
+                      className="input-glass w-full pl-10"
+                      value={linkPhone}
+                      onChange={(e) => setLinkPhone(e.target.value)}
+                      placeholder="+380..."
+                    />
                   </div>
                 </div>
                 <div className="flex gap-3 justify-end">
-                  <button onClick={() => setLinkModal(null)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60">{t('cancel')}</button>
-                  <button onClick={() => void handleLinkTelegram()} className="btn-accent flex items-center gap-2" disabled={linking}><Link2 className="w-4 h-4" />{t('telegramLinkAction')}</button>
+                  <button
+                    onClick={() => setLinkModal(null)}
+                    className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    onClick={() => void handleLinkTelegram()}
+                    className="btn-accent flex items-center gap-2"
+                    disabled={linking}
+                  >
+                    <Link2 className="w-4 h-4" />
+                    {t('telegramLinkAction')}
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

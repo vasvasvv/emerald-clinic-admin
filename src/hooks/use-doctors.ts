@@ -39,8 +39,7 @@ export function useUpdateSiteDoctor() {
   const { token } = useAuth();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
-      api.updateSiteDoctor(token!, id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateSiteDoctor(token!, id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['site-doctors'] });
     },

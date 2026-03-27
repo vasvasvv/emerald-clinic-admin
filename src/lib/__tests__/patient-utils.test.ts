@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildPatientName, extractFirstName, formatPhoneForDisplay, normalizePhone, splitPatientName } from '../patient-utils';
+import {
+  buildPatientName,
+  extractFirstName,
+  formatPhoneForDisplay,
+  normalizePhone,
+  splitPatientName,
+} from '../patient-utils';
 
 describe('patient-utils', () => {
   describe('normalizePhone', () => {

@@ -4,12 +4,7 @@ import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Plus, Edit2, Trash2, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  useCreateSiteDoctor,
-  useDeleteSiteDoctor,
-  useSiteDoctors,
-  useUpdateSiteDoctor,
-} from '@/hooks/use-doctors';
+import { useCreateSiteDoctor, useDeleteSiteDoctor, useSiteDoctors, useUpdateSiteDoctor } from '@/hooks/use-doctors';
 import { useAuth } from '@/lib/auth-context';
 import type { ApiSiteDoctor } from '@/types/api';
 
@@ -161,48 +156,60 @@ export default function Doctors() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {loading ? (
             <div className="glass-panel-sm p-5 text-muted-foreground">{t('loading')}</div>
-          ) : doctors.map((doctor, i) => (
-            <motion.div
-              key={doctor.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-panel-sm space-y-4 p-5"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  {doctor.photo ? (
-                    <img
-                      src={doctor.photo}
-                      alt={doctor.fullName}
-                      className="h-12 w-12 rounded-xl border border-border/50 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
-                      <User className="h-6 w-6 text-primary" />
+          ) : (
+            doctors.map((doctor, i) => (
+              <motion.div
+                key={doctor.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="glass-panel-sm space-y-4 p-5"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    {doctor.photo ? (
+                      <img
+                        src={doctor.photo}
+                        alt={doctor.fullName}
+                        className="h-12 w-12 rounded-xl border border-border/50 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-heading text-sm font-semibold">{doctor.fullName}</h3>
+                      <p className="text-xs text-primary">{doctor.position}</p>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="font-heading text-sm font-semibold">{doctor.fullName}</h3>
-                    <p className="text-xs text-primary">{doctor.position}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => openEdit(doctor)}
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(doctor.id)}
+                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <button onClick={() => openEdit(doctor)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setDeletingId(doctor.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="space-y-1.5 text-sm">
+                  <p className="text-muted-foreground">
+                    <span className="text-foreground/70">{t('specialization')}:</span> {doctor.specialization}
+                  </p>
+                  <p className="text-muted-foreground">
+                    <span className="text-foreground/70">{t('experience')}:</span> {doctor.experience} {t('years')}
+                  </p>
+                  {doctor.description && <p className="mt-2 text-xs text-muted-foreground">{doctor.description}</p>}
                 </div>
-              </div>
-              <div className="space-y-1.5 text-sm">
-                <p className="text-muted-foreground"><span className="text-foreground/70">{t('specialization')}:</span> {doctor.specialization}</p>
-                <p className="text-muted-foreground"><span className="text-foreground/70">{t('experience')}:</span> {doctor.experience} {t('years')}</p>
-                {doctor.description && <p className="mt-2 text-xs text-muted-foreground">{doctor.description}</p>}
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))
+          )}
         </div>
 
         <AnimatePresence>
@@ -223,31 +230,59 @@ export default function Doctors() {
               >
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newDoctor')}</h2>
-                  <button onClick={() => setShowForm(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"><X className="w-5 h-5" /></button>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('fullName')}</label>
-                    <input className="input-glass w-full" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.fullName}
+                      onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('position')}</label>
-                    <input className="input-glass w-full" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.position}
+                      onChange={(e) => setForm({ ...form, position: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('specialization')}</label>
-                    <input className="input-glass w-full" value={form.specialization} onChange={(e) => setForm({ ...form, specialization: e.target.value })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.specialization}
+                      onChange={(e) => setForm({ ...form, specialization: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('experience')}</label>
-                    <input type="number" className="input-glass w-full" value={form.experience} onChange={(e) => setForm({ ...form, experience: parseInt(e.target.value, 10) || 0 })} />
+                    <input
+                      type="number"
+                      className="input-glass w-full"
+                      value={form.experience}
+                      onChange={(e) => setForm({ ...form, experience: parseInt(e.target.value, 10) || 0 })}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('photo')} (URL)</label>
-                    <input className="input-glass w-full" value={form.photo} onChange={(e) => setForm({ ...form, photo: e.target.value })} />
+                    <input
+                      className="input-glass w-full"
+                      value={form.photo}
+                      onChange={(e) => setForm({ ...form, photo: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('photo')} ({t('upload')})</label>
+                    <label className="text-sm text-muted-foreground">
+                      {t('photo')} ({t('upload')})
+                    </label>
                     <input
                       type="file"
                       accept="image/*"
@@ -263,18 +298,36 @@ export default function Doctors() {
                   </div>
                   {form.photo && (
                     <div className="space-y-1.5 sm:col-span-2">
-                      <p className="text-sm text-muted-foreground">{t('photo')} {t('preview').toLowerCase()}</p>
-                      <img src={form.photo} alt="Doctor preview" className="h-40 w-full rounded-xl border border-border/50 object-cover" />
+                      <p className="text-sm text-muted-foreground">
+                        {t('photo')} {t('preview').toLowerCase()}
+                      </p>
+                      <img
+                        src={form.photo}
+                        alt="Doctor preview"
+                        className="h-40 w-full rounded-xl border border-border/50 object-cover"
+                      />
                     </div>
                   )}
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm text-muted-foreground">{t('description')}</label>
-                    <textarea className="input-glass w-full resize-none" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                    <textarea
+                      className="input-glass w-full resize-none"
+                      rows={3}
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setShowForm(false)} className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60">{t('cancel')}</button>
-                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>{t('save')}</button>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>
+                    {t('save')}
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

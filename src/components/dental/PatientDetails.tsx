@@ -8,7 +8,16 @@ import { cn } from '@/lib/utils';
 import type { Doctor, Patient } from '@/types/dental';
 import { LOWER_TEETH, UPPER_TEETH } from '@/types/dental';
 import { uk } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, Clock, Plus, Printer, Stethoscope, Trash2, User as UserIcon } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  Clock,
+  Plus,
+  Printer,
+  Stethoscope,
+  Trash2,
+  User as UserIcon,
+} from 'lucide-react';
 
 interface PatientDetailsProps {
   canDeletePatient: boolean;
@@ -97,7 +106,11 @@ export function PatientDetails({
                       </span>
                     )}
                     <span>{formatPhoneForDisplay(selectedPatient.phone)}</span>
-                    <span>{selectedPatient.doctorName || doctors.find((doctor) => doctor.id === selectedPatient.doctorId)?.name || '—'}</span>
+                    <span>
+                      {selectedPatient.doctorName ||
+                        doctors.find((doctor) => doctor.id === selectedPatient.doctorId)?.name ||
+                        '—'}
+                    </span>
                   </div>
                 </div>
                 {issueCount > 0 && (
@@ -112,7 +125,9 @@ export function PatientDetails({
           <div className="flex-1 overflow-auto p-3 md:p-6">
             <div className="min-w-[280px]">
               <div className="mb-2">
-                <div className="mb-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">Верхня щелепа</div>
+                <div className="mb-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">
+                  Верхня щелепа
+                </div>
                 <div className="flex flex-nowrap items-end justify-center gap-0 overflow-auto py-[5px]">
                   {UPPER_TEETH.map((number) => (
                     <Tooth
@@ -140,7 +155,9 @@ export function PatientDetails({
                     />
                   ))}
                 </div>
-                <div className="mt-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">Нижня щелепа</div>
+                <div className="mt-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">
+                  Нижня щелепа
+                </div>
               </div>
             </div>
 
@@ -149,10 +166,17 @@ export function PatientDetails({
                 <div className="flex items-center gap-2 justify-start">
                   <CalendarIcon className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-medium">Історія візитів</h3>
-                  <Badge variant="secondary" className="text-xs">{selectedPatient.visits.length}</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {selectedPatient.visits.length}
+                  </Badge>
                 </div>
                 <div className="flex justify-center">
-                  <Button variant="outline" size="sm" className="h-9 w-9 p-0" onClick={() => onSelectDate(selectedDate ?? new Date())}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                    onClick={() => onSelectDate(selectedDate ?? new Date())}
+                  >
                     <Stethoscope className="h-4 w-4" />
                   </Button>
                 </div>
@@ -195,16 +219,26 @@ export function PatientDetails({
                       <ScrollArea className="max-h-36">
                         <div className="space-y-1">
                           {futureVisits.map((visit) => (
-                            <div key={visit.id} className="group flex items-center justify-between rounded-md bg-primary/5 p-2 text-xs">
+                            <div
+                              key={visit.id}
+                              className="group flex items-center justify-between rounded-md bg-primary/5 p-2 text-xs"
+                            >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3 shrink-0 text-primary" />
                                   <span className="font-medium">{formatVisitDate(visit.date)}</span>
-                                  {visit.notes && <span className="truncate text-muted-foreground">— {visit.notes}</span>}
+                                  {visit.notes && (
+                                    <span className="truncate text-muted-foreground">— {visit.notes}</span>
+                                  )}
                                 </div>
                               </div>
                               {canDeletePatient && (
-                                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => onDeleteVisit(visit.id)}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100"
+                                  onClick={() => onDeleteVisit(visit.id)}
+                                >
                                   <Trash2 className="h-3 w-3 text-destructive" />
                                 </Button>
                               )}
@@ -224,16 +258,26 @@ export function PatientDetails({
                       <ScrollArea className="max-h-36">
                         <div className="space-y-1">
                           {pastVisits.map((visit) => (
-                            <div key={visit.id} className="group flex items-center justify-between rounded-md bg-muted/50 p-2 text-xs">
+                            <div
+                              key={visit.id}
+                              className="group flex items-center justify-between rounded-md bg-muted/50 p-2 text-xs"
+                            >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1">
                                   <CalendarIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
                                   <span className="text-muted-foreground">{formatVisitDate(visit.date)}</span>
-                                  {visit.notes && <span className="truncate text-muted-foreground">— {visit.notes}</span>}
+                                  {visit.notes && (
+                                    <span className="truncate text-muted-foreground">— {visit.notes}</span>
+                                  )}
                                 </div>
                               </div>
                               {canDeletePatient && (
-                                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100" onClick={() => onDeleteVisit(visit.id)}>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100"
+                                  onClick={() => onDeleteVisit(visit.id)}
+                                >
                                   <Trash2 className="h-3 w-3 text-destructive" />
                                 </Button>
                               )}

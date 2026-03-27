@@ -12,7 +12,9 @@ interface HistoryModalProps {
 }
 
 export function HistoryModal({ isOpen, onClose, patient }: HistoryModalProps) {
-  const history = [...(patient?.changeHistory ?? [])].sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime());
+  const history = [...(patient?.changeHistory ?? [])].sort(
+    (left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
+  );
   const actionIcons = {
     create: <Plus className="h-4 w-4" />,
     edit: <Edit2 className="h-4 w-4" />,
@@ -38,9 +40,7 @@ export function HistoryModal({ isOpen, onClose, patient }: HistoryModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading">
-            Історія змін — {patient ? formatPatientName(patient) : ''}
-          </DialogTitle>
+          <DialogTitle className="font-heading">Історія змін — {patient ? formatPatientName(patient) : ''}</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="max-h-[400px]">
@@ -50,13 +50,19 @@ export function HistoryModal({ isOpen, onClose, patient }: HistoryModalProps) {
             <div className="space-y-3 pr-2">
               {history.map((entry) => (
                 <div key={entry.id} className="flex gap-3 rounded-lg border bg-card p-3">
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${actionColors[entry.action]}`}>
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${actionColors[entry.action]}`}
+                  >
                     {actionIcons[entry.action]}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{actionLabels[entry.action]}</Badge>
-                      <Badge variant="secondary" className="text-xs">{targetLabels[entry.target]}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {actionLabels[entry.action]}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {targetLabels[entry.target]}
+                      </Badge>
                     </div>
                     <p className="mt-1 text-sm text-foreground">{entry.details}</p>
                     <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">

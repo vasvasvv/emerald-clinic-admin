@@ -30,8 +30,7 @@ export function useUpdateAppointment() {
   const { token } = useAuth();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ApiAppointmentPayload }) =>
-      api.updateAppointment(token!, id, data),
+    mutationFn: ({ id, data }: { id: number; data: ApiAppointmentPayload }) => api.updateAppointment(token!, id, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['appointments'] });
     },

@@ -68,7 +68,8 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
       const changes: string[] = [];
       if (patient.firstName !== firstName) changes.push(`Ім'я: ${patient.firstName} → ${firstName}`);
       if (patient.lastName !== lastName) changes.push(`Прізвище: ${patient.lastName} → ${lastName}`);
-      if ((patient.middleName ?? '') !== middleName) changes.push(`По-батькові: ${patient.middleName ?? '—'} → ${middleName || '—'}`);
+      if ((patient.middleName ?? '') !== middleName)
+        changes.push(`По-батькові: ${patient.middleName ?? '—'} → ${middleName || '—'}`);
       if (patient.phone !== formattedPhone) changes.push(`Телефон: ${patient.phone} → ${formattedPhone}`);
       if (patient.dateOfBirth !== dateOfBirth) changes.push('Дата народження змінена');
       if (patient.doctorId !== doctorId) changes.push('Лікар змінений');
@@ -103,18 +104,32 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="patient-last-name">Прізвище</Label>
-              <Input id="patient-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
+              <Input
+                id="patient-last-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="patient-first-name">Ім'я</Label>
-              <Input id="patient-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
+              <Input
+                id="patient-first-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                required
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-[1fr_auto] gap-4">
             <div className="space-y-2">
               <Label htmlFor="patient-middle-name">По-батькові</Label>
-              <Input id="patient-middle-name" value={middleName} onChange={(event) => setMiddleName(event.target.value)} />
+              <Input
+                id="patient-middle-name"
+                value={middleName}
+                onChange={(event) => setMiddleName(event.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Стать</Label>
@@ -132,12 +147,24 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
 
           <div className="space-y-2">
             <Label htmlFor="patient-phone">Номер телефону</Label>
-            <Input id="patient-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="+380 або 0XX..." required />
+            <Input
+              id="patient-phone"
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="+380 або 0XX..."
+              required
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="patient-dob">Дата народження</Label>
-            <Input id="patient-dob" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} />
+            <Input
+              id="patient-dob"
+              type="date"
+              value={dateOfBirth}
+              onChange={(event) => setDateOfBirth(event.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
@@ -148,7 +175,9 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>{doctor.name}</SelectItem>
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

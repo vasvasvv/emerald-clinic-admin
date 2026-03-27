@@ -153,7 +153,9 @@ function buildHTML(form: FormData, images: string[]) {
 
   html = html.replace(/Лікар&#160;_{10,}/g, `Лікар&#160;${form.likar}`);
 
-  const planTops = [141, 171, 201, 230, 260, 289, 319, 348, 378, 408, 437, 467, 496, 526, 556, 585, 615, 644, 674, 704, 733];
+  const planTops = [
+    141, 171, 201, 230, 260, 289, 319, 348, 378, 408, 437, 467, 496, 526, 556, 585, 615, 644, 674, 704, 733,
+  ];
   form.planObstezhenny.slice(0, planTops.length).forEach((value, index) => fillCell(planTops[index], 129, value));
   form.planLikuvannya.slice(0, planTops.length).forEach((value, index) => fillCell(planTops[index], 662, value));
 
@@ -215,7 +217,9 @@ function initFromPatient(patient: Patient, doctors: Doctor[]): FormData {
     kolirvita: '',
     navchannya: '',
     kontrolGigieny: '',
-    journal: Array(35).fill(null).map(() => ({ date: '', note: '' })),
+    journal: Array(35)
+      .fill(null)
+      .map(() => ({ date: '', note: '' })),
     planObstezhenny: Array(21).fill(''),
     planLikuvannya: Array(21).fill(''),
     likar: doctor?.name ?? '',
@@ -239,12 +243,15 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
   const blobUrlRef = useRef<string | null>(null);
   const images = useBase64Images();
 
-  const iframeCallbackRef = useCallback((node: HTMLIFrameElement | null) => {
-    iframeRef.current = node;
-    if (node && blobUrlRef.current) {
-      node.src = `${blobUrlRef.current}#page${previewPage}-div`;
-    }
-  }, [previewPage]);
+  const iframeCallbackRef = useCallback(
+    (node: HTMLIFrameElement | null) => {
+      iframeRef.current = node;
+      if (node && blobUrlRef.current) {
+        node.src = `${blobUrlRef.current}#page${previewPage}-div`;
+      }
+    },
+    [previewPage],
+  );
 
   useEffect(() => {
     const body = document.body;
@@ -276,9 +283,12 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
     updatePreview();
   }, [updatePreview]);
 
-  useEffect(() => () => {
-    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    },
+    [],
+  );
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setFormData((current) => ({ ...current, [key]: value }));
@@ -339,7 +349,9 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
   const PreviewPanel = () => (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-200">
       <div className="flex shrink-0 items-center justify-between gap-2 bg-slate-800 px-3 py-2 text-white">
-        <span className="whitespace-nowrap text-xs font-medium">{t('formPage')} {previewPage}</span>
+        <span className="whitespace-nowrap text-xs font-medium">
+          {t('formPage')} {previewPage}
+        </span>
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => setPreviewPage((current) => Math.max(1, current - 1))}
@@ -367,7 +379,10 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
-        <button onClick={() => setShowPreview(false)} className="ml-1 rounded p-1 transition-colors hover:bg-slate-700 md:hidden">
+        <button
+          onClick={() => setShowPreview(false)}
+          className="ml-1 rounded p-1 transition-colors hover:bg-slate-700 md:hidden"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -414,7 +429,11 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            <Button size="sm" onClick={handlePrint} className="h-7 gap-1 bg-white px-2 text-xs text-teal-700 hover:bg-teal-50">
+            <Button
+              size="sm"
+              onClick={handlePrint}
+              className="h-7 gap-1 bg-white px-2 text-xs text-teal-700 hover:bg-teal-50"
+            >
               <Printer className="h-3 w-3" />
               <span className="hidden xs:inline">{t('print')}</span>
             </Button>
@@ -434,7 +453,13 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
         <Tabs defaultValue="p1" className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 overflow-x-auto border-b border-slate-100 bg-slate-50">
             <TabsList className="h-9 min-w-full w-max justify-start gap-0.5 rounded-none bg-transparent px-2">
-              {[['p1', t('formTabPage1')], ['p2', t('formTabTeeth')], ['p3', t('formTabExam')], ['p4', t('formTabJournal')], ['p6', t('formTabPlan')]].map(([value, label]) => (
+              {[
+                ['p1', t('formTabPage1')],
+                ['p2', t('formTabTeeth')],
+                ['p3', t('formTabExam')],
+                ['p4', t('formTabJournal')],
+                ['p6', t('formTabPlan')],
+              ].map(([value, label]) => (
                 <TabsTrigger
                   key={value}
                   value={value}
@@ -450,16 +475,28 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className={labelClass}>{t('formCardNumber')}</Label>
-                <Input className={inputClass} value={formData.cardNumber} onChange={(event) => set('cardNumber', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.cardNumber}
+                  onChange={(event) => set('cardNumber', event.target.value)}
+                />
               </div>
               <div>
                 <Label className={labelClass}>{t('formYear')}</Label>
-                <Input className={inputClass} value={formData.year} onChange={(event) => set('year', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.year}
+                  onChange={(event) => set('year', event.target.value)}
+                />
               </div>
             </div>
             <div>
               <Label className={labelClass}>{t('formPatientFullName')}</Label>
-              <Input className={inputClass} value={formData.fullName} onChange={(event) => set('fullName', event.target.value)} />
+              <Input
+                className={inputClass}
+                value={formData.fullName}
+                onChange={(event) => set('fullName', event.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -477,7 +514,13 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             </div>
             <div>
               <Label className={labelClass}>{t('phone')}</Label>
-              <Input className={inputClass} value={formData.phone} onChange={(event) => set('phone', event.target.value)} placeholder="+380..." inputMode="tel" />
+              <Input
+                className={inputClass}
+                value={formData.phone}
+                onChange={(event) => set('phone', event.target.value)}
+                placeholder="+380..."
+                inputMode="tel"
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('dateOfBirth')}</Label>
@@ -499,40 +542,69 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             </div>
             <div>
               <Label className={labelClass}>{t('diagnosis')}</Label>
-              <Textarea className={textAreaClass} value={formData.diagnoz} onChange={(event) => set('diagnoz', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.diagnoz}
+                onChange={(event) => set('diagnoz', event.target.value)}
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('complaints')}</Label>
-              <Textarea className={textAreaClass} value={formData.skargy} onChange={(event) => set('skargy', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.skargy}
+                onChange={(event) => set('skargy', event.target.value)}
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('concomitantDiseases')}</Label>
-              <Textarea className={textAreaClass} value={formData.pereneseni} onChange={(event) => set('pereneseni', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.pereneseni}
+                onChange={(event) => set('pereneseni', event.target.value)}
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('currentDiseaseDevelopment')}</Label>
-              <Textarea className={textAreaClass} value={formData.rozvytok} onChange={(event) => set('rozvytok', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.rozvytok}
+                onChange={(event) => set('rozvytok', event.target.value)}
+              />
             </div>
           </TabsContent>
 
           <TabsContent value="p2" className={`${tabContentClass} space-y-3`}>
             <div>
               <Label className={labelClass}>{t('objectiveExamData')}</Label>
-              <Textarea className={textAreaClass} value={formData.daniOglyadu} onChange={(event) => set('daniOglyadu', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.daniOglyadu}
+                onChange={(event) => set('daniOglyadu', event.target.value)}
+              />
             </div>
             <div className="rounded-lg border border-teal-100 bg-teal-50 p-2 text-[10px] leading-relaxed text-teal-800">
-              <b>{t('toothCodes')}:</b> C-карієс · P-пульпіт · Pt-періодонтит · A-відсутній · R-корінь · Cd-коронка · Pl-пломба · F-фасетка · ar-штучний · r-реставрація · pin-штифт · I-імплантат · Dc-камінь
+              <b>{t('toothCodes')}:</b> C-карієс · P-пульпіт · Pt-періодонтит · A-відсутній · R-корінь · Cd-коронка ·
+              Pl-пломба · F-фасетка · ar-штучний · r-реставрація · pin-штифт · I-імплантат · Dc-камінь
             </div>
-            {[{ label: t('upperJaw'), list: UPPER_TEETH }, { label: t('lowerJaw'), list: LOWER_TEETH }].map(({ label, list }) => (
+            {[
+              { label: t('upperJaw'), list: UPPER_TEETH },
+              { label: t('lowerJaw'), list: LOWER_TEETH },
+            ].map(({ label, list }) => (
               <div key={label}>
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">{label}</div>
                 <div className="-mx-4 overflow-x-auto px-4">
                   <table className="border-collapse text-[10px]" style={{ minWidth: 'max-content' }}>
                     <thead>
                       <tr className="bg-slate-50">
-                        <td className="sticky left-0 z-10 w-12 border border-slate-200 bg-slate-50 px-1 py-0.5 text-center text-slate-400">{t('tooth')}</td>
+                        <td className="sticky left-0 z-10 w-12 border border-slate-200 bg-slate-50 px-1 py-0.5 text-center text-slate-400">
+                          {t('tooth')}
+                        </td>
                         {list.map((number) => (
-                          <td key={number} className="w-8 border border-slate-200 py-0.5 text-center font-mono font-bold text-slate-700">
+                          <td
+                            key={number}
+                            className="w-8 border border-slate-200 py-0.5 text-center font-mono font-bold text-slate-700"
+                          >
                             {number}
                           </td>
                         ))}
@@ -563,36 +635,64 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             ))}
             <div>
               <Label className={labelClass}>{t('additionalToothData')}</Label>
-              <Textarea className={textAreaClass} value={formData.toothNotes} onChange={(event) => set('toothNotes', event.target.value)} />
+              <Textarea
+                className={textAreaClass}
+                value={formData.toothNotes}
+                onChange={(event) => set('toothNotes', event.target.value)}
+              />
             </div>
           </TabsContent>
 
           <TabsContent value="p3" className={`${tabContentClass} space-y-3`}>
             <div>
               <Label className={labelClass}>{t('bite')}</Label>
-              <Input className={inputClass} value={formData.prykus} onChange={(event) => set('prykus', event.target.value)} />
+              <Input
+                className={inputClass}
+                value={formData.prykus}
+                onChange={(event) => set('prykus', event.target.value)}
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('hygieneState')}</Label>
-              <Textarea className={`${textAreaClass} min-h-[80px]`} value={formData.stanGigieny} onChange={(event) => set('stanGigieny', event.target.value)} />
+              <Textarea
+                className={`${textAreaClass} min-h-[80px]`}
+                value={formData.stanGigieny}
+                onChange={(event) => set('stanGigieny', event.target.value)}
+              />
             </div>
             <div>
               <Label className={labelClass}>{t('xrayAndLabData')}</Label>
-              <Textarea className={`${textAreaClass} min-h-[80px]`} value={formData.daniRentgen} onChange={(event) => set('daniRentgen', event.target.value)} />
+              <Textarea
+                className={`${textAreaClass} min-h-[80px]`}
+                value={formData.daniRentgen}
+                onChange={(event) => set('daniRentgen', event.target.value)}
+              />
             </div>
             <div className="grid grid-cols-1 gap-3 xs:grid-cols-2">
               <div>
                 <Label className={labelClass}>{t('vitaColor')}</Label>
-                <Input className={inputClass} value={formData.kolirvita} onChange={(event) => set('kolirvita', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.kolirvita}
+                  onChange={(event) => set('kolirvita', event.target.value)}
+                />
               </div>
               <div>
                 <Label className={labelClass}>{t('hygieneTraining')}</Label>
-                <Input className={inputClass} value={formData.navchannya} onChange={(event) => set('navchannya', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.navchannya}
+                  onChange={(event) => set('navchannya', event.target.value)}
+                />
               </div>
             </div>
             <div>
               <Label className={labelClass}>{t('hygieneControlDate')}</Label>
-              <Input className={inputClass} value={formData.kontrolGigieny} onChange={(event) => set('kontrolGigieny', event.target.value)} />
+              <Input
+                className={inputClass}
+                value={formData.kontrolGigieny}
+                onChange={(event) => set('kontrolGigieny', event.target.value)}
+              />
             </div>
           </TabsContent>
 
@@ -600,14 +700,24 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             <div className="mb-3 grid grid-cols-1 gap-3 border-b border-slate-100 pb-3 xs:grid-cols-2">
               <div>
                 <Label className={labelClass}>{t('doctor')}</Label>
-                <Input className={inputClass} value={formData.likar} onChange={(event) => set('likar', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.likar}
+                  onChange={(event) => set('likar', event.target.value)}
+                />
               </div>
               <div>
                 <Label className={labelClass}>{t('headOfDepartment')}</Label>
-                <Input className={inputClass} value={formData.zavViddil} onChange={(event) => set('zavViddil', event.target.value)} />
+                <Input
+                  className={inputClass}
+                  value={formData.zavViddil}
+                  onChange={(event) => set('zavViddil', event.target.value)}
+                />
               </div>
             </div>
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">{t('doctorJournalTitle')}</p>
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              {t('doctorJournalTitle')}
+            </p>
             <div className="space-y-1.5">
               {formData.journal.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -633,7 +743,9 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
           <TabsContent value="p6" className={tabContentClass}>
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2">
               <div>
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">{t('examinationPlan')}</p>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">
+                  {t('examinationPlan')}
+                </p>
                 <div className="space-y-1">
                   {formData.planObstezhenny.map((value, index) => (
                     <Input
@@ -646,7 +758,9 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">{t('treatmentPlan')}</p>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">
+                  {t('treatmentPlan')}
+                </p>
                 <div className="space-y-1">
                   {formData.planLikuvannya.map((value, index) => (
                     <Input
@@ -663,7 +777,9 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
         </Tabs>
       </div>
 
-      <div className={`min-w-0 flex-1 md:flex ${showPreview ? 'fixed inset-0 z-[60] flex bg-slate-900/80 md:static md:bg-transparent' : 'hidden'}`}>
+      <div
+        className={`min-w-0 flex-1 md:flex ${showPreview ? 'fixed inset-0 z-[60] flex bg-slate-900/80 md:static md:bg-transparent' : 'hidden'}`}
+      >
         <PreviewPanel />
       </div>
     </div>

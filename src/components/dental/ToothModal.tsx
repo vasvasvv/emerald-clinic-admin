@@ -107,9 +107,15 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-heading">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">{toothNumber}</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+              {toothNumber}
+            </span>
             Зуб №{toothNumber}
-            {currentTemplate && <Badge variant="secondary" className="ml-1 text-xs">{currentTemplate.label}</Badge>}
+            {currentTemplate && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {currentTemplate.label}
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -123,7 +129,9 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
               <SelectContent>
                 <SelectItem value="__clear__">— Очистити —</SelectItem>
                 {DENTAL_TEMPLATES.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>{template.label}</SelectItem>
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -131,12 +139,22 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
 
           <div className="space-y-2">
             <Label>Опис</Label>
-            <Textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={2} placeholder="Детальний опис стану зуба..." />
+            <Textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={2}
+              placeholder="Детальний опис стану зуба..."
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Додаткові примітки</Label>
-            <Textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Примітки до лікування, рекомендації..." />
+            <Textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              rows={3}
+              placeholder="Примітки до лікування, рекомендації..."
+            />
           </div>
 
           {xrayFiles.length > 0 && (
@@ -164,7 +182,9 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(file.uploadedAt).toLocaleString('uk-UA')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(file.uploadedAt).toLocaleString('uk-UA')}
+                        </p>
                       </div>
                       <Badge variant="outline">Перегляд</Badge>
                     </button>
@@ -176,11 +196,23 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" type="button" onClick={() => { setTemplateId(''); setDescription(''); setNotes(''); }}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setTemplateId('');
+              setDescription('');
+              setNotes('');
+            }}
+          >
             Очистити
           </Button>
-          <Button variant="outline" type="button" onClick={onClose}>Скасувати</Button>
-          <Button type="button" onClick={handleSave}>Зберегти</Button>
+          <Button variant="outline" type="button" onClick={onClose}>
+            Скасувати
+          </Button>
+          <Button type="button" onClick={handleSave}>
+            Зберегти
+          </Button>
         </DialogFooter>
       </DialogContent>
 
@@ -190,7 +222,9 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
             <DialogTitle>Рентген-знімок зуба {toothNumber}</DialogTitle>
           </DialogHeader>
           <div className="overflow-auto rounded-2xl border border-border/70 bg-muted/20 p-4">
-            {selectedXrayUrl && <img src={selectedXrayUrl} alt={`Xray ${toothNumber}`} className="mx-auto rounded-xl" />}
+            {selectedXrayUrl && (
+              <img src={selectedXrayUrl} alt={`Xray ${toothNumber}`} className="mx-auto rounded-xl" />
+            )}
           </div>
         </DialogContent>
       </Dialog>

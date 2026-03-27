@@ -70,7 +70,8 @@ export function useSendPushToPhone() {
   const { token } = useAuth();
 
   return useMutation({
-    mutationFn: (data: { phone: string; title?: string; body: string; url?: string }) => api.sendPushToPhone(token!, data),
+    mutationFn: (data: { phone: string; title?: string; body: string; url?: string }) =>
+      api.sendPushToPhone(token!, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notification-logs'] });
       void queryClient.invalidateQueries({ queryKey: ['push-counts'] });

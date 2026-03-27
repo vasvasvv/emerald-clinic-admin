@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, apiCall } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import {
-  normalizeDoctors,
-  normalizePatient,
-  resolveDoctorFilter,
-} from '@/lib/dental-charts-utils';
+import { normalizeDoctors, normalizePatient, resolveDoctorFilter } from '@/lib/dental-charts-utils';
 import type { Doctor, Patient, ToothRecord, User } from '@/types/dental';
 
 export interface DentalPatientPayload {
@@ -33,7 +29,12 @@ interface UseDentalChartsOptions {
   historyPatientId: string | null;
 }
 
-export function useDentalCharts({ currentUser, selectedPatientId, editingPatientId, historyPatientId }: UseDentalChartsOptions) {
+export function useDentalCharts({
+  currentUser,
+  selectedPatientId,
+  editingPatientId,
+  historyPatientId,
+}: UseDentalChartsOptions) {
   const { token } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -50,21 +51,29 @@ export function useDentalCharts({ currentUser, selectedPatientId, editingPatient
     setSelectedDoctorId(resolveDoctorFilter(normalized, currentUser));
   }, [currentUser, token]);
 
-  const loadPatients = useCallback(async (query = '') => {
-    if (!token) return;
-    const data = await api.getPatients(token, query);
-    const normalized = Array.isArray(data) ? data.map(normalizePatient) : [];
-    setPatients(normalized);
-  }, [token]);
+  const loadPatients = useCallback(
+    async (query = '') => {
+      if (!token) return;
+      const data = await api.getPatients(token, query);
+      const normalized = Array.isArray(data) ? data.map(normalizePatient) : [];
+      setPatients(normalized);
+    },
+    [token],
+  );
 
-  const loadPatientDetails = useCallback(async (patientId: string) => {
-    if (!token || !patientId) return;
-    const data = await apiCall(`/api/patients/${patientId}`, {}, token);
-    const normalized = normalizePatient(data);
-    setPatients((current) =>
-      current.map((patient) => (patient.id === patientId ? { ...patient, ...normalized, detailsLoaded: true } : patient)),
-    );
-  }, [token]);
+  const loadPatientDetails = useCallback(
+    async (patientId: string) => {
+      if (!token || !patientId) return;
+      const data = await apiCall(`/api/patients/${patientId}`, {}, token);
+      const normalized = normalizePatient(data);
+      setPatients((current) =>
+        current.map((patient) =>
+          patient.id === patientId ? { ...patient, ...normalized, detailsLoaded: true } : patient,
+        ),
+      );
+    },
+    [token],
+  );
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -212,7 +221,9 @@ export function useDentalCharts({ currentUser, selectedPatientId, editingPatient
   }, [refresh]);
 
   useEffect(() => {
-    const patientIds = [selectedPatientId, editingPatientId, historyPatientId].filter((value): value is string => Boolean(value));
+    const patientIds = [selectedPatientId, editingPatientId, historyPatientId].filter((value): value is string =>
+      Boolean(value),
+    );
     const pendingIds = patientIds.filter((patientId, index) => {
       if (patientIds.indexOf(patientId) !== index) return false;
       const patient = patients.find((item) => item.id === patientId);
