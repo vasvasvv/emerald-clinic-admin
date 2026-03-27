@@ -1,49 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form043Editor } from '@/components/dental/Form043Editor';
 import { HistoryModal } from '@/components/dental/HistoryModal';
 import { PatientDetails } from '@/components/dental/PatientDetails';
 import { PatientList } from '@/components/dental/PatientList';
 import { PatientModal, type PatientModalProps } from '@/components/dental/PatientModal';
-import { Tooth } from '@/components/dental/Tooth';
 import { ToothModal } from '@/components/dental/ToothModal';
 import { VisitModal } from '@/components/dental/VisitModal';
 import { useDentalCharts } from '@/hooks/use-dental-charts';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useI18n } from '@/lib/i18n';
 import {
   canPerformAction,
-  formatPatientName,
-  formatPhoneForDisplay,
-  formatVisitDate,
   getStoredAdminUser,
 } from '@/lib/dental-charts-utils';
 import { cn } from '@/lib/utils';
 import type { ToothRecord } from '@/types/dental';
-import { LOWER_TEETH, UPPER_TEETH } from '@/types/dental';
-import { uk } from 'date-fns/locale';
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Edit2,
-  History,
-  MoreVertical,
-  Phone,
-  Plus,
   Printer,
-  Search,
-  Stethoscope,
-  Trash2,
-  User as UserIcon,
 } from 'lucide-react';
 
 function useRecentSearches() {
@@ -68,7 +42,7 @@ function useRecentSearches() {
 }
 
 export function DentalChartsWorkspace() {
-  const isMobile = useIsMobile();
+  const { t } = useI18n();
   const [isCompactLayout, setIsCompactLayout] = useState(false);
   const currentUser = useMemo(() => getStoredAdminUser(), []);
   const [selectedPatientId, setSelectedPatientId] = useState('');
@@ -219,14 +193,14 @@ export function DentalChartsWorkspace() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold">Зубні карти</h1>
+          <h1 className="text-2xl font-heading font-bold">{t('dentalCharts')}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!shouldShowCompactPatientDetails && <Button variant="outline" onClick={() => void refresh()} disabled={loading || saving}>Оновити</Button>}
+          {!shouldShowCompactPatientDetails && <Button variant="outline" onClick={() => void refresh()} disabled={loading || saving}>{t('refresh')}</Button>}
           {selectedPatient && !shouldShowCompactPatientDetails && (
             <Button onClick={() => setShowForm043(true)} className="gap-2">
               <Printer className="h-4 w-4" />
-              Форма 043
+              {t('form043')}
             </Button>
           )}
         </div>
@@ -333,18 +307,18 @@ export function DentalChartsWorkspace() {
         open={Boolean(deletingPatientId)}
         onCancel={() => setDeletingPatientId(null)}
         onConfirm={() => void handleDeletePatient()}
-        title="Видалити пацієнта"
-        description="Ви впевнені, що хочете видалити цього пацієнта? Будуть видалені всі пов'язані стоматологічні записи та візити."
-        confirmLabel="Так, видалити"
+        title={t('deletePatientTitle')}
+        description={t('deletePatientDescription')}
+        confirmLabel={t('confirmDeleteAction')}
       />
 
       <ConfirmDialog
         open={Boolean(deletingVisitId)}
         onCancel={() => setDeletingVisitId(null)}
         onConfirm={() => void handleDeleteVisit()}
-        title="Видалити візит"
-        description="Ви впевнені, що хочете видалити цей візит? Цю дію неможливо скасувати."
-        confirmLabel="Так, видалити"
+        title={t('deleteVisitTitle')}
+        description={t('deleteVisitDescription')}
+        confirmLabel={t('confirmDeleteAction')}
       />
 
       {showForm043 && selectedPatient && (

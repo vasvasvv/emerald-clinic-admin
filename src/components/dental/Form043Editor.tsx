@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useBase64Images } from '@/hooks/useBase64Images';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useI18n } from '@/lib/i18n';
 import type { Doctor, Patient } from '@/types/dental';
 import { ChevronLeft, ChevronRight, Eye, Printer, X } from 'lucide-react';
 
@@ -229,6 +230,7 @@ interface Form043EditorProps {
 }
 
 export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps) {
+  const { t } = useI18n();
   const isMobile = useIsMobile();
   const [formData, setFormData] = useState<FormData>(() => initFromPatient(patient, doctors));
   const [previewPage, setPreviewPage] = useState(1);
@@ -306,14 +308,14 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
 
   const handlePrint = () => {
     if (!images) {
-      window.alert('Зображення ще завантажуються, спробуйте за секунду.');
+      window.alert(t('form043ImagesLoading'));
       return;
     }
 
     const html = buildHTML(formData, images);
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      window.alert('Дозвольте pop-up для цього сайту.');
+      window.alert(t('allowPopups'));
       return;
     }
 
@@ -337,7 +339,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
   const PreviewPanel = () => (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-200">
       <div className="flex shrink-0 items-center justify-between gap-2 bg-slate-800 px-3 py-2 text-white">
-        <span className="whitespace-nowrap text-xs font-medium">Стор. {previewPage}</span>
+        <span className="whitespace-nowrap text-xs font-medium">{t('formPage')} {previewPage}</span>
         <div className="flex items-center gap-0.5">
           <button
             onClick={() => setPreviewPage((current) => Math.max(1, current - 1))}
@@ -381,7 +383,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
         >
           <iframe
             ref={iframeCallbackRef}
-            title="Форма 043"
+            title={t('form043Title')}
             style={{
               width: iframeWidth,
               height: iframeHeight,
@@ -406,15 +408,15 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
       >
         <div className="flex shrink-0 items-center justify-between bg-teal-600 px-4 py-3 text-white">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Форма 043/О</p>
+            <p className="text-sm font-semibold">{t('form043Title')}</p>
             <p className="mt-0.5 max-w-[200px] truncate text-[11px] text-teal-200 sm:max-w-[270px]">
-              {formData.fullName || 'Пацієнт'}
+              {formData.fullName || t('patientFallback')}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Button size="sm" onClick={handlePrint} className="h-7 gap-1 bg-white px-2 text-xs text-teal-700 hover:bg-teal-50">
               <Printer className="h-3 w-3" />
-              <span className="hidden xs:inline">Друк</span>
+              <span className="hidden xs:inline">{t('print')}</span>
             </Button>
             <Button
               size="sm"
@@ -432,7 +434,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
         <Tabs defaultValue="p1" className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 overflow-x-auto border-b border-slate-100 bg-slate-50">
             <TabsList className="h-9 min-w-full w-max justify-start gap-0.5 rounded-none bg-transparent px-2">
-              {[['p1', 'Стор. 1'], ['p2', 'Зуби'], ['p3', 'Огляд'], ['p4', 'Щоденник'], ['p6', 'План']].map(([value, label]) => (
+              {[['p1', t('formTabPage1')], ['p2', t('formTabTeeth')], ['p3', t('formTabExam')], ['p4', t('formTabJournal')], ['p6', t('formTabPlan')]].map(([value, label]) => (
                 <TabsTrigger
                   key={value}
                   value={value}
@@ -447,38 +449,38 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
           <TabsContent value="p1" className={`${tabContentClass} space-y-3`}>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className={labelClass}>Номер картки</Label>
+                <Label className={labelClass}>{t('formCardNumber')}</Label>
                 <Input className={inputClass} value={formData.cardNumber} onChange={(event) => set('cardNumber', event.target.value)} />
               </div>
               <div>
-                <Label className={labelClass}>Рік</Label>
+                <Label className={labelClass}>{t('formYear')}</Label>
                 <Input className={inputClass} value={formData.year} onChange={(event) => set('year', event.target.value)} />
               </div>
             </div>
             <div>
-              <Label className={labelClass}>ПІБ пацієнта</Label>
+              <Label className={labelClass}>{t('formPatientFullName')}</Label>
               <Input className={inputClass} value={formData.fullName} onChange={(event) => set('fullName', event.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className={labelClass}>Стать</Label>
+                <Label className={labelClass}>{t('gender')}</Label>
                 <Select value={formData.gender} onValueChange={(value) => set('gender', value)}>
                   <SelectTrigger className={inputClass}>
                     <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 — чоловіча</SelectItem>
-                    <SelectItem value="2">2 — жіноча</SelectItem>
+                    <SelectItem value="1">1 — {t('male')}</SelectItem>
+                    <SelectItem value="2">2 — {t('female')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label className={labelClass}>Телефон</Label>
+              <Label className={labelClass}>{t('phone')}</Label>
               <Input className={inputClass} value={formData.phone} onChange={(event) => set('phone', event.target.value)} placeholder="+380..." inputMode="tel" />
             </div>
             <div>
-              <Label className={labelClass}>Дата народження</Label>
+              <Label className={labelClass}>{t('dateOfBirth')}</Label>
               <div className="flex flex-wrap items-center gap-1">
                 {(['dobD1', 'dobD2', 'dobM1', 'dobM2', 'dobY1', 'dobY2'] as const).map((key, index) => (
                   <div key={key} className="contents">
@@ -492,43 +494,43 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
                     {(index === 1 || index === 3) && <span className="font-bold text-slate-400">.</span>}
                   </div>
                 ))}
-                <span className="text-[10px] text-slate-400">дд.мм.рр</span>
+                <span className="text-[10px] text-slate-400">{t('formDateShort')}</span>
               </div>
             </div>
             <div>
-              <Label className={labelClass}>Діагноз</Label>
+              <Label className={labelClass}>{t('diagnosis')}</Label>
               <Textarea className={textAreaClass} value={formData.diagnoz} onChange={(event) => set('diagnoz', event.target.value)} />
             </div>
             <div>
-              <Label className={labelClass}>Скарги</Label>
+              <Label className={labelClass}>{t('complaints')}</Label>
               <Textarea className={textAreaClass} value={formData.skargy} onChange={(event) => set('skargy', event.target.value)} />
             </div>
             <div>
-              <Label className={labelClass}>Перенесені та супутні захворювання</Label>
+              <Label className={labelClass}>{t('concomitantDiseases')}</Label>
               <Textarea className={textAreaClass} value={formData.pereneseni} onChange={(event) => set('pereneseni', event.target.value)} />
             </div>
             <div>
-              <Label className={labelClass}>Розвиток теперішнього захворювання</Label>
+              <Label className={labelClass}>{t('currentDiseaseDevelopment')}</Label>
               <Textarea className={textAreaClass} value={formData.rozvytok} onChange={(event) => set('rozvytok', event.target.value)} />
             </div>
           </TabsContent>
 
           <TabsContent value="p2" className={`${tabContentClass} space-y-3`}>
             <div>
-              <Label className={labelClass}>Дані об'єктивного дослідження / зовнішній огляд</Label>
+              <Label className={labelClass}>{t('objectiveExamData')}</Label>
               <Textarea className={textAreaClass} value={formData.daniOglyadu} onChange={(event) => set('daniOglyadu', event.target.value)} />
             </div>
             <div className="rounded-lg border border-teal-100 bg-teal-50 p-2 text-[10px] leading-relaxed text-teal-800">
-              <b>Коди:</b> C-карієс · P-пульпіт · Pt-періодонтит · A-відсутній · R-корінь · Cd-коронка · Pl-пломба · F-фасетка · ar-штучний · r-реставрація · pin-штифт · I-імплантат · Dc-камінь
+              <b>{t('toothCodes')}:</b> C-карієс · P-пульпіт · Pt-періодонтит · A-відсутній · R-корінь · Cd-коронка · Pl-пломба · F-фасетка · ar-штучний · r-реставрація · pin-штифт · I-імплантат · Dc-камінь
             </div>
-            {[{ label: 'Верхня щелепа', list: UPPER_TEETH }, { label: 'Нижня щелепа', list: LOWER_TEETH }].map(({ label, list }) => (
+            {[{ label: t('upperJaw'), list: UPPER_TEETH }, { label: t('lowerJaw'), list: LOWER_TEETH }].map(({ label, list }) => (
               <div key={label}>
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">{label}</div>
                 <div className="-mx-4 overflow-x-auto px-4">
                   <table className="border-collapse text-[10px]" style={{ minWidth: 'max-content' }}>
                     <thead>
                       <tr className="bg-slate-50">
-                        <td className="sticky left-0 z-10 w-12 border border-slate-200 bg-slate-50 px-1 py-0.5 text-center text-slate-400">Зуб</td>
+                        <td className="sticky left-0 z-10 w-12 border border-slate-200 bg-slate-50 px-1 py-0.5 text-center text-slate-400">{t('tooth')}</td>
                         {list.map((number) => (
                           <td key={number} className="w-8 border border-slate-200 py-0.5 text-center font-mono font-bold text-slate-700">
                             {number}
@@ -540,7 +542,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
                       {(['numerator', 'denominator'] as const).map((field, rowIndex) => (
                         <tr key={field}>
                           <td className="sticky left-0 z-10 whitespace-nowrap border border-slate-200 bg-white px-1 py-0.5 text-center text-[9px] text-slate-400">
-                            {rowIndex === 0 ? 'Огляд' : 'Лікування'}
+                            {rowIndex === 0 ? t('examination') : t('treatment')}
                           </td>
                           {list.map((number) => (
                             <td key={number} className="border border-slate-200 p-0">
@@ -560,36 +562,36 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
               </div>
             ))}
             <div>
-              <Label className={labelClass}>Додаткові дані щодо зубів</Label>
+              <Label className={labelClass}>{t('additionalToothData')}</Label>
               <Textarea className={textAreaClass} value={formData.toothNotes} onChange={(event) => set('toothNotes', event.target.value)} />
             </div>
           </TabsContent>
 
           <TabsContent value="p3" className={`${tabContentClass} space-y-3`}>
             <div>
-              <Label className={labelClass}>Прикус</Label>
+              <Label className={labelClass}>{t('bite')}</Label>
               <Input className={inputClass} value={formData.prykus} onChange={(event) => set('prykus', event.target.value)} />
             </div>
             <div>
-              <Label className={labelClass}>Стан гігієни, слизової, ясен</Label>
+              <Label className={labelClass}>{t('hygieneState')}</Label>
               <Textarea className={`${textAreaClass} min-h-[80px]`} value={formData.stanGigieny} onChange={(event) => set('stanGigieny', event.target.value)} />
             </div>
             <div>
-              <Label className={labelClass}>Дані рентгенівських та лабораторних досліджень</Label>
+              <Label className={labelClass}>{t('xrayAndLabData')}</Label>
               <Textarea className={`${textAreaClass} min-h-[80px]`} value={formData.daniRentgen} onChange={(event) => set('daniRentgen', event.target.value)} />
             </div>
             <div className="grid grid-cols-1 gap-3 xs:grid-cols-2">
               <div>
-                <Label className={labelClass}>Колір за шкалою "Віта"</Label>
+                <Label className={labelClass}>{t('vitaColor')}</Label>
                 <Input className={inputClass} value={formData.kolirvita} onChange={(event) => set('kolirvita', event.target.value)} />
               </div>
               <div>
-                <Label className={labelClass}>Навчання гігієні</Label>
+                <Label className={labelClass}>{t('hygieneTraining')}</Label>
                 <Input className={inputClass} value={formData.navchannya} onChange={(event) => set('navchannya', event.target.value)} />
               </div>
             </div>
             <div>
-              <Label className={labelClass}>Дата контролю гігієни порожнини рота</Label>
+              <Label className={labelClass}>{t('hygieneControlDate')}</Label>
               <Input className={inputClass} value={formData.kontrolGigieny} onChange={(event) => set('kontrolGigieny', event.target.value)} />
             </div>
           </TabsContent>
@@ -597,29 +599,29 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
           <TabsContent value="p4" className={tabContentClass}>
             <div className="mb-3 grid grid-cols-1 gap-3 border-b border-slate-100 pb-3 xs:grid-cols-2">
               <div>
-                <Label className={labelClass}>Лікар</Label>
+                <Label className={labelClass}>{t('doctor')}</Label>
                 <Input className={inputClass} value={formData.likar} onChange={(event) => set('likar', event.target.value)} />
               </div>
               <div>
-                <Label className={labelClass}>Зав. відділенням</Label>
+                <Label className={labelClass}>{t('headOfDepartment')}</Label>
                 <Input className={inputClass} value={formData.zavViddil} onChange={(event) => set('zavViddil', event.target.value)} />
               </div>
             </div>
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">Щоденник лікаря — стор. 4-5 (35 записів)</p>
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-slate-400">{t('doctorJournalTitle')}</p>
             <div className="space-y-1.5">
               {formData.journal.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <span className="w-4 shrink-0 text-right text-[10px] text-slate-300">{index + 1}</span>
                   <Input
                     className="h-7 w-24 shrink-0 border-slate-200 px-1.5 text-xs"
-                    placeholder="дд.мм.рр"
+                    placeholder={t('formDateShort')}
                     inputMode="numeric"
                     value={item.date}
                     onChange={(event) => setJournal(index, 'date', event.target.value)}
                   />
                   <Input
                     className="h-7 min-w-0 flex-1 border-slate-200 px-1.5 text-xs"
-                    placeholder={`Запис ${index + 1}`}
+                    placeholder={`${t('entry')} ${index + 1}`}
                     value={item.note}
                     onChange={(event) => setJournal(index, 'note', event.target.value)}
                   />
@@ -631,7 +633,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
           <TabsContent value="p6" className={tabContentClass}>
             <div className="grid grid-cols-1 gap-4 xs:grid-cols-2">
               <div>
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">План обстеження</p>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">{t('examinationPlan')}</p>
                 <div className="space-y-1">
                   {formData.planObstezhenny.map((value, index) => (
                     <Input
@@ -644,7 +646,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
                 </div>
               </div>
               <div>
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">План лікування</p>
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-teal-700">{t('treatmentPlan')}</p>
                 <div className="space-y-1">
                   {formData.planLikuvannya.map((value, index) => (
                     <Input

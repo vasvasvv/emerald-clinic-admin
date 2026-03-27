@@ -84,7 +84,7 @@ export default function Notifications() {
     const handleInstalled = () => {
       setPwaInstalled(true);
       setDeferredInstallPrompt(null);
-      setResult('PWA встановлено.');
+      setResult(t('notificationsPwaInstalled'));
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
@@ -109,16 +109,16 @@ export default function Notifications() {
         : await sendPushToPhone.mutateAsync({ phone: pushPhone.trim(), body: pushMessage.trim() });
       setResult(`Надіслано: ${response.sent}, помилки: ${response.failed}`);
       setPushMessage(''); setPushPhone('');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to send push notification'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedSendPush')); }
   };
   const handleSendTelegram = async () => {
     if (!sendModal?.telegram_chat_id || !sendText.trim()) return;
     setError(''); setResult('');
     try {
       await sendTelegramMessage.mutateAsync({ chat_id: sendModal.telegram_chat_id, text: sendText.trim() });
-      setResult('Повідомлення в Telegram надіслано.');
+      setResult(t('notificationsTelegramSent'));
       setSendModal(null); setSendText('');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to send telegram message'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedSendTelegram')); }
   };
   const handleLinkTelegram = async () => {
     if (!linkModal) return;
@@ -127,21 +127,21 @@ export default function Notifications() {
     setError(''); setResult('');
     try {
       const response = await linkTelegramPhone.mutateAsync({ phone, telegram_chat_id: linkModal.chat_id });
-      setResult(response.updated > 0 ? `Прив'язано до ${response.updated} записів.` : 'Записів з таким номером не знайдено.');
+      setResult(response.updated > 0 ? t('notificationsLinkedRecords').replace('{{count}}', String(response.updated)) : t('notificationsNoRecordsForPhone'));
       setLinkModal(null); setLinkPhone('');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to link telegram phone'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedLinkTelegram')); }
   };
   const handleTriggerCron = async () => {
     setError(''); setResult('');
     try {
       const data = await triggerTelegramCron.mutateAsync();
-      setResult(`Cron ???????????????? ????????????. 24h: ${data.remind24}, 1h: ${data.remind1}`);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to trigger telegram cron'); }
+      setResult(t('notificationsCronResult').replace('{{remind24}}', String(data.remind24)).replace('{{remind1}}', String(data.remind1)));
+    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsFailedTriggerCron')); }
       };
 
   const handleInstallPwa = async () => {
     if (!deferredInstallPrompt) {
-      setResult('Встановлення PWA стане доступним, коли браузер дозволить інсталяцію.');
+      setResult(t('notificationsPwaInstallAvailableLater'));
       return;
     }
     setInstallingPwa(true); setError(''); setResult('');
@@ -149,12 +149,12 @@ export default function Notifications() {
       await deferredInstallPrompt.prompt();
       const choice = await deferredInstallPrompt.userChoice;
       if (choice.outcome === 'accepted') {
-        setResult('Запит на встановлення PWA підтверджено.');
+        setResult(t('notificationsPwaInstallAccepted'));
       } else {
-        setResult('Встановлення PWA скасовано.');
+        setResult(t('notificationsPwaInstallDismissed'));
       }
       setDeferredInstallPrompt(null);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Не вдалося запустити встановлення PWA'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('notificationsPwaInstallFailed')); }
     finally { setInstallingPwa(false); }
   };
 
@@ -172,7 +172,7 @@ export default function Notifications() {
     <div className="rounded-2xl border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">{icon}<h3 className="font-semibold">{title}</h3></div>
       <p className="text-xs text-muted-foreground">{subtitle}</p>
-      {items.length === 0 ? <p className="text-sm text-muted-foreground">Немає кандидатів.</p> : (
+      {items.length === 0 ? <p className="text-sm text-muted-foreground">{t('xrayNoMatches')}</p> : (
         <div className="space-y-2">
           {items.map((item) => (
             <div key={item.id} className="rounded-xl bg-secondary/40 px-3 py-2">
@@ -193,9 +193,9 @@ export default function Notifications() {
         {result && <p className="text-sm text-success">{result}</p>}
 
         <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
-          <button onClick={() => setSection('telegram')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Send className="h-4 w-4" />Telegram</button>
-          <button onClick={() => setSection('push')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Bell className="h-4 w-4" />Push</button>
-          <button onClick={() => setSection('pwa')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Smartphone className="h-4 w-4" />PWA</button>
+          <button onClick={() => setSection('telegram')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Send className="h-4 w-4" />{t('notificationsSectionTelegram')}</button>
+          <button onClick={() => setSection('push')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Bell className="h-4 w-4" />{t('notificationsSectionPush')}</button>
+          <button onClick={() => setSection('pwa')} className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}><Smartphone className="h-4 w-4" />{t('notificationsSectionPwa')}</button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -229,7 +229,7 @@ export default function Notifications() {
               {loading ? (
                 <div className="p-5 text-sm text-muted-foreground">{t('loading')}</div>
               ) : filteredLogs.length === 0 ? (
-                <div className="p-5 text-sm text-muted-foreground">Історія поки порожня.</div>
+                <div className="p-5 text-sm text-muted-foreground">{t('notificationsHistoryEmpty')}</div>
               ) : (
                 <div className="divide-y divide-border/50">
                   {filteredLogs.map((log) => (
@@ -238,9 +238,9 @@ export default function Notifications() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{log.body}</p>
                         <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span>{log.target_type === 'all' ? 'Всі підписники' : log.target_value || '-'}</span>
-                          <span>Успішно: {log.sent_count}</span>
-                          <span>Помилки: {log.failed_count}</span>
+                          <span>{log.target_type === 'all' ? t('notificationsAllSubscribers') : log.target_value || '-'}</span>
+                          <span>{t('notificationsSuccessCount')}: {log.sent_count}</span>
+                          <span>{t('notificationsFailedCount')}: {log.failed_count}</span>
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(log.created_at).toLocaleString(locale)}</span>
                         </div>
                       </div>
@@ -255,9 +255,9 @@ export default function Notifications() {
         {section === 'telegram' && (
           <>
             <div className="inline-flex w-full max-w-2xl rounded-2xl border border-border bg-secondary/25 p-1">
-              <button onClick={() => setTelegramTab('appointments')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>Записи</button>
-              <button onClick={() => setTelegramTab('pending')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>Очікують прив'язки</button>
-              <button onClick={() => setTelegramTab('settings')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>Налаштування</button>
+              <button onClick={() => setTelegramTab('appointments')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabAppointments')}</button>
+              <button onClick={() => setTelegramTab('pending')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabPending')}</button>
+              <button onClick={() => setTelegramTab('settings')} className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}>{t('telegramTabSettings')}</button>
             </div>
 
             {telegramTab === 'appointments' && (
@@ -267,12 +267,12 @@ export default function Notifications() {
                     <input type="date" className="input-glass" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
                     <button onClick={() => void telegramAppointmentsQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} /></button>
                   </div>
-                  <span className="text-sm text-muted-foreground">Стан Telegram для записів на {filterDate}</span>
+                  <span className="text-sm text-muted-foreground">{t('telegramStatusForDate')} {filterDate}</span>
                 </div>
                 {loadingTelegramAppointments ? (
                   <div className="text-sm text-muted-foreground">{t('loading')}</div>
                 ) : telegramAppointments.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">Записів на цю дату немає.</div>
+                  <div className="text-sm text-muted-foreground">{t('telegramNoAppointmentsForDate')}</div>
                 ) : (
                   <div className="space-y-3">
                     {telegramAppointments.map((appointment) => {
@@ -282,7 +282,7 @@ export default function Notifications() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm font-medium">{firstName || appointment.patient_name}</p>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}>{appointment.telegram_chat_id ? 'Telegram OK' : 'Без Telegram'}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${appointment.telegram_chat_id ? 'bg-info/20 text-info' : 'bg-secondary text-muted-foreground'}`}>{appointment.telegram_chat_id ? t('telegramOk') : t('telegramMissing')}</span>
                             </div>
                             <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
                               <span>{new Date(appointment.appointment_at).toLocaleString(locale)}</span>
@@ -292,7 +292,7 @@ export default function Notifications() {
                             </div>
                           </div>
                           {appointment.telegram_chat_id && (
-                            <button onClick={() => { setSendModal(appointment); setSendText(`Доброго дня, ${firstName || 'пацієнте'}! Нагадуємо про ваш прийом у Dentis.`); }} className="btn-accent flex items-center gap-2"><MessageCircle className="w-4 h-4" />Написати</button>
+                            <button onClick={() => { setSendModal(appointment); setSendText(`Доброго дня, ${firstName || 'пацієнте'}! Нагадуємо про ваш прийом у Dentis.`); }} className="btn-accent flex items-center gap-2"><MessageCircle className="w-4 h-4" />{t('telegramWrite')}</button>
                           )}
                         </div>
                       );
@@ -305,26 +305,26 @@ export default function Notifications() {
             {telegramTab === 'pending' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-muted-foreground">Користувачі, які написали боту, але ще не прив'язані до телефону.</p>
+                  <p className="text-sm text-muted-foreground">{t('telegramPendingHelp')}</p>
                   <button onClick={() => void telegramPendingQuery.refetch()} className="p-2 rounded-xl hover:bg-secondary/60"><RefreshCw className={`w-4 h-4 ${loadingTelegramPending ? 'animate-spin' : ''}`} /></button>
                 </div>
                 {loadingTelegramPending ? (
                   <div className="text-sm text-muted-foreground">{t('loading')}</div>
                 ) : telegramPending.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">Немає користувачів у pending-черзі.</div>
+                  <div className="text-sm text-muted-foreground">{t('telegramNoPending')}</div>
                 ) : (
                   <div className="space-y-3">
                     {telegramPending.map((pending) => (
                       <div key={pending.id} className="rounded-2xl border border-border p-4 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-info/15 flex items-center justify-center"><Send className="w-5 h-5 text-info" /></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{pending.first_name || 'Без імені'}</p>
+                          <p className="text-sm font-medium">{pending.first_name || t('noName')}</p>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
                             <span>chat_id: {pending.chat_id}</span>
                             <span>{new Date(pending.created_at).toLocaleString(locale)}</span>
                           </div>
                         </div>
-                        <button onClick={() => { setLinkModal(pending); setLinkPhone(''); }} className="btn-accent flex items-center gap-2"><Link2 className="w-4 h-4" />Прив'язати</button>
+                        <button onClick={() => { setLinkModal(pending); setLinkPhone(''); }} className="btn-accent flex items-center gap-2"><Link2 className="w-4 h-4" />{t('telegramLinkAction')}</button>
                       </div>
                     ))}
                   </div>
@@ -335,30 +335,30 @@ export default function Notifications() {
             {telegramTab === 'settings' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 <div className="glass-panel p-6 space-y-3">
-                  <h2 className="font-heading font-semibold">Посилання для пацієнтів</h2>
+                  <h2 className="font-heading font-semibold">{t('telegramBotLinkTitle')}</h2>
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="input-glass flex-1 min-w-[280px]">https://t.me/dentis_notif_bot</div>
                     <button onClick={async () => { await navigator.clipboard.writeText('https://t.me/dentis_notif_bot'); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="btn-accent">
-                      {copied ? 'Скопійовано' : 'Копіювати'}
+                      {copied ? t('copied') : t('copy')}
                     </button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Пацієнт відкриває бота, надсилає `/start`, ділиться номером телефону, після чого його можна зв'язати із записами.</p>
+                  <p className="text-sm text-muted-foreground">{t('telegramBotLinkDescription')}</p>
                 </div>
 
                 <div className="glass-panel p-6 space-y-4">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
-                      <h2 className="font-heading font-semibold">Нагадування Telegram</h2>
-                      <p className="text-sm text-muted-foreground">Найближчі кандидати на 24h і 1h та ручний запуск cron.</p>
+                      <h2 className="font-heading font-semibold">{t('telegramRemindersTitle')}</h2>
+                      <p className="text-sm text-muted-foreground">{t('telegramRemindersDescription')}</p>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <button onClick={() => void telegramDebugQuery.refetch()} className="px-4 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 text-sm font-medium" disabled={loadingDebug}>
                         <RefreshCw className={`w-4 h-4 inline mr-2 ${loadingDebug ? 'animate-spin' : ''}`} />
-                        Оновити
+                        {t('refresh')}
                       </button>
                       <button onClick={() => void handleTriggerCron()} className="btn-accent" disabled={triggeringCron}>
                         <Siren className="w-4 h-4 inline mr-2" />
-                        Запустити cron
+                        {t('runCron')}
                       </button>
                     </div>
                   </div>
@@ -368,13 +368,13 @@ export default function Notifications() {
                   ) : debugData ? (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <DebugColumn title="24h кандидати" subtitle={`Вікно: ${debugData.windows.from24} - ${debugData.windows.to24}`} items={debugData.appointments24} icon={<TimerReset className="w-4 h-4 text-primary" />} />
-                        <DebugColumn title="1h кандидати" subtitle={`Вікно: ${debugData.windows.from1} - ${debugData.windows.to1}`} items={debugData.appointments1} icon={<Clock className="w-4 h-4 text-accent" />} />
+                        <DebugColumn title={t('telegramCandidates24h')} subtitle={`Вікно: ${debugData.windows.from24} - ${debugData.windows.to24}`} items={debugData.appointments24} icon={<TimerReset className="w-4 h-4 text-primary" />} />
+                        <DebugColumn title={t('telegramCandidates1h')} subtitle={`Вікно: ${debugData.windows.from1} - ${debugData.windows.to1}`} items={debugData.appointments1} icon={<Clock className="w-4 h-4 text-accent" />} />
                       </div>
                       <div className="rounded-2xl border border-border p-4 space-y-2">
-                        <p className="text-sm font-medium">Лог перевірки</p>
+                        <p className="text-sm font-medium">{t('debugLogTitle')}</p>
                         {debugData.log.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Лог порожній.</p>
+                          <p className="text-sm text-muted-foreground">{t('debugLogEmpty')}</p>
                         ) : (
                           <div className="space-y-1 font-mono text-xs text-muted-foreground">
                             {debugData.log.map((line, index) => <p key={`${line}-${index}`}>{line}</p>)}
@@ -383,16 +383,16 @@ export default function Notifications() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Ще не завантажено debug-дані.</p>
+                    <p className="text-sm text-muted-foreground">{t('debugNotLoaded')}</p>
                   )}
                 </div>
 
                 <div className="glass-panel p-6 space-y-2 text-sm text-muted-foreground">
-                  <p>1. Пацієнт переходить у Telegram-бота.</p>
-                  <p>2. Надсилає `/start` і ділиться номером телефону.</p>
-                  <p>3. Контакт потрапляє в `pending` або одразу збігається з номером у системі.</p>
-                  <p>4. Менеджер може вручну прив'язати pending-контакт до номера пацієнта.</p>
-                  <p>5. Після цього можна надсилати ручні Telegram-повідомлення з адмінки.</p>
+                  <p>{t('telegramFlowStep1')}</p>
+                  <p>{t('telegramFlowStep2')}</p>
+                  <p>{t('telegramFlowStep3')}</p>
+                  <p>{t('telegramFlowStep4')}</p>
+                  <p>{t('telegramFlowStep5')}</p>
                 </div>
               </motion.div>
             )}
@@ -402,33 +402,33 @@ export default function Notifications() {
         {section === 'pwa' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 space-y-5">
             <div className="space-y-2">
-              <h2 className="font-heading font-semibold">Встановлення застосунку</h2>
-              <p className="text-sm text-muted-foreground">Встанови `Дентіс Адмін` як окремий застосунок без адресного рядка браузера.</p>
+              <h2 className="font-heading font-semibold">{t('pwaInstallTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('pwaInstallDescription')}</p>
             </div>
 
             <div className="rounded-3xl border border-border bg-secondary/30 p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Статус PWA</p>
+                  <p className="text-sm font-medium">{t('pwaStatusTitle')}</p>
                   <p className="text-sm text-muted-foreground">
                     {pwaInstalled
-                      ? 'Застосунок уже встановлено на цьому пристрої.'
+                      ? t('pwaAlreadyInstalled')
                       : deferredInstallPrompt
-                        ? 'Застосунок готовий до встановлення.'
-                        : 'Кнопка стане активною, коли браузер підготує інсталяцію.'}
+                        ? t('pwaReadyToInstall')
+                        : t('pwaWaitingToInstall')}
                   </p>
                 </div>
                 <button onClick={() => void handleInstallPwa()} className="btn-accent flex items-center justify-center gap-2 sm:min-w-[220px]" disabled={installingPwa || pwaInstalled || !deferredInstallPrompt}>
                   <Download className="w-4 h-4" />
-                  {pwaInstalled ? 'Встановлено' : installingPwa ? 'Запуск...' : 'Встановити PWA'}
+                  {pwaInstalled ? t('pwaInstalledLabel') : installingPwa ? t('pwaLaunching') : t('pwaInstallButton')}
                 </button>
               </div>
             </div>
 
             <div className="rounded-2xl border border-border p-4 text-sm text-muted-foreground space-y-2">
-              <p>1. Відкрий цю сторінку у Chrome, Edge або Safari на потрібному пристрої.</p>
-              <p>2. Якщо кнопка неактивна, онови сторінку і зачекай, поки браузер підготує встановлення.</p>
-              <p>3. На iPhone або iPad встановлення доступне через `Поділитися` → `На початковий екран`.</p>
+              <p>{t('pwaStep1')}</p>
+              <p>{t('pwaStep2')}</p>
+              <p>{t('pwaStep3')}</p>
             </div>
           </motion.div>
         )}
@@ -437,7 +437,7 @@ export default function Notifications() {
           {sendModal && (
             <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div className="glass-panel w-full max-w-lg p-6 space-y-4" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
-                <h2 className="font-heading font-semibold text-lg">Написати в Telegram</h2>
+                <h2 className="font-heading font-semibold text-lg">{t('telegramWriteTitle')}</h2>
                 <div className="rounded-xl bg-secondary/50 p-4 text-sm">
                   <p className="font-medium">{extractFirstName(sendModal.patient_name) || sendModal.patient_name}</p>
                   <p className="text-muted-foreground">{sendModal.phone}</p>
@@ -455,9 +455,9 @@ export default function Notifications() {
           {linkModal && (
             <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <motion.div className="glass-panel w-full max-w-lg p-6 space-y-4" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}>
-                <h2 className="font-heading font-semibold text-lg">Прив'язати Telegram</h2>
+                <h2 className="font-heading font-semibold text-lg">{t('telegramLinkTitle')}</h2>
                 <div className="rounded-xl bg-secondary/50 p-4 text-sm">
-                  <p className="font-medium">{linkModal.first_name || 'Без імені'}</p>
+                  <p className="font-medium">{linkModal.first_name || t('noName')}</p>
                   <p className="text-muted-foreground">chat_id: {linkModal.chat_id}</p>
                 </div>
                 <div className="space-y-1.5">
@@ -469,7 +469,7 @@ export default function Notifications() {
                 </div>
                 <div className="flex gap-3 justify-end">
                   <button onClick={() => setLinkModal(null)} className="px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-secondary/60">{t('cancel')}</button>
-                  <button onClick={() => void handleLinkTelegram()} className="btn-accent flex items-center gap-2" disabled={linking}><Link2 className="w-4 h-4" />Прив'язати</button>
+                  <button onClick={() => void handleLinkTelegram()} className="btn-accent flex items-center gap-2" disabled={linking}><Link2 className="w-4 h-4" />{t('telegramLinkAction')}</button>
                 </div>
               </motion.div>
             </motion.div>

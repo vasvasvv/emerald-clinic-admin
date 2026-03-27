@@ -6,7 +6,7 @@ import {
   normalizePatient,
   resolveDoctorFilter,
 } from '@/lib/dental-charts-utils';
-import type { ChangeHistoryEntry, Doctor, Patient, ToothRecord, User, Visit } from '@/types/dental';
+import type { Doctor, Patient, ToothRecord, User } from '@/types/dental';
 
 export interface DentalPatientPayload {
   firstName: string;

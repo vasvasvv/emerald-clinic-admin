@@ -4,8 +4,16 @@ import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-context';
+import type { ComponentType } from 'react';
 
-const primaryNavItems = [
+type NavItem = {
+  key: 'dashboard' | 'appointments' | 'records' | 'dentalCharts' | 'xrays' | 'notifications' | 'doctors' | 'news';
+  url: string;
+  icon: ComponentType<{ className?: string }>;
+  label?: string;
+};
+
+const primaryNavItems: NavItem[] = [
   { key: 'dashboard' as const, url: '/', icon: LayoutDashboard },
   { key: 'appointments' as const, url: '/appointments', icon: Calendar },
   { key: 'records' as const, url: '/records', icon: ClipboardList },
@@ -14,7 +22,7 @@ const primaryNavItems = [
   { key: 'notifications' as const, url: '/notifications', icon: Bell },
 ];
 
-const secondaryNavItems = [
+const secondaryNavItems: NavItem[] = [
   { key: 'doctors' as const, url: '/doctors', icon: Users },
   { key: 'news' as const, url: '/news', icon: Newspaper },
 ];
@@ -75,7 +83,7 @@ function SidebarContent({
           {primaryNavItems.map((item) => (
             <NavLink key={item.key} to={item.url} end={item.url === '/'} className={linkClass} activeClassName={activeClass}>
               <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
-              {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key as any)}</span>}
+              {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key)}</span>}
             </NavLink>
           ))}
         </div>
@@ -85,7 +93,7 @@ function SidebarContent({
         {secondaryNavItems.map((item) => (
           <NavLink key={item.key} to={item.url} className={linkClass} activeClassName={activeClass}>
             <item.icon className="h-[1.24rem] w-[1.24rem] flex-shrink-0" />
-            {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key as any)}</span>}
+            {!collapsed && <span className="text-[1.08rem] font-medium">{item.label ?? t(item.key)}</span>}
           </NavLink>
         ))}
 

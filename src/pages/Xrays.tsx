@@ -13,6 +13,7 @@ import { useCreatePatient, useSearchPatients } from '@/hooks/use-patients';
 import { useActiveXraySession, useStartXraySession } from '@/hooks/use-xray';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { normalizePhone } from '@/lib/patient-utils';
 import { cn } from '@/lib/utils';
 import type { ApiPatient, ApiPatientPayload, ApiXraySession } from '@/types/api';
@@ -128,6 +129,7 @@ function PatientModal({
   draft: PatientDraft;
   onSubmit: (payload: PatientFormPayload) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [middleName, setMiddleName] = useState('');
@@ -172,35 +174,35 @@ function PatientModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Створити пацієнта</DialogTitle>
+          <DialogTitle>{t('xrayCreatePatientTitle')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="patient-last-name">Прізвище</Label>
+              <Label htmlFor="patient-last-name">{t('lastName')}</Label>
               <Input id="patient-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="patient-first-name">Ім'я</Label>
+              <Label htmlFor="patient-first-name">{t('firstName')}</Label>
               <Input id="patient-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
             </div>
           </div>
 
           <div className="grid grid-cols-[1fr_130px] gap-4">
             <div className="space-y-2">
-              <Label htmlFor="patient-middle-name">По батькові</Label>
+              <Label htmlFor="patient-middle-name">{t('middleName')}</Label>
               <Input id="patient-middle-name" value={middleName} onChange={(event) => setMiddleName(event.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Стать</Label>
+              <Label>{t('gender')}</Label>
               <Select value={gender} onValueChange={setGender}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Не вказано" />
+                  <SelectValue placeholder={t('unspecified')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Чоловіча</SelectItem>
-                  <SelectItem value="female">Жіноча</SelectItem>
+                  <SelectItem value="male">{t('male')}</SelectItem>
+                  <SelectItem value="female">{t('female')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -208,20 +210,20 @@ function PatientModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="patient-phone">Телефон</Label>
+              <Label htmlFor="patient-phone">{t('phone')}</Label>
               <Input id="patient-phone" value={phone} onChange={(event) => setPhone(event.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="patient-date">Дата народження</Label>
+              <Label htmlFor="patient-date">{t('dateOfBirth')}</Label>
               <Input id="patient-date" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Лікар</Label>
+            <Label>{t('doctor')}</Label>
             <Select value={doctorId} onValueChange={setDoctorId}>
               <SelectTrigger>
-                <SelectValue placeholder="Оберіть лікаря" />
+                <SelectValue placeholder={t('chooseDoctor')} />
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
@@ -235,11 +237,11 @@ function PatientModal({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Скасувати
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={saving || !doctorId}>
               {saving ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
-              Зберегти пацієнта
+              {t('savePatient')}
             </Button>
           </DialogFooter>
         </form>
@@ -249,6 +251,7 @@ function PatientModal({
 }
 
 export default function Xrays() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { token } = useAuth();
   const [step, setStep] = useState<Step>('patient');
@@ -282,10 +285,10 @@ export default function Xrays() {
         ? systemDoctorsQuery.data.map((doctor) => ({
             id: String(doctor.id ?? ''),
             name: doctor.name ?? doctor.fullName ?? '',
-            specialty: doctor.specialty ?? '??????????',
+            specialty: doctor.specialty ?? t('xrayNoSpecialty'),
           }))
         : [],
-    [systemDoctorsQuery.data],
+    [systemDoctorsQuery.data, t],
   );
   const session = activeSessionQuery.data ?? sessionState;
   const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
@@ -328,7 +331,7 @@ export default function Xrays() {
         setPreviewUrl(previewObjectUrl);
         setOriginalUrl(originalObjectUrl);
       } catch (imageError) {
-        if (!cancelled) setError(imageError instanceof Error ? imageError.message : 'Не вдалося завантажити зображення');
+        if (!cancelled) setError(imageError instanceof Error ? imageError.message : t('xrayFailedLoadImage'));
       } finally {
         if (!cancelled) setIsImageLoading(false);
       }
@@ -376,7 +379,7 @@ export default function Xrays() {
       setHasSearched(true);
     } catch (searchError) {
       if (searchError instanceof DOMException && searchError.name === 'AbortError') return;
-      setError(searchError instanceof Error ? searchError.message : 'Не вдалося знайти пацієнтів');
+      setError(searchError instanceof Error ? searchError.message : t('xrayFailedSearchPatients'));
     } finally {
       if (searchAbortRef.current === controller) {
         searchAbortRef.current = null;
@@ -417,7 +420,7 @@ export default function Xrays() {
         doctorId: String(created.primary_doctor_user_id ?? payload.doctorId),
       });
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : 'Не вдалося створити пацієнта');
+      setError(createError instanceof Error ? createError.message : t('xrayFailedCreatePatient'));
       throw createError;
     }
   };
@@ -433,7 +436,7 @@ export default function Xrays() {
       setSessionState(nextSession);
       setStep('capture');
     } catch (sessionError) {
-      setError(sessionError instanceof Error ? sessionError.message : 'Не вдалося створити сесію');
+      setError(sessionError instanceof Error ? sessionError.message : t('xrayFailedCreateSession'));
     }
   };
 
@@ -443,7 +446,7 @@ export default function Xrays() {
       const result = await activeSessionQuery.refetch();
       if (result.data) setSessionState(result.data);
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'Не вдалося оновити статус');
+      setError(refreshError instanceof Error ? refreshError.message : t('xrayFailedRefreshStatus'));
     }
   };
 
@@ -471,49 +474,49 @@ export default function Xrays() {
         {step === 'patient' && (
           <section className="mx-auto max-w-3xl rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">Оберіть пацієнта</h1>
+              <h1 className="text-2xl font-semibold">{t('xraySelectPatientTitle')}</h1>
               <p className="text-sm text-muted-foreground">
-                Пошук виконується після переходу на інше поле. Натискання <code>Enter</code> або кнопки <code>Знайти</code> запускає пошук одразу.
+                {t('xraySelectPatientDescription')}
               </p>
             </div>
 
             <form onSubmit={handleSearchSubmit}>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="xray-last-name">Прізвище</Label>
-                  <Input id="xray-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} onBlur={triggerSearch} placeholder="Прізвище" />
+                  <Label htmlFor="xray-last-name">{t('lastName')}</Label>
+                  <Input id="xray-last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} onBlur={triggerSearch} placeholder={t('lastName')} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="xray-first-name">Ім'я</Label>
-                  <Input id="xray-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} onBlur={triggerSearch} placeholder="Ім'я" />
+                  <Label htmlFor="xray-first-name">{t('firstName')}</Label>
+                  <Input id="xray-first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} onBlur={triggerSearch} placeholder={t('firstName')} />
                 </div>
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-[1fr_auto]">
                 <div className="space-y-2">
-                  <Label htmlFor="xray-phone">Телефон</Label>
+                  <Label htmlFor="xray-phone">{t('phone')}</Label>
                   <Input id="xray-phone" value={phone} onChange={(event) => setPhone(event.target.value)} onBlur={triggerSearch} placeholder="+380..." />
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" variant="outline">
                     {isSearching ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-                    Знайти
+                    {t('xraySearchButton')}
                   </Button>
                 </div>
               </div>
             </form>
 
             <div className="mt-6 flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">Створення доступне одразу. Для активації кнопки заповніть прізвище, ім'я і телефон.</p>
+              <p className="text-sm text-muted-foreground">{t('xrayCreateReadyHint')}</p>
               <Button onClick={() => setIsCreatingPatient(true)} disabled={!canCreate}>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Створити
+                {t('xrayCreateButton')}
               </Button>
             </div>
 
             {hasSearched && (
               <div className="mt-4 rounded-[24px] border border-border/60 bg-muted/20 p-3">
-                <p className="mb-3 text-sm font-medium">{matches.length > 0 ? 'Знайдені пацієнти' : 'Збігів не знайдено'}</p>
+                <p className="mb-3 text-sm font-medium">{matches.length > 0 ? t('xrayMatchesFound') : t('xrayNoMatches')}</p>
                 {matches.length > 0 ? (
                   <ScrollArea className="h-[260px]">
                     <div className="space-y-2 pr-2">
@@ -525,14 +528,14 @@ export default function Xrays() {
                           className="w-full rounded-[18px] border border-transparent bg-background px-4 py-3 text-left transition-colors hover:border-border hover:bg-muted/40"
                         >
                           <p className="font-medium">{formatPatientName(patient)}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{patient.phone || 'Телефон не вказано'}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{patient.phone || t('xrayNoPhone')}</p>
                         </button>
                       ))}
                     </div>
                   </ScrollArea>
                 ) : (
                   <div className="rounded-[18px] bg-background px-4 py-5 text-sm text-muted-foreground">
-                    Збігів не знайдено. Можна створити нового пацієнта кнопкою вище.
+                    {t('xrayNoMatchesDescription')}
                   </div>
                 )}
               </div>
@@ -544,18 +547,18 @@ export default function Xrays() {
           <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Пацієнт</p>
+                <p className="text-sm text-muted-foreground">{t('xrayPatientLabel')}</p>
                 <h1 className="text-2xl font-semibold">{formatPatientName(selectedPatient)}</h1>
-                <p className="mt-2 text-sm text-muted-foreground">Оберіть зуб, до якого прив'яжеться знімок.</p>
+                <p className="mt-2 text-sm text-muted-foreground">{t('xrayChooseToothDescription')}</p>
               </div>
               <Button variant="outline" onClick={() => setStep('patient')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Назад
+                {t('xrayBack')}
               </Button>
             </div>
 
             <div className="rounded-[24px] border border-border/60 bg-background p-4 sm:p-5">
-              <p className="mb-3 text-sm font-semibold">Верхня щелепа</p>
+              <p className="mb-3 text-sm font-semibold">{t('xrayUpperJaw')}</p>
               <div className="overflow-x-auto">
                 <div className="flex min-w-[720px] justify-between gap-2">
                   {UPPER_TEETH.map((tooth) => (
@@ -564,7 +567,7 @@ export default function Xrays() {
                 </div>
               </div>
 
-              <p className="mb-3 mt-6 text-sm font-semibold">Нижня щелепа</p>
+              <p className="mb-3 mt-6 text-sm font-semibold">{t('xrayLowerJaw')}</p>
               <div className="overflow-x-auto">
                 <div className="flex min-w-[720px] justify-between gap-2">
                   {LOWER_TEETH.map((tooth) => (
@@ -575,10 +578,10 @@ export default function Xrays() {
             </div>
 
             <div className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">{selectedTooth ? `Обраний зуб: FDI ${selectedTooth}` : 'Оберіть зуб для знімка'}</p>
+              <p className="text-sm text-muted-foreground">{selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}</p>
               <Button onClick={startCapture} disabled={!selectedTooth || startXraySessionMutation.isPending} className="h-12 rounded-2xl px-6 text-base">
                 {startXraySessionMutation.isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                Почати знімок
+                {t('xrayStartCapture')}
               </Button>
             </div>
           </section>
@@ -587,25 +590,25 @@ export default function Xrays() {
         {step === 'capture' && session && !session.xray && (
           <section className="flex min-h-[72vh] flex-col justify-between rounded-[28px] border border-amber-500/20 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.12),transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.98))] p-6 md:p-8">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-amber-700">Очікування</p>
-              <h2 className="mt-2 text-3xl font-semibold">Зробіть знімок у Carestream</h2>
-              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">Після появи нового файлу система автоматично прикріпить його до пацієнта, зуба і зубної карти.</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-amber-700">{t('xrayWaitingEyebrow')}</p>
+              <h2 className="mt-2 text-3xl font-semibold">{t('xrayWaitingTitle')}</h2>
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{t('xrayWaitingDescription')}</p>
             </div>
 
             <div className="grid gap-4 rounded-[24px] border border-border/70 bg-background/90 p-5 md:grid-cols-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Пацієнт</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayPatientLabel')}</p>
                 <p className="mt-2 font-medium">{session.patientName}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Зуб</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayToothLabel')}</p>
                 <p className="mt-2 font-medium">FDI {session.toothId}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Статус</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayStatusLabel')}</p>
                 <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1 text-sm text-amber-700">
                   <LoaderCircle className="h-4 w-4 animate-spin" />
-                  Polling кожні 3 сек.
+                  {t('xrayPollingStatus')}
                 </div>
               </div>
             </div>
@@ -613,11 +616,11 @@ export default function Xrays() {
             <div className="flex items-center justify-between gap-4">
               <Button variant="outline" onClick={() => setStep('tooth')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Змінити зуб
+                {t('xrayChangeTooth')}
               </Button>
               <Button variant="outline" onClick={refreshCapture}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${activeSessionQuery.isFetching ? 'animate-spin' : ''}`} />
-                Оновити зараз
+                {t('xrayRefreshNow')}
               </Button>
             </div>
           </section>
@@ -627,26 +630,26 @@ export default function Xrays() {
           <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Результат</p>
-                <h2 className="mt-2 text-2xl font-semibold">Знімок отримано</h2>
-                <p className="mt-2 text-sm text-muted-foreground">Клік по preview відкриває full resolution. Оригінал не стискався.</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">{t('xrayResultEyebrow')}</p>
+                <h2 className="mt-2 text-2xl font-semibold">{t('xrayResultTitle')}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">{t('xrayResultDescription')}</p>
               </div>
               <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-3">
                 <p className="text-sm font-medium">{session.patientName}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Зуб FDI {session.toothId}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t('xrayToothLabel')} FDI {session.toothId}</p>
               </div>
             </div>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <label className="flex items-center gap-3 text-sm">
                 <ZoomIn className="h-4 w-4 text-muted-foreground" />
-                Zoom
+                {t('xrayZoom')}
                 <input type="range" min={1} max={3} step={0.1} value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="w-40" />
                 <span className="w-10 text-right text-muted-foreground">{zoom.toFixed(1)}x</span>
               </label>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => navigate('/dental-charts')}>До зубних карт</Button>
-                <Button variant="outline" onClick={resetCapture}>Новий знімок</Button>
+                <Button variant="outline" onClick={() => navigate('/dental-charts')}>{t('xrayGoToDentalCharts')}</Button>
+                <Button variant="outline" onClick={resetCapture}>{t('xrayNewCapture')}</Button>
               </div>
             </div>
 
@@ -655,7 +658,7 @@ export default function Xrays() {
                 {isImageLoading || !previewUrl ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <LoaderCircle className="h-4 w-4 animate-spin" />
-                    Завантаження preview...
+                    {t('xrayPreviewLoading')}
                   </div>
                 ) : (
                   <img
@@ -683,7 +686,7 @@ export default function Xrays() {
       <Dialog open={isFullResOpen} onOpenChange={setIsFullResOpen}>
         <DialogContent className="max-h-[92vh] max-w-6xl overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Оригінал без стискання</DialogTitle>
+            <DialogTitle>{t('xrayOriginalTitle')}</DialogTitle>
           </DialogHeader>
           <div className="overflow-auto rounded-2xl border border-border/70 bg-muted/20 p-4">
             {originalUrl ? (
@@ -694,7 +697,7 @@ export default function Xrays() {
                 style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
               />
             ) : (
-              <div className="flex min-h-[420px] items-center justify-center text-sm text-muted-foreground">Оригінал ще завантажується...</div>
+              <div className="flex min-h-[420px] items-center justify-center text-sm text-muted-foreground">{t('xrayOriginalLoading')}</div>
             )}
           </div>
         </DialogContent>
