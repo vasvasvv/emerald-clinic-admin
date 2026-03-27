@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Flame, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCreateNews, useDeleteNews, useNews, useUpdateNews } from '@/hooks/use-news';
@@ -31,6 +32,7 @@ export default function News() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: items = [], isLoading: loading, error: newsError } = useNews();
   const createNews = useCreateNews();
@@ -162,7 +164,7 @@ export default function News() {
                   <button onClick={() => openEdit(item)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => void handleDelete(item.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                  <button onClick={() => setDeletingId(item.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -240,6 +242,18 @@ export default function News() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <ConfirmDialog
+          open={deletingId !== null}
+          onCancel={() => setDeletingId(null)}
+          onConfirm={() => {
+            if (deletingId === null) return;
+            void handleDelete(deletingId).finally(() => setDeletingId(null));
+          }}
+          title="Видалити новину"
+          description="Ви впевнені, що хочете видалити цю новину? Цю дію неможливо скасувати."
+          confirmLabel="Так, видалити"
+        />
       </div>
     </AdminLayout>
   );

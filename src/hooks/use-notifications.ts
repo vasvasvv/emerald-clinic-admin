@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 export function usePushCounts() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['push-counts'],
@@ -13,7 +13,7 @@ export function usePushCounts() {
 }
 
 export function useNotificationLogs() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['notification-logs'],
@@ -23,7 +23,7 @@ export function useNotificationLogs() {
 }
 
 export function useTelegramAppointments(date?: string, enabled = true) {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['telegram-appointments', date],
@@ -33,7 +33,7 @@ export function useTelegramAppointments(date?: string, enabled = true) {
 }
 
 export function useTelegramPending(enabled = true) {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['telegram-pending'],
@@ -43,7 +43,7 @@ export function useTelegramPending(enabled = true) {
 }
 
 export function useTelegramDebug(enabled = true) {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['telegram-debug'],
@@ -54,7 +54,7 @@ export function useTelegramDebug(enabled = true) {
 
 export function useSendPushToAll() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: { title?: string; body: string; url?: string }) => api.sendPushToAll(token!, data),
@@ -67,7 +67,7 @@ export function useSendPushToAll() {
 
 export function useSendPushToPhone() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: { phone: string; title?: string; body: string; url?: string }) => api.sendPushToPhone(token!, data),
@@ -80,7 +80,7 @@ export function useSendPushToPhone() {
 
 export function useSendTelegramMessage() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: { chat_id: string; text: string }) => api.sendTelegramMessage(token!, data),
@@ -92,7 +92,7 @@ export function useSendTelegramMessage() {
 
 export function useLinkTelegramPhone() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: { phone: string; telegram_chat_id: string }) => api.linkTelegramPhone(token!, data),
@@ -108,7 +108,7 @@ export function useLinkTelegramPhone() {
 
 export function useTriggerTelegramCron() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: () => api.triggerTelegramCron(token!),

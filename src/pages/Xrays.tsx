@@ -12,7 +12,7 @@ import { useSystemDoctors } from '@/hooks/use-doctors';
 import { useCreatePatient, useSearchPatients } from '@/hooks/use-patients';
 import { useActiveXraySession, useStartXraySession } from '@/hooks/use-xray';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import { normalizePhone } from '@/lib/patient-utils';
 import { cn } from '@/lib/utils';
 import type { ApiPatient, ApiPatientPayload, ApiXraySession } from '@/types/api';
@@ -250,7 +250,7 @@ function PatientModal({
 
 export default function Xrays() {
   const navigate = useNavigate();
-  const token = getAdminToken();
+  const { token } = useAuth();
   const [step, setStep] = useState<Step>('patient');
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');

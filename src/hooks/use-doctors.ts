@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 export function useSystemDoctors() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['system-doctors'],
@@ -13,7 +13,7 @@ export function useSystemDoctors() {
 }
 
 export function useSiteDoctors() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['site-doctors'],
@@ -24,7 +24,7 @@ export function useSiteDoctors() {
 
 export function useCreateSiteDoctor() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => api.createSiteDoctor(token!, data),
@@ -36,7 +36,7 @@ export function useCreateSiteDoctor() {
 
 export function useUpdateSiteDoctor() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
@@ -49,7 +49,7 @@ export function useUpdateSiteDoctor() {
 
 export function useDeleteSiteDoctor() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (id: number) => api.deleteSiteDoctor(token!, id),

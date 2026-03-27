@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 export function useStartXraySession() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: { patientId: number; toothId: number }) => api.startXraySession(token!, data),
@@ -11,7 +11,7 @@ export function useStartXraySession() {
 }
 
 export function useActiveXraySession(sessionId?: number, enabled = true) {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['xray-session', sessionId],

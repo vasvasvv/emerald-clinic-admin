@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 export function useNews() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['news'],
@@ -14,7 +14,7 @@ export function useNews() {
 
 export function useCreateNews() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: Record<string, unknown>) => api.createNews(token!, data),
@@ -26,7 +26,7 @@ export function useCreateNews() {
 
 export function useUpdateNews() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => api.updateNews(token!, id, data),
@@ -38,7 +38,7 @@ export function useUpdateNews() {
 
 export function useDeleteNews() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (id: number) => api.deleteNews(token!, id),

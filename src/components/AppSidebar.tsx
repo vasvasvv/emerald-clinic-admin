@@ -3,7 +3,7 @@ import { LayoutDashboard, Calendar, ClipboardList, Users, Newspaper, Bell, LogOu
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
-import { clearAdminSession } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 const primaryNavItems = [
   { key: 'dashboard' as const, url: '/', icon: LayoutDashboard },
@@ -44,6 +44,7 @@ function SidebarContent({
   onCollapse?: () => void;
 }) {
   const { t } = useI18n();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const linkClass = collapsed
@@ -90,7 +91,7 @@ function SidebarContent({
 
         <button
           onClick={() => {
-            clearAdminSession();
+            logout();
             navigate('/login');
           }}
           className={`flex w-full items-center rounded-2xl px-3 py-3 text-destructive/85 transition-colors duration-200 hover:bg-destructive/10 ${collapsed ? 'justify-center' : 'gap-3'}`}

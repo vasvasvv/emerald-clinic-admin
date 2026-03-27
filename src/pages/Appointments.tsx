@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Search, Calendar, Clock3, Phone, ChevronDown, UserRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -85,6 +86,7 @@ export default function Appointments() {
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
   const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
@@ -312,7 +314,7 @@ export default function Appointments() {
                       <button onClick={() => openEdit(appointment)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button onClick={() => void handleDelete(appointment.id)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                      <button onClick={() => setDeletingId(appointment.id)} className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -408,6 +410,18 @@ export default function Appointments() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <ConfirmDialog
+          open={deletingId !== null}
+          onCancel={() => setDeletingId(null)}
+          onConfirm={() => {
+            if (deletingId === null) return;
+            void handleDelete(deletingId).finally(() => setDeletingId(null));
+          }}
+          title="Видалити запис"
+          description="Ви впевнені, що хочете видалити цей запис? Цю дію неможливо скасувати."
+          confirmLabel="Так, видалити"
+        />
       </div>
     </AdminLayout>
   );

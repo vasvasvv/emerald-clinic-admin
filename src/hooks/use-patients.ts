@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { api, apiCall } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import type { ApiPatient, ApiPatientPayload } from '@/types/api';
 
 export function useSearchPatients() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: ({ query, limit, signal }: { query: string; limit?: number; signal?: AbortSignal }) =>
@@ -13,7 +13,7 @@ export function useSearchPatients() {
 }
 
 export function useCreatePatient() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: ApiPatientPayload) => api.createPatient(token!, data as Record<string, unknown>),
@@ -21,7 +21,7 @@ export function useCreatePatient() {
 }
 
 export function useCreatePatientLegacy() {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: ApiPatientPayload) =>

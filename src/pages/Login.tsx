@@ -4,10 +4,11 @@ import { useI18n } from '@/lib/i18n';
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { api } from '@/lib/api';
-import { clearAdminSession } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Login() {
   const { t } = useI18n();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +19,11 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    clearAdminSession();
+    logout();
 
     try {
       const result = await api.login(email, password);
-      localStorage.setItem('dental_admin_auth', 'true');
-      localStorage.setItem('dental_admin_token', result.token);
-      localStorage.setItem('dental_admin_user', JSON.stringify(result.user));
+      login(result.token, result.user);
       navigate('/');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
@@ -32,7 +31,7 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

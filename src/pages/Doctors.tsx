@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Plus, Edit2, Trash2, X, User } from 'lucide-react';
@@ -9,6 +10,7 @@ import {
   useSiteDoctors,
   useUpdateSiteDoctor,
 } from '@/hooks/use-doctors';
+import { useAuth } from '@/lib/auth-context';
 import type { ApiSiteDoctor } from '@/types/api';
 
 interface Doctor {
@@ -26,12 +28,14 @@ const MAX_DOCTOR_PHOTO_SIZE_MB = 5;
 
 export default function Doctors() {
   const { t } = useI18n();
+  const { token } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const { data: items = [], isLoading: loading, error: doctorsError } = useSiteDoctors();
   const createDoctor = useCreateSiteDoctor();
@@ -117,7 +121,6 @@ export default function Doctors() {
     setUploadingPhoto(true);
     try {
       const photoUrl = await import('@/lib/api').then(({ api }) => {
-        const token = localStorage.getItem('dental_admin_token');
         if (!token) throw new Error('Missing auth token');
         return api.uploadDoctorPhoto(token, file);
       });
@@ -188,7 +191,7 @@ export default function Doctors() {
                   <button onClick={() => openEdit(doctor)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground">
                     <Edit2 className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => void handleDelete(doctor.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                  <button onClick={() => setDeletingId(doctor.id)} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -277,6 +280,18 @@ export default function Doctors() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <ConfirmDialog
+          open={deletingId !== null}
+          onCancel={() => setDeletingId(null)}
+          onConfirm={() => {
+            if (deletingId === null) return;
+            void handleDelete(deletingId).finally(() => setDeletingId(null));
+          }}
+          title="Видалити лікаря"
+          description="Ви впевнені, що хочете видалити цього лікаря? Цю дію неможливо скасувати."
+          confirmLabel="Так, видалити"
+        />
       </div>
     </AdminLayout>
   );

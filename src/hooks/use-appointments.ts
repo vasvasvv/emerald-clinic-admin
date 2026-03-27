@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { getAdminToken } from '@/lib/auth';
+import { useAuth } from '@/lib/auth-context';
 import type { ApiAppointmentPayload } from '@/types/api';
 
 export function useAppointments(date?: string) {
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useQuery({
     queryKey: ['appointments', date],
@@ -15,7 +15,7 @@ export function useAppointments(date?: string) {
 
 export function useCreateAppointment() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (data: ApiAppointmentPayload) => api.createAppointment(token!, data),
@@ -27,7 +27,7 @@ export function useCreateAppointment() {
 
 export function useUpdateAppointment() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: ApiAppointmentPayload }) =>
@@ -40,7 +40,7 @@ export function useUpdateAppointment() {
 
 export function useDeleteAppointment() {
   const queryClient = useQueryClient();
-  const token = getAdminToken();
+  const { token } = useAuth();
 
   return useMutation({
     mutationFn: (id: number) => api.deleteAppointment(token!, id),
