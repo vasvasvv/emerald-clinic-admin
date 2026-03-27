@@ -55,7 +55,6 @@ export default function Notifications() {
   const linkTelegramPhone = useLinkTelegramPhone();
   const triggerTelegramCron = useTriggerTelegramCron();
 
-  const logs = notificationLogsQuery.data ?? [];
   const pushSubscriptions = pushCountsQuery.data?.pushSubscriptions ?? 0;
   const telegramContacts = pushCountsQuery.data?.telegramContacts ?? 0;
   const loading = pushCountsQuery.isLoading || notificationLogsQuery.isLoading;
@@ -92,11 +91,14 @@ export default function Notifications() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };
-  }, []);
+  }, [t]);
 
   const filteredLogs = useMemo(
-    () => logs.filter((log: ApiNotificationLog) => (section === 'push' ? log.channel === 'push' : log.channel === 'telegram')),
-    [logs, section],
+    () =>
+      (notificationLogsQuery.data ?? []).filter((log: ApiNotificationLog) =>
+        section === 'push' ? log.channel === 'push' : log.channel === 'telegram',
+      ),
+    [notificationLogsQuery.data, section],
   );
 
   const handlePushSend = async () => {

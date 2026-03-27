@@ -58,7 +58,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   const [comment, setComment] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const monday = getMonday(currentDate);
+  const monday = useMemo(() => getMonday(currentDate), [currentDate]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 6 }, (_, i) => {
@@ -66,7 +66,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
       d.setDate(monday.getDate() + i);
       return d;
     });
-  }, [monday.getTime()]);
+  }, [monday]);
 
   const navigateWeek = (dir: number) => {
     const d = new Date(currentDate);

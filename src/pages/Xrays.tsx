@@ -291,6 +291,7 @@ export default function Xrays() {
     [systemDoctorsQuery.data, t],
   );
   const session = activeSessionQuery.data ?? sessionState;
+  const sessionXray = session?.xray ?? null;
   const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
   const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
   const searchAbortRef = useRef<AbortController | null>(null);
@@ -313,7 +314,7 @@ export default function Xrays() {
   }, [activeSessionQuery.data]);
 
   useEffect(() => {
-    if (!token || !session?.xray) return;
+    if (!token || !sessionXray) return;
     let cancelled = false;
     let previewObjectUrl: string | null = null;
     let originalObjectUrl: string | null = null;
@@ -322,8 +323,8 @@ export default function Xrays() {
       setIsImageLoading(true);
       try {
         const [previewBlob, originalBlob] = await Promise.all([
-          api.getProtectedImageBlob(token, session.xray!.previewUrl),
-          api.getProtectedImageBlob(token, session.xray!.originalUrl),
+          api.getProtectedImageBlob(token, sessionXray.previewUrl),
+          api.getProtectedImageBlob(token, sessionXray.originalUrl),
         ]);
         if (cancelled) return;
         previewObjectUrl = URL.createObjectURL(previewBlob);
@@ -342,7 +343,7 @@ export default function Xrays() {
       if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
       if (originalObjectUrl) URL.revokeObjectURL(originalObjectUrl);
     };
-  }, [token, session?.xray?.id]);
+  }, [sessionXray, t, token]);
 
   const queryError = systemDoctorsQuery.error ?? activeSessionQuery.error;
   const errorMessage = error || (queryError instanceof Error ? queryError.message : '');
