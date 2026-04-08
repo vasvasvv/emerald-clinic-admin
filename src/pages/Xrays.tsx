@@ -47,7 +47,6 @@ type PatientFormPayload = {
   gender?: 'male' | 'female';
 };
 
-const DEFAULT_DOCTOR_NAME = 'Верховський Олександр';
 const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {
@@ -95,10 +94,7 @@ const buildPatientSearchQuery = (lastName: string, firstName: string, phone: str
 const formatPatientName = (patient: PatientSummary | null) =>
   [patient?.lastName, patient?.firstName, patient?.middleName].filter(Boolean).join(' ').trim();
 
-const findDefaultDoctor = (doctors: Doctor[]) =>
-  doctors.find((doctor) => doctor.name.trim().toLowerCase() === DEFAULT_DOCTOR_NAME.toLowerCase()) ??
-  doctors[0] ??
-  null;
+const findDefaultDoctor = (doctors: Doctor[]) => doctors[0] ?? null;
 
 const buildDraft = (lastName: string, firstName: string, phone: string): PatientDraft => ({
   lastName: lastName.trim(),

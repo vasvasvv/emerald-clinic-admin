@@ -1,11 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AUTH_CHANGED_EVENT, clearAdminSession, getAdminToken, getAdminUser, setAdminSession } from '@/lib/auth';
+import type { ApiUser } from '@/types/api';
 
 interface AuthContextValue {
   token: string | null;
-  user: unknown;
+  user: ApiUser | null;
   isAuthenticated: boolean;
-  login: (token: string, user: unknown) => void;
+  login: (token: string, user: ApiUser | null) => void;
   logout: () => void;
 }
 
@@ -13,12 +14,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => getAdminToken());
-  const [user, setUser] = useState<unknown>(() => getAdminUser());
+  const [user, setUser] = useState<ApiUser | null>(() => getAdminUser() as ApiUser | null);
 
   useEffect(() => {
     const syncAuthState = () => {
       setToken(getAdminToken());
-      setUser(getAdminUser());
+      setUser(getAdminUser() as ApiUser | null);
     };
 
     window.addEventListener(AUTH_CHANGED_EVENT, syncAuthState);
@@ -30,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback((nextToken: string, nextUser: unknown) => {
+  const login = useCallback((nextToken: string, nextUser: ApiUser | null) => {
     setAdminSession(nextToken, nextUser);
     setToken(nextToken);
     setUser(nextUser);

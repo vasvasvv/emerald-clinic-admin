@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { api, apiCall } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import type { ApiPatient, ApiPatientPayload } from '@/types/api';
+import type { ApiPatientPayload } from '@/types/api';
 
 export function useSearchPatients() {
   const { token } = useAuth();
@@ -17,14 +17,5 @@ export function useCreatePatient() {
 
   return useMutation({
     mutationFn: (data: ApiPatientPayload) => api.createPatient(token!, data as Record<string, unknown>),
-  });
-}
-
-export function useCreatePatientLegacy() {
-  const { token } = useAuth();
-
-  return useMutation({
-    mutationFn: (data: ApiPatientPayload) =>
-      apiCall<ApiPatient>('/api/patients', { method: 'POST', body: JSON.stringify(data) }, token!),
   });
 }
