@@ -168,7 +168,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               onClick={() => setShowNewForm(true)}
-              className="btn-accent flex items-center justify-center gap-3 rounded-2xl py-6 text-lg font-heading font-semibold"
+              className="btn-accent flex items-center justify-center gap-3 rounded-2xl py-8 text-lg font-heading font-semibold"
             >
               <CalendarPlus className="h-6 w-6" />
               {t('addRecord')}

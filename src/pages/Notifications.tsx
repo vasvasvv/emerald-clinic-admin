@@ -301,7 +301,7 @@ export default function Notifications() {
         {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
         {result && <p className="text-sm text-success">{result}</p>}
 
-        <div className="inline-flex w-full max-w-xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+        <div className="inline-flex w-full max-w-6xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
           <button
             onClick={() => setSection('telegram')}
             className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
@@ -443,7 +443,7 @@ export default function Notifications() {
 
         {section === 'telegram' && (
           <>
-            <div className="inline-flex w-full max-w-2xl rounded-2xl border border-border bg-secondary/25 p-1">
+            <div className="inline-flex w-full max-w-6xl rounded-2xl border border-border bg-secondary/25 p-2">
               <button
                 onClick={() => setTelegramTab('appointments')}
                 className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
