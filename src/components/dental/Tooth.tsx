@@ -67,8 +67,8 @@ export function Tooth({
   const hasIssue = Boolean(record && (record.description || record.notes || record.files.length > 0));
   const { imageNumber, mirrored } = getToothImage(number, isUpper);
   const imagePath = `/teeth/${imageNumber}.png`;
-  const canvasWidth = mobile ? 36 : compact ? 62 : 48;
-  const canvasHeight = mobile ? 60 : compact ? 108 : 84;
+  const canvasWidth = mobile ? 45 : compact ? 78 : 60;
+  const canvasHeight = mobile ? 75 : compact ? 135 : 105;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -163,7 +163,7 @@ export function Tooth({
     <div
       className={cn(
         'flex flex-none flex-col items-center',
-        mobile ? 'w-[18px] md:w-[30px]' : compact ? 'w-[30px] md:w-[36px]' : 'w-[18px] md:w-[24px]',
+        mobile ? 'w-[23px] md:w-[38px]' : compact ? 'w-[38px] md:w-[45px]' : 'w-[23px] md:w-[30px]',
         alignBottom ? 'justify-end' : 'justify-start',
       )}
     >
@@ -184,10 +184,10 @@ export function Tooth({
         onClick={handleClick}
         className={cn(
           mobile
-            ? 'block h-[42px] w-[18px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[72px] md:w-[30px]'
+            ? 'block h-[53px] w-[23px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[90px] md:w-[38px]'
             : compact
-              ? 'block h-[72px] w-[30px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[96px] md:w-[36px]'
-              : 'block h-[56px] w-[18px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[72px] md:w-[24px]',
+              ? 'block h-[90px] w-[38px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[120px] md:w-[45px]'
+              : 'block h-[70px] w-[23px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[90px] md:w-[30px]',
           !isLoaded && 'opacity-0',
         )}
         style={{ imageRendering: 'auto' }}

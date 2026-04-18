@@ -65,7 +65,7 @@ export default function AppPwa() {
                       : t('appNotificationsLoading')}
                 </p>
               </div>
-              <label className="inline-flex cursor-pointer items-center gap-3">
+              <label className="inline-flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">{t('appNotificationsToggle')}</span>
                 <button
                   type="button"
@@ -73,12 +73,12 @@ export default function AppPwa() {
                   aria-checked={notificationsEnabled}
                   onClick={() => void handleToggleNotifications(!notificationsEnabled)}
                   disabled={!isSupported || state === 'loading'}
-                  className={`relative h-7 w-12 rounded-full transition-colors ${
-                    notificationsEnabled ? 'bg-primary' : 'bg-secondary'
-                  } ${!isSupported || state === 'loading' ? 'opacity-60' : ''}`}
+                  className={`relative h-7 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                    notificationsEnabled ? 'bg-primary' : 'bg-muted'
+                  } ${!isSupported || state === 'loading' ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                 >
                   <span
-                    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${
+                    className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
                       notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />

@@ -112,9 +112,9 @@ const mergePatients = (items: ApiPatient[]) => {
     if (!id || unique.has(id)) return;
     unique.set(id, {
       id,
-      firstName: item.first_name ?? item.firstName ?? '',
-      lastName: item.last_name ?? item.lastName ?? '',
-      middleName: item.middle_name ?? item.middleName ?? '',
+      firstName: item.first_name ?? item.first_name ?? '',
+      lastName: item.last_name ?? item.last_name ?? '',
+      middleName: item.middle_name ?? item.middle_name ?? '',
       phone: item.phone ?? '',
       doctorId: String(item.primary_doctor_user_id ?? ''),
     });
@@ -154,7 +154,7 @@ function ToothButton({
         src={`/teeth/${mapped?.imageNumber ?? (isUpper ? 8 : 18)}.png`}
         alt={`Tooth ${tooth}`}
         className={cn(
-          'h-[52px] w-[22px] sm:h-[60px] sm:w-[26px] md:h-[70px] md:w-[30px] object-contain',
+          'h-[65px] w-[28px] sm:h-[75px] sm:w-[33px] md:h-[88px] md:w-[38px] object-contain',
           mapped?.mirrored && '-scale-x-100',
         )}
       />
@@ -493,9 +493,9 @@ export default function Xrays() {
 
       pickPatient({
         id: Number(created.id),
-        firstName: created.first_name ?? created.firstName ?? '',
-        lastName: created.last_name ?? created.lastName ?? '',
-        middleName: created.middle_name ?? created.middleName ?? '',
+        firstName: created.first_name ?? created.first_name ?? '',
+        lastName: created.last_name ?? created.last_name ?? '',
+        middleName: created.middle_name ?? created.middle_name ?? '',
         phone: created.phone ?? '',
         doctorId: String(created.primary_doctor_user_id ?? payload.doctorId),
       });
@@ -686,7 +686,7 @@ export default function Xrays() {
             <div className="rounded-[24px] border border-border/60 bg-background p-3 sm:p-4 md:p-5">
               <p className="mb-2 text-xs sm:text-sm font-semibold">{t('xrayUpperJaw')}</p>
               <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-                <div className="flex min-w-[600px] sm:min-w-[680px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
+                <div className="flex min-w-[750px] sm:min-w-[850px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
                   {UPPER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}
@@ -701,7 +701,7 @@ export default function Xrays() {
 
               <p className="mb-2 mt-4 sm:mt-6 text-xs sm:text-sm font-semibold">{t('xrayLowerJaw')}</p>
               <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-                <div className="flex min-w-[600px] sm:min-w-[680px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
+                <div className="flex min-w-[750px] sm:min-w-[850px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
                   {LOWER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}
