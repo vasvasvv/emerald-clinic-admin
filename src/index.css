@@ -106,6 +106,7 @@
     @apply bg-background text-foreground font-body;
     font-family: var(--font-body);
     background: var(--gradient);
+    background-attachment: fixed;
     min-height: 100vh;
     overflow-x: hidden;
     /* Hint browser to optimize for scrolling */

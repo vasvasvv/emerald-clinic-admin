@@ -20,7 +20,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const showMobileStyle = isMobile || isTablet;
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden" style={{ background: 'var(--gradient)' }}>
+    <div
+      className="relative min-h-screen w-full overflow-hidden"
+      style={{ background: 'var(--gradient)', backgroundAttachment: 'fixed' }}
+    >
       {!showMobileStyle && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
