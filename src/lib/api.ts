@@ -65,7 +65,7 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}, to
     });
 
     if (!response.ok) {
-      if (response.status === 401) {
+      if (response.status === 401 && endpoint !== '/api/auth/login') {
         const { clearAdminSession } = await import('./auth');
         clearAdminSession();
         window.location.href = '/login';
