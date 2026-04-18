@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { enUS, uk } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
@@ -15,6 +15,8 @@ import {
   MessageSquareShare,
   TimerReset,
   Siren,
+  Smartphone,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -40,11 +42,16 @@ import type {
   ApiTelegramPending,
 } from '@/types/api';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function Notifications() {
   const { t, lang } = useI18n();
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const dateLocale = lang === 'uk' ? uk : enUS;
-  const [section, setSection] = useState<'push' | 'telegram'>('telegram');
+  const [section, setSection] = useState<'push' | 'telegram' | 'pwa'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
@@ -57,6 +64,11 @@ export default function Notifications() {
   const [linkModal, setLinkModal] = useState<ApiTelegramPending | null>(null);
   const [linkPhone, setLinkPhone] = useState('');
   const [copied, setCopied] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installingPwa, setInstallingPwa] = useState(false);
+  const [pwaInstalled, setPwaInstalled] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches,
+  );
 
   const pushCountsQuery = usePushCounts();
   const notificationLogsQuery = useNotificationLogs();
@@ -92,6 +104,24 @@ export default function Notifications() {
     telegramPendingQuery.error ??
     telegramDebugQuery.error;
   const errorMessage = error || (queryError instanceof Error ? queryError.message : '');
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setPwaInstalled(true);
+      setDeferredInstallPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
+  }, []);
+
   const filteredLogs = useMemo(
     () =>
       (notificationLogsQuery.data ?? []).filter((log: ApiNotificationLog) =>
@@ -161,6 +191,26 @@ export default function Notifications() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : t('notificationsFailedTriggerCron'));
+    }
+  };
+
+  const handleInstallPwa = async () => {
+    if (!deferredInstallPrompt) {
+      setResult('Кнопка встановлення стане активною, коли браузер підготує інсталяцію.');
+      return;
+    }
+    setInstallingPwa(true);
+    setError('');
+    setResult('');
+    try {
+      await deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      setResult(outcome === 'accepted' ? 'PWA встановлено!' : 'Встановлення скасовано.');
+      setDeferredInstallPrompt(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не вдалося запустити встановлення PWA');
+    } finally {
+      setInstallingPwa(false);
     }
   };
 
@@ -261,6 +311,13 @@ export default function Notifications() {
           >
             <Bell className="h-4 w-4" />
             {t('notificationsSectionPush')}
+          </button>
+          <button
+            onClick={() => setSection('pwa')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+          >
+            <Smartphone className="h-4 w-4" />
+            PWA
           </button>
         </div>
 
@@ -613,6 +670,49 @@ export default function Notifications() {
             )}
           </>
         )}
+
+        {section === 'pwa' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel p-6 space-y-5"
+          >
+            <div>
+              <h2 className="font-heading font-semibold text-lg">Встановлення застосунку</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Встанови &laquo;Дентіс Адмін&raquo; як окремий застосунок без адресного рядка браузера.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-secondary/30 p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Статус PWA</p>
+                <p className="text-sm text-muted-foreground">
+                  {pwaInstalled
+                    ? 'Застосунок уже встановлено на цьому пристрої.'
+                    : deferredInstallPrompt
+                      ? 'Готово до встановлення.'
+                      : 'Очікування готовності браузера...'}
+                </p>
+              </div>
+              <button
+                onClick={() => void handleInstallPwa()}
+                disabled={installingPwa || pwaInstalled}
+                className="btn-accent flex items-center justify-center gap-2 sm:min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4" />
+                {pwaInstalled ? 'Встановлено' : installingPwa ? 'Встановлення...' : 'Встановити PWA'}
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-border p-4 text-sm text-muted-foreground space-y-2">
+              <p>1. Відкрий цю сторінку у Chrome, Edge або Safari на потрібному пристрої.</p>
+              <p>2. Якщо кнопка неактивна — оновіть сторінку і зачекайте кілька секунд.</p>
+              <p>3. На iPhone/iPad: &laquo;Поділитися&raquo; → &laquo;На початковий екран&raquo;.</p>
+            </div>
+          </motion.div>
+        )}
+
         <AnimatePresence>
           {sendModal && (
             <motion.div
