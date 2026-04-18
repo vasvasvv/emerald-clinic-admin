@@ -108,6 +108,8 @@
     background: var(--gradient);
     min-height: 100vh;
     overflow-x: hidden;
+    /* Hint browser to optimize for scrolling */
+    -webkit-overflow-scrolling: touch;
   }
 
   h1,
@@ -122,15 +124,24 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-card/60 backdrop-blur-xl border border-glass-border rounded-2xl transition-[background-color,border-color,box-shadow,transform] duration-300;
+    @apply bg-card/60 backdrop-blur-xl border border-glass-border rounded-2xl;
     box-shadow:
       0 10px 34px rgba(0, 0, 0, 0.26),
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    /* Removed transform from transition - use separate class for hover effects */
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .glass-panel-sm {
-    @apply bg-card/40 backdrop-blur-lg border border-glass-border rounded-xl transition-[background-color,border-color,box-shadow,transform] duration-300;
+    @apply bg-card/40 backdrop-blur-lg border border-glass-border rounded-xl;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .gradient-panel {
@@ -248,7 +259,12 @@
 
   /* Card */
   .glass-card {
-    @apply glass p-4 sm:p-5 transition-all duration-300;
+    @apply glass p-4 sm:p-5;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
   }
 
   .glass-card:hover {
@@ -268,7 +284,12 @@
   }
 
   .glass-button {
-    @apply glass px-4 py-2 font-medium transition-all duration-300 cursor-pointer;
+    @apply glass px-4 py-2 font-medium cursor-pointer;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.15s ease;
+    will-change: transform;
   }
 
   .glass-button:hover {
@@ -351,6 +372,9 @@
     backdrop-filter: var(--glass-blur-heavy);
     -webkit-backdrop-filter: var(--glass-blur-heavy);
     border-right: 1px solid var(--sidebar-glass-border);
+    /* Optimize sidebar for compositor layer */
+    contain: layout style;
+    content-visibility: auto;
   }
 
   /* Status indicators */
@@ -427,15 +451,20 @@
   from {
     opacity: 0;
     transform: scale(0.96) translateY(8px);
-    backdrop-filter: blur(0px);
-    -webkit-backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
   }
+}
+
+/* GPU-optimized animations with will-change */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
 }
 
 @keyframes slideInRight {
@@ -515,17 +544,24 @@
 [data-radix-popper-content-wrapper] > *,
 [role='listbox'],
 [data-radix-select-content] {
-  background: rgba(0, 0, 0, 0.82) !important;
-  backdrop-filter: blur(32px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  box-shadow: var(--glass-shadow) !important;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Exception for emerald glass styled selects */
+[data-radix-select-content].glass-panel {
+  background: linear-gradient(180deg, rgba(24, 56, 53, 0.96) 0%, rgba(16, 39, 37, 0.98) 100%) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  border: 1px solid hsl(var(--glass-border)) !important;
 }
 
 /* ─── Page transition ─── */
-main > * {
-  animation: pageEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Note: Removed global main > * animation to prevent janky re-animations.
+   Use .page-enter class explicitly on page containers instead. */
 
 /* ========================= */
 /* Анімації */

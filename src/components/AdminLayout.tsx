@@ -18,20 +18,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* фон */}
-      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover z-0">
+      {/* фон - optimized for GPU */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0 will-change-transform"
+      >
         <source src="/background.mp4" type="video/mp4" />
       </video>
 
-      <div className="absolute inset-0 bg-black/40 z-10" />
+      <div className="absolute inset-0 bg-black/40 z-10" style={{ contain: 'paint' }} />
 
       {!isMobile && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
-        className={cn(
-          'relative z-20 flex transition-all duration-300',
-          isMobile ? 'pl-0 pb-16' : collapsed ? 'pl-[86px]' : 'pl-[280px]',
-        )}
+        className={cn('relative z-20 flex', isMobile ? 'pl-0 pb-16' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
+        style={{
+          transition: 'padding-left 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'padding-left',
+          contain: 'layout',
+        }}
       >
         <main className="flex-1 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 py-6">{children}</div>
@@ -160,9 +168,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <aside
             className={cn(
-              'glass-sidebar fixed right-0 top-0 z-50 h-screen w-[280px] transform transition-transform duration-300',
+              'glass-sidebar fixed right-0 top-0 z-50 h-screen w-[280px] transform',
               mobileDrawerOpen ? 'translate-x-0' : 'translate-x-full',
             )}
+            style={{
+              transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              willChange: 'transform',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div onClick={closeMobileDrawer} className="h-full">
