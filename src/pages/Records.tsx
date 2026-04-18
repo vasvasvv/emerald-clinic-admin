@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { AdminLayout } from '@/components/AdminLayout';
 import { ChevronLeft, ChevronRight, Users, Plus } from 'lucide-react';
@@ -7,6 +7,8 @@ import { NewRecordForm } from '@/components/NewRecordForm';
 import { formatDateKey, getDaysInMonth, getMonday } from '@/lib/date-utils';
 import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
 import { useSystemDoctors } from '@/hooks/use-doctors';
+import { useAuth } from '@/lib/auth-context';
+import { findDoctorOptionForUser } from '@/lib/admin-user';
 import { buildPatientName, extractFirstName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -30,9 +32,11 @@ export default function Records() {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [doctorFilterInitialized, setDoctorFilterInitialized] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
   const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
   const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
   const createAppointment = useCreateAppointment();
@@ -60,6 +64,13 @@ export default function Records() {
     () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
     [doctorItems],
   );
+  const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctorOptions, user), [doctorOptions, user]);
+
+  useEffect(() => {
+    if (!defaultDoctor || selectedDoctor || doctorFilterInitialized) return;
+    setSelectedDoctor(defaultDoctor.name);
+    setDoctorFilterInitialized(true);
+  }, [defaultDoctor, doctorFilterInitialized, selectedDoctor]);
 
   const loadError = appointmentsError ?? doctorsError;
 
@@ -331,6 +342,7 @@ export default function Records() {
             onSave={handleNewRecord}
             existingRecords={records.map((record) => ({ date: record.date, time: record.time, doctor: record.doctor }))}
             doctors={doctorOptions.map((doctor) => doctor.name)}
+            defaultDoctor={defaultDoctor?.name ?? ''}
           />
         )}
       </AnimatePresence>

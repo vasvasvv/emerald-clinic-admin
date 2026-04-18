@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { ArrowLeft, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +16,7 @@ interface NewRecordFormProps {
   }) => void | Promise<void>;
   existingRecords: { date: string; time: string; doctor: string }[];
   doctors: string[];
+  defaultDoctor?: string;
 }
 
 const WORK_HOURS_WEEKDAY = Array.from({ length: 9 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
@@ -44,14 +45,14 @@ function getWorkHours(dateStr: string) {
   return d.getDay() === 6 ? WORK_HOURS_SATURDAY : WORK_HOURS_WEEKDAY;
 }
 
-export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: NewRecordFormProps) {
+export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defaultDoctor }: NewRecordFormProps) {
   const { t, lang } = useI18n();
   const [step, setStep] = useState<1 | 2>(1);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [manualTime, setManualTime] = useState('');
-  const [selectedDoctor, setSelectedDoctor] = useState(doctors[0] || '');
+  const [selectedDoctor, setSelectedDoctor] = useState(defaultDoctor || doctors[0] || '');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -120,6 +121,11 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors }: New
   const today = formatDate(new Date());
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const weekLabel = `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'long' })} — ${weekDays[5].toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+  useEffect(() => {
+    if (!defaultDoctor) return;
+    setSelectedDoctor(defaultDoctor);
+  }, [defaultDoctor]);
 
   return (
     <motion.div

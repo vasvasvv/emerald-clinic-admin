@@ -13,6 +13,7 @@ import { useCreatePatient, useSearchPatients } from '@/hooks/use-patients';
 import { useActiveXraySession, useStartXraySession } from '@/hooks/use-xray';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { findDentalDoctorForUser } from '@/lib/admin-user';
 import { useI18n } from '@/lib/i18n';
 import { normalizePhone } from '@/lib/patient-utils';
 import { cn } from '@/lib/utils';
@@ -315,7 +316,7 @@ function PatientModal({
 export default function Xrays() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [step, setStep] = useState<Step>('patient');
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -354,7 +355,10 @@ export default function Xrays() {
   );
   const session = activeSessionQuery.data ?? sessionState;
   const sessionXray = session?.xray ?? null;
-  const defaultDoctor = useMemo(() => findDefaultDoctor(doctors), [doctors]);
+  const defaultDoctor = useMemo(
+    () => findDentalDoctorForUser(doctors, user) ?? findDefaultDoctor(doctors),
+    [doctors, user],
+  );
   const draft = useMemo(() => buildDraft(lastName, firstName, phone), [lastName, firstName, phone]);
   const searchAbortRef = useRef<AbortController | null>(null);
   const canCreate =

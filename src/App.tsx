@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { canAccessSiteManagement } from '@/lib/admin-user';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { I18nProvider } from '@/lib/i18n';
 import { queryClient } from '@/lib/query-client';
@@ -15,6 +16,7 @@ const Xrays = lazy(() => import('./pages/Xrays'));
 const Doctors = lazy(() => import('./pages/Doctors'));
 const News = lazy(() => import('./pages/News'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const AppPwa = lazy(() => import('./pages/AppPwa'));
 const Login = lazy(() => import('./pages/Login'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -35,6 +37,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function SiteManagementRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!canAccessSiteManagement(user)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -100,7 +108,9 @@ const App = () => (
                     path="/doctors"
                     element={
                       <ProtectedRoute>
-                        <Doctors />
+                        <SiteManagementRoute>
+                          <Doctors />
+                        </SiteManagementRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -108,7 +118,9 @@ const App = () => (
                     path="/news"
                     element={
                       <ProtectedRoute>
-                        <News />
+                        <SiteManagementRoute>
+                          <News />
+                        </SiteManagementRoute>
                       </ProtectedRoute>
                     }
                   />
@@ -117,6 +129,14 @@ const App = () => (
                     element={
                       <ProtectedRoute>
                         <Notifications />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/app"
+                    element={
+                      <ProtectedRoute>
+                        <AppPwa />
                       </ProtectedRoute>
                     }
                   />

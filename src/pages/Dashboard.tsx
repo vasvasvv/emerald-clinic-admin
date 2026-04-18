@@ -8,6 +8,8 @@ import { NewRecordForm } from '@/components/NewRecordForm';
 import { formatDateKey } from '@/lib/date-utils';
 import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
 import { useSystemDoctors } from '@/hooks/use-doctors';
+import { useAuth } from '@/lib/auth-context';
+import { findDoctorOptionForUser } from '@/lib/admin-user';
 import { buildPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => new Date());
+  const { user } = useAuth();
   const { data: appointmentItems = [], isLoading: loading, error: appointmentsError } = useAppointments();
   const { data: doctorItems = [], error: doctorsError } = useSystemDoctors();
   const createAppointment = useCreateAppointment();
@@ -72,6 +75,7 @@ export default function Dashboard() {
     () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
     [doctorItems],
   );
+  const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctors, user), [doctors, user]);
 
   const loadError = appointmentsError ?? doctorsError;
 
@@ -292,6 +296,7 @@ export default function Dashboard() {
               doctor: appointment.doctor,
             }))}
             doctors={doctors.map((doctor) => doctor.name)}
+            defaultDoctor={defaultDoctor?.name ?? ''}
           />
         )}
       </AnimatePresence>

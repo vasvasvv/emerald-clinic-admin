@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { enUS, uk } from 'date-fns/locale';
 import { useI18n } from '@/lib/i18n';
@@ -15,8 +15,6 @@ import {
   MessageSquareShare,
   TimerReset,
   Siren,
-  Download,
-  Smartphone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -42,16 +40,11 @@ import type {
   ApiTelegramPending,
 } from '@/types/api';
 
-type DeferredInstallPrompt = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-};
-
 export default function Notifications() {
   const { t, lang } = useI18n();
   const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const dateLocale = lang === 'uk' ? uk : enUS;
-  const [section, setSection] = useState<'push' | 'telegram' | 'pwa'>('telegram');
+  const [section, setSection] = useState<'push' | 'telegram'>('telegram');
   const [pushTarget, setPushTarget] = useState<'all' | 'targeted'>('all');
   const [pushMessage, setPushMessage] = useState('');
   const [pushPhone, setPushPhone] = useState('');
@@ -64,11 +57,6 @@ export default function Notifications() {
   const [linkModal, setLinkModal] = useState<ApiTelegramPending | null>(null);
   const [linkPhone, setLinkPhone] = useState('');
   const [copied, setCopied] = useState(false);
-  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<DeferredInstallPrompt | null>(null);
-  const [installingPwa, setInstallingPwa] = useState(false);
-  const [pwaInstalled, setPwaInstalled] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches,
-  );
 
   const pushCountsQuery = usePushCounts();
   const notificationLogsQuery = useNotificationLogs();
@@ -104,24 +92,6 @@ export default function Notifications() {
     telegramPendingQuery.error ??
     telegramDebugQuery.error;
   const errorMessage = error || (queryError instanceof Error ? queryError.message : '');
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredInstallPrompt(event as DeferredInstallPrompt);
-    };
-    const handleInstalled = () => {
-      setPwaInstalled(true);
-      setDeferredInstallPrompt(null);
-      setResult(t('notificationsPwaInstalled'));
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleInstalled);
-    };
-  }, [t]);
-
   const filteredLogs = useMemo(
     () =>
       (notificationLogsQuery.data ?? []).filter((log: ApiNotificationLog) =>
@@ -191,30 +161,6 @@ export default function Notifications() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : t('notificationsFailedTriggerCron'));
-    }
-  };
-
-  const handleInstallPwa = async () => {
-    if (!deferredInstallPrompt) {
-      setResult(t('notificationsPwaInstallAvailableLater'));
-      return;
-    }
-    setInstallingPwa(true);
-    setError('');
-    setResult('');
-    try {
-      await deferredInstallPrompt.prompt();
-      const choice = await deferredInstallPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        setResult(t('notificationsPwaInstallAccepted'));
-      } else {
-        setResult(t('notificationsPwaInstallDismissed'));
-      }
-      setDeferredInstallPrompt(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notificationsPwaInstallFailed'));
-    } finally {
-      setInstallingPwa(false);
     }
   };
 
@@ -315,13 +261,6 @@ export default function Notifications() {
           >
             <Bell className="h-4 w-4" />
             {t('notificationsSectionPush')}
-          </button>
-          <button
-            onClick={() => setSection('pwa')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
-          >
-            <Smartphone className="h-4 w-4" />
-            {t('notificationsSectionPwa')}
           </button>
         </div>
 
@@ -674,49 +613,6 @@ export default function Notifications() {
             )}
           </>
         )}
-
-        {section === 'pwa' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-panel p-6 space-y-5"
-          >
-            <div className="space-y-2">
-              <h2 className="font-heading font-semibold">{t('pwaInstallTitle')}</h2>
-              <p className="text-sm text-muted-foreground">{t('pwaInstallDescription')}</p>
-            </div>
-
-            <div className="rounded-3xl border border-border bg-secondary/30 p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{t('pwaStatusTitle')}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {pwaInstalled
-                      ? t('pwaAlreadyInstalled')
-                      : deferredInstallPrompt
-                        ? t('pwaReadyToInstall')
-                        : t('pwaWaitingToInstall')}
-                  </p>
-                </div>
-                <button
-                  onClick={() => void handleInstallPwa()}
-                  className="btn-accent flex items-center justify-center gap-2 sm:min-w-[220px]"
-                  disabled={installingPwa || pwaInstalled || !deferredInstallPrompt}
-                >
-                  <Download className="w-4 h-4" />
-                  {pwaInstalled ? t('pwaInstalledLabel') : installingPwa ? t('pwaLaunching') : t('pwaInstallButton')}
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border p-4 text-sm text-muted-foreground space-y-2">
-              <p>{t('pwaStep1')}</p>
-              <p>{t('pwaStep2')}</p>
-              <p>{t('pwaStep3')}</p>
-            </div>
-          </motion.div>
-        )}
-
         <AnimatePresence>
           {sendModal && (
             <motion.div

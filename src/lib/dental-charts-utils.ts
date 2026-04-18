@@ -208,7 +208,7 @@ export function resolveDoctorFilter(normalized: Doctor[], currentUser: User | nu
     const matched = normalized.find(
       (doctor) => doctor.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
     );
-    return matched?.id ?? normalized[0]?.id ?? 'all';
+    return matched?.id ?? 'all';
   }
 
   return 'all';

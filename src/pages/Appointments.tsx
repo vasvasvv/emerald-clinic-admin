@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format, type Locale } from 'date-fns';
 import { enUS, uk } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,8 @@ import {
   useDeleteAppointment,
   useUpdateAppointment,
 } from '@/hooks/use-appointments';
+import { useAuth } from '@/lib/auth-context';
+import { findDoctorOptionForUser } from '@/lib/admin-user';
 import { useI18n } from '@/lib/i18n';
 import { buildPatientName, splitPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
@@ -127,12 +129,14 @@ export default function Appointments() {
   const saveErrorText = lang === 'uk' ? 'Не вдалося зберегти прийом' : 'Failed to save appointment';
   const deleteErrorText = lang === 'uk' ? 'Не вдалося видалити прийом' : 'Failed to delete appointment';
   const loadErrorText = lang === 'uk' ? 'Не вдалося завантажити прийоми' : 'Failed to load appointments';
+  const { user } = useAuth();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [filterDate, setFilterDate] = useState('');
   const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [doctorFilterInitialized, setDoctorFilterInitialized] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -171,6 +175,7 @@ export default function Appointments() {
     () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
     [doctorItems],
   );
+  const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctorOptions, user), [doctorOptions, user]);
 
   const filterDoctorOptions = useMemo(
     () => [
@@ -222,10 +227,16 @@ export default function Appointments() {
   );
 
   const openNew = () => {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, doctor: defaultDoctor?.name ?? '' });
     setEditingId(null);
     setShowForm(true);
   };
+
+  useEffect(() => {
+    if (!defaultDoctor || selectedDoctor || doctorFilterInitialized) return;
+    setSelectedDoctor(defaultDoctor.name);
+    setDoctorFilterInitialized(true);
+  }, [defaultDoctor, doctorFilterInitialized, selectedDoctor]);
 
   const openEdit = (appointment: Appointment) => {
     const split = splitPatientName(appointment.clientName);

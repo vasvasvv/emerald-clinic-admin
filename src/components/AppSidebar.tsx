@@ -10,15 +10,26 @@ import {
   Stethoscope,
   ChevronLeft,
   ScanLine,
+  Smartphone,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-context';
+import { canAccessSiteManagement } from '@/lib/admin-user';
 import type { ComponentType } from 'react';
 
 type NavItem = {
-  key: 'dashboard' | 'appointments' | 'records' | 'dentalCharts' | 'xrays' | 'notifications' | 'doctors' | 'news';
+  key:
+    | 'dashboard'
+    | 'appointments'
+    | 'records'
+    | 'dentalCharts'
+    | 'xrays'
+    | 'notifications'
+    | 'appTab'
+    | 'doctors'
+    | 'news';
   url: string;
   icon: ComponentType<{ className?: string }>;
   label?: string;
@@ -31,6 +42,7 @@ const primaryNavItems: NavItem[] = [
   { key: 'dentalCharts', url: '/dental-charts', icon: Stethoscope },
   { key: 'xrays', url: '/xrays', icon: ScanLine, label: 'X-Rays' },
   { key: 'notifications', url: '/notifications', icon: Bell },
+  { key: 'appTab', url: '/app', icon: Smartphone },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -49,8 +61,9 @@ export const mobileBottomNavItems: Array<Pick<NavItem, 'key' | 'url' | 'icon'>> 
 
 export function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onCollapse?: () => void }) {
   const { t } = useI18n();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const canManageSiteContent = canAccessSiteManagement(user);
 
   const linkClass = collapsed
     ? 'glass-button flex items-center justify-center'
@@ -88,6 +101,7 @@ export function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; 
                       | 'records'
                       | 'dentalCharts'
                       | 'notifications'
+                      | 'appTab'
                       | 'doctors'
                       | 'news',
                   )}
@@ -98,26 +112,29 @@ export function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; 
       </nav>
 
       <div className="px-2 py-4 border-t space-y-2">
-        {secondaryNavItems.map((item) => (
-          <NavLink key={item.key} to={item.url} className={linkClass} activeClassName={activeClass}>
-            <item.icon className="h-5 w-5" />
-            {!collapsed && (
-              <span>
-                {item.label ||
-                  t(
-                    item.key as
-                      | 'dashboard'
-                      | 'appointments'
-                      | 'records'
-                      | 'dentalCharts'
-                      | 'notifications'
-                      | 'doctors'
-                      | 'news',
-                  )}
-              </span>
-            )}
-          </NavLink>
-        ))}
+        {secondaryNavItems
+          .filter((item) => canManageSiteContent || (item.key !== 'doctors' && item.key !== 'news'))
+          .map((item) => (
+            <NavLink key={item.key} to={item.url} className={linkClass} activeClassName={activeClass}>
+              <item.icon className="h-5 w-5" />
+              {!collapsed && (
+                <span>
+                  {item.label ||
+                    t(
+                      item.key as
+                        | 'dashboard'
+                        | 'appointments'
+                        | 'records'
+                        | 'dentalCharts'
+                        | 'notifications'
+                        | 'appTab'
+                        | 'doctors'
+                        | 'news',
+                    )}
+                </span>
+              )}
+            </NavLink>
+          ))}
 
         <button
           onClick={() => {
