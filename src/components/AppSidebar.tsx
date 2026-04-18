@@ -17,6 +17,7 @@ import { useI18n } from '@/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-context';
 import { canAccessSiteManagement } from '@/lib/admin-user';
+import { useIsTablet } from '@/hooks/use-mobile';
 import type { ComponentType } from 'react';
 
 type NavItem = {
@@ -153,27 +154,57 @@ export function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; 
 
 export function AppSidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) {
   const inactivityTimerRef = useRef<number | null>(null);
+  const isTablet = useIsTablet();
 
   useEffect(() => {
     const resetTimer = () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      inactivityTimerRef.current = window.setTimeout(() => setCollapsed(true), 20000);
+      // 15 seconds for tablets, 20 seconds for desktop
+      const timeout = isTablet ? 15000 : 20000;
+      inactivityTimerRef.current = window.setTimeout(() => setCollapsed(true), timeout);
     };
 
     resetTimer();
-    window.addEventListener('mousemove', resetTimer);
+
+    // Desktop: mousemove only
+    if (!isTablet) {
+      window.addEventListener('mousemove', resetTimer);
+    }
+    // Tablet: both mouse and touch events
+    else {
+      window.addEventListener('mousemove', resetTimer);
+      window.addEventListener('touchstart', resetTimer);
+      window.addEventListener('touchmove', resetTimer);
+      window.addEventListener('click', resetTimer);
+      window.addEventListener('scroll', resetTimer);
+    }
 
     return () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      window.removeEventListener('mousemove', resetTimer);
+      if (!isTablet) {
+        window.removeEventListener('mousemove', resetTimer);
+      } else {
+        window.removeEventListener('mousemove', resetTimer);
+        window.removeEventListener('touchstart', resetTimer);
+        window.removeEventListener('touchmove', resetTimer);
+        window.removeEventListener('click', resetTimer);
+        window.removeEventListener('scroll', resetTimer);
+      }
     };
-  }, [setCollapsed]);
+  }, [setCollapsed, isTablet]);
+
+  const handleSidebarClick = () => {
+    if (collapsed) {
+      setCollapsed(false);
+    }
+  };
 
   return (
     <aside
-      className={`glass-sidebar fixed left-0 top-0 z-40 h-screen transition-all duration-300 ${
+      className={`glass-sidebar fixed left-0 top-0 z-40 h-screen transition-all duration-300 cursor-pointer ${
         collapsed ? 'w-[86px]' : 'w-[280px]'
       }`}
+      onClick={handleSidebarClick}
     >
       <SidebarContent collapsed={collapsed} onCollapse={() => setCollapsed(true)} />
     </aside>
