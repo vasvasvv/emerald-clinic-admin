@@ -40,7 +40,14 @@ const secondaryNavItems: NavItem[] = [
 
 const logoSrc = '/emerald-general.png';
 
-function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onCollapse?: () => void }) {
+export const mobileBottomNavItems: Array<Pick<NavItem, 'key' | 'url' | 'icon'>> = [
+  { key: 'dashboard', url: '/', icon: LayoutDashboard },
+  { key: 'records', url: '/records', icon: ClipboardList },
+  { key: 'appointments', url: '/appointments', icon: Calendar },
+  { key: 'dentalCharts', url: '/dental-charts', icon: Stethoscope },
+];
+
+export function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onCollapse?: () => void }) {
   const { t } = useI18n();
   const { logout } = useAuth();
   const navigate = useNavigate();

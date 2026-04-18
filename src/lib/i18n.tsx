@@ -4,7 +4,7 @@ type Lang = 'uk' | 'en';
 
 const translations = {
   uk: {
-    dashboard: 'Панель керування',
+    dashboard: 'Головна',
     appointments: 'Прийоми',
     records: 'Записи',
     doctors: 'Лікарі',
