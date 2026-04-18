@@ -5,7 +5,6 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Flame, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCreateNews, useDeleteNews, useNews, useUpdateNews } from '@/hooks/use-news';
-import type { ApiNewsItem } from '@/types/api';
 
 interface NewsItem {
   id: number;
@@ -48,7 +47,7 @@ export default function News() {
 
   const news = useMemo<NewsItem[]>(
     () =>
-      items.map((item: ApiNewsItem & Record<string, unknown>) => ({
+      items.map((item) => ({
         id: Number(item.id),
         type: (item.kind ?? item.type ?? 'news') as 'news' | 'promo',
         label: (item.label ?? 'info') as 'info' | 'news' | 'update',

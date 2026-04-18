@@ -50,6 +50,9 @@ export interface ApiSiteDoctor {
 }
 
 export interface ApiNewsItem {
+  is_hot: boolean;
+  expires_on: string | null;
+  kind: string;
   id: number;
   title: string;
   description: string;
