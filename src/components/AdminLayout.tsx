@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { AppSidebar, SidebarContent, mobileBottomNavItems } from '@/components/AppSidebar';
 import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
@@ -20,10 +19,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const showMobileStyle = isMobile || isTablet;
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{ background: 'var(--gradient)', backgroundAttachment: 'fixed' }}
-    >
+    <div className="relative min-h-screen min-h-dvh w-full overflow-hidden">
       {!showMobileStyle && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
@@ -35,7 +31,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           paddingTop: showMobileStyle ? 'env(safe-area-inset-top)' : undefined,
         }}
       >
-        <main className="flex-1 min-h-screen">
+        <main className="flex-1 min-h-screen min-h-dvh" style={{ transform: 'translateZ(0)' }}>
           <div className={cn('max-w-7xl mx-auto px-4 py-6', showMobileStyle && 'pb-24')}>{children}</div>
         </main>
       </div>
@@ -48,10 +44,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
           >
             <div className="pointer-events-auto relative mx-auto max-w-4xl overflow-visible">
-              <motion.div
-                className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-[linear-gradient(180deg,rgba(24,56,53,0.95)_0%,rgba(16,39,37,0.98)_100%)] p-2 shadow-2xl backdrop-blur-xl"
-                initial={false}
-              >
+              <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-[linear-gradient(180deg,rgba(24,56,53,0.95)_0%,rgba(16,39,37,0.98)_100%)] p-2 shadow-2xl backdrop-blur-xl">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 pointer-events-none z-0" />
 
                 <div className="relative z-10 grid grid-cols-5 gap-1">
@@ -66,29 +59,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                         className="group relative flex flex-col items-center"
                         onClick={closeMobileDrawer}
                       >
-                        <motion.div
-                          className="relative flex h-full w-full flex-col items-center justify-center gap-1 rounded-3xl py-2.5"
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 1.01 }}
-                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                        >
-                          {active && (
-                            <motion.div
-                              layoutId="mobile-nav-active-tab"
-                              className="absolute -inset-1 z-10 rounded-[1.4rem] bg-background/30 backdrop-blur-lg"
-                              initial={{ scale: 1.25, opacity: 1 }}
-                              animate={{ scale: 1.15, opacity: 1 }}
-                              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                            >
-                              <div className="absolute inset-0 rounded-[1.4rem] bg-background/30 backdrop-blur-lg" />
-                            </motion.div>
-                          )}
+                        <div className="relative flex h-full w-full flex-col items-center justify-center gap-1 rounded-3xl py-2.5">
+                          {active && <div className="absolute -inset-1 z-10 rounded-[1.4rem] bg-emerald-900/40" />}
 
                           <Icon
-                            className={`relative z-20 h-7 w-7 transition-all duration-200 ${
-                              active
-                                ? 'scale-110 text-white'
-                                : 'text-emerald-200/70 group-hover:scale-105 group-hover:text-emerald-100'
+                            className={`relative z-20 h-7 w-7 transition-colors duration-200 ${
+                              active ? 'text-white' : 'text-emerald-200/70 group-hover:text-emerald-100'
                             }`}
                           />
 
@@ -109,7 +85,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                                 | 'news',
                             )}
                           </span>
-                        </motion.div>
+                        </div>
                       </Link>
                     );
                   })}
@@ -120,23 +96,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => setMobileDrawerOpen(true)}
                     type="button"
                   >
-                    <motion.div
+                    <div
                       className={`relative flex w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
                         mobileDrawerOpen ? 'bg-emerald-500/20' : 'bg-transparent'
                       }`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 1.15 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
-                      {mobileDrawerOpen && (
-                        <motion.div
-                          layoutId="mobile-nav-active-tab"
-                          className="absolute inset-0 rounded-2xl backdrop-blur-lg"
-                          transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-                        />
-                      )}
                       <Menu
-                        className={`relative z-10 h-7 w-7 transition-all ${
+                        className={`relative z-10 h-7 w-7 transition-colors ${
                           mobileDrawerOpen ? 'text-white' : 'text-emerald-200/60 group-hover:text-emerald-100'
                         }`}
                       />
@@ -149,10 +115,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       >
                         Меню
                       </span>
-                    </motion.div>
+                    </div>
                   </button>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
 

@@ -106,11 +106,20 @@
     @apply bg-background text-foreground font-body;
     font-family: var(--font-body);
     background: var(--gradient);
-    background-attachment: fixed;
+    /* background-attachment: fixed breaks on iOS PWA — use pseudo-element instead */
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
-    /* Hint browser to optimize for scrolling */
-    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fixed gradient background via pseudo-element — works on iOS PWA */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--gradient);
+    z-index: -1;
+    pointer-events: none;
   }
 
   h1,
@@ -129,11 +138,13 @@
     box-shadow:
       0 10px 34px rgba(0, 0, 0, 0.26),
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    /* Removed transform from transition - use separate class for hover effects */
     transition:
       background-color 0.5s ease,
       border-color 0.5s ease,
       box-shadow 0.5s ease;
+    /* iOS: promote to own compositor layer to prevent repaint on navigation */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 
   .glass-panel-sm {
