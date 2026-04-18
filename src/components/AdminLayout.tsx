@@ -6,9 +6,6 @@ import { AppSidebar, SidebarContent, mobileBottomNavItems } from '@/components/A
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-{
-  /*import Bg from '@/assets/0418.mp4';*/
-}
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -20,38 +17,29 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const closeMobileDrawer = () => setMobileDrawerOpen(false);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* фон - optimized for GPU */}
-      {/*  <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0 will-change-transform"
-      >
-        <source src={''} type="video/mp4" />
-      </video>*/}
-
-      <div className="absolute inset-0 bg-background/20 z-10" style={{ contain: 'paint' }} />
-
+    <div className="relative min-h-screen w-full overflow-hidden" style={{ background: 'var(--gradient)' }}>
       {!isMobile && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
-        className={cn('relative z-20 flex', isMobile ? 'pl-0 pb-16' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
+        className={cn('relative z-20 flex', isMobile ? 'pl-0' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
         style={{
           transition: 'padding-left 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'padding-left',
           contain: 'layout',
+          paddingTop: isMobile ? 'env(safe-area-inset-top)' : undefined,
         }}
       >
         <main className="flex-1 min-h-screen">
-          <div className="max-w-7xl mx-auto px-4 py-6">{children}</div>
+          <div className={cn('max-w-7xl mx-auto px-4 py-6', isMobile && 'pb-24')}>{children}</div>
         </main>
       </div>
 
       {isMobile && (
         <>
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2 pb-4 md:px-6 md:pb-6">
+          <div
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2"
+            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+          >
             <div className="pointer-events-auto relative mx-auto max-w-4xl overflow-visible">
               <motion.div
                 className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-[linear-gradient(180deg,rgba(24,56,53,0.95)_0%,rgba(16,39,37,0.98)_100%)] p-2 shadow-2xl backdrop-blur-xl"
@@ -171,12 +159,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <aside
             className={cn(
-              'glass-sidebar fixed right-0 top-0 z-50 h-screen w-[280px] transform',
+              'glass-sidebar fixed right-0 z-50 h-screen w-[280px] transform',
               mobileDrawerOpen ? 'translate-x-0' : 'translate-x-full',
             )}
             style={{
               transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               willChange: 'transform',
+              top: 'env(safe-area-inset-top)',
+              height: 'calc(100vh - env(safe-area-inset-top))',
             }}
             onClick={(e) => e.stopPropagation()}
           >
