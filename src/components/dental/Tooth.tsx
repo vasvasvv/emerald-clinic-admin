@@ -9,6 +9,7 @@ interface ToothProps {
   onClick: () => void;
   alignBottom?: boolean;
   compact?: boolean;
+  mobile?: boolean;
 }
 
 const TOOTH_IMAGE_MAP: Record<number, { imageNumber: number; mirrored: boolean }> = {
@@ -52,14 +53,22 @@ function getToothImage(toothNumber: number, isUpper: boolean) {
   return isUpper ? { imageNumber: 8, mirrored: false } : { imageNumber: 18, mirrored: false };
 }
 
-export function Tooth({ number, isUpper, record, onClick, alignBottom = false, compact = false }: ToothProps) {
+export function Tooth({
+  number,
+  isUpper,
+  record,
+  onClick,
+  alignBottom = false,
+  compact = false,
+  mobile = false,
+}: ToothProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const hasIssue = Boolean(record && (record.description || record.notes || record.files.length > 0));
   const { imageNumber, mirrored } = getToothImage(number, isUpper);
   const imagePath = `/teeth/${imageNumber}.png`;
-  const canvasWidth = compact ? 62 : 48;
-  const canvasHeight = compact ? 108 : 84;
+  const canvasWidth = mobile ? 36 : compact ? 62 : 48;
+  const canvasHeight = mobile ? 60 : compact ? 108 : 84;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -154,7 +163,7 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
     <div
       className={cn(
         'flex flex-none flex-col items-center',
-        compact ? 'w-[30px] md:w-[36px]' : 'w-[18px] md:w-[24px]',
+        mobile ? 'w-[18px] md:w-[30px]' : compact ? 'w-[30px] md:w-[36px]' : 'w-[18px] md:w-[24px]',
         alignBottom ? 'justify-end' : 'justify-start',
       )}
     >
@@ -162,7 +171,7 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
         <span
           className={cn(
             'w-full text-center font-medium leading-none text-muted-foreground',
-            compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
+            mobile ? 'text-[8px] md:text-[10px]' : compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
           )}
         >
           {number}
@@ -174,9 +183,11 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
         height={canvasHeight}
         onClick={handleClick}
         className={cn(
-          compact
-            ? 'block h-[72px] w-[30px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[96px] md:w-[36px]'
-            : 'block h-[56px] w-[18px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[72px] md:w-[24px]',
+          mobile
+            ? 'block h-[42px] w-[18px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[72px] md:w-[30px]'
+            : compact
+              ? 'block h-[72px] w-[30px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[96px] md:w-[36px]'
+              : 'block h-[56px] w-[18px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[72px] md:w-[24px]',
           !isLoaded && 'opacity-0',
         )}
         style={{ imageRendering: 'auto' }}
@@ -185,7 +196,7 @@ export function Tooth({ number, isUpper, record, onClick, alignBottom = false, c
         <span
           className={cn(
             'w-full text-center font-medium leading-none text-muted-foreground',
-            compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
+            mobile ? 'text-[8px] md:text-[10px]' : compact ? 'text-[10px] md:text-xs' : 'text-[8px] md:text-[10px]',
           )}
         >
           {number}

@@ -1,6 +1,6 @@
 const CACHE_NAME = 'dentis-admin-v3';
 const STATIC_CACHE = 'dentis-static-v3';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/favicon.ico', '/admin-icon-192.png', '/admin-icon-512.png'];
+const APP_SHELL = ['/', '/manifest.json', '/favicon.ico', '/admin-icon-192.png', '/admin-icon-512.png'];
 
 // Кеш для статичних ассетів (JS/CSS з хешами в назві)
 const STATIC_ASSETS = /\.(js|css|woff2?|png|webp|svg)$/;

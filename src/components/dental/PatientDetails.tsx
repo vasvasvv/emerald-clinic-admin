@@ -84,7 +84,7 @@ export function PatientDetails({
                 {isCompactLayout && (
                   <Button variant="ghost" size="sm" className="h-9 px-3 text-muted-foreground" onClick={onBack}>
                     <ChevronLeft className="mr-1 h-4 w-4" />
-                    До списку пацієнтів
+                    До списку
                   </Button>
                 )}
                 <Button variant="outline" onClick={onRefresh} disabled={loading || saving} className="h-9 px-3">
@@ -123,12 +123,12 @@ export function PatientDetails({
           </div>
 
           <div className="flex-1 overflow-auto p-3 md:p-6">
-            <div className="min-w-[280px]">
+            <div className="w-full max-w-full">
               <div className="mb-2">
                 <div className="mb-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">
                   Верхня щелепа
                 </div>
-                <div className="flex flex-nowrap items-end justify-center gap-0 overflow-auto py-[5px]">
+                <div className="flex items-end justify-center gap-0 py-[4px] px-1">
                   {UPPER_TEETH.map((number) => (
                     <Tooth
                       key={number}
@@ -138,12 +138,13 @@ export function PatientDetails({
                       onClick={() => canEditDental && onSelectTooth(number)}
                       alignBottom
                       compact={isCompactLayout}
+                      mobile={isCompactLayout}
                     />
                   ))}
                 </div>
               </div>
               <div>
-                <div className="flex flex-nowrap items-start justify-center gap-0 overflow-auto py-[5px]">
+                <div className="flex items-start justify-center gap-0 py-[4px] px-1">
                   {LOWER_TEETH.map((number) => (
                     <Tooth
                       key={number}
@@ -152,6 +153,7 @@ export function PatientDetails({
                       record={selectedPatient.dentalChart.find((item) => item.toothNumber === number)}
                       onClick={() => canEditDental && onSelectTooth(number)}
                       compact={isCompactLayout}
+                      mobile={isCompactLayout}
                     />
                   ))}
                 </div>

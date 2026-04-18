@@ -6,6 +6,9 @@ import { AppSidebar, SidebarContent, mobileBottomNavItems } from '@/components/A
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+{
+  /*import Bg from '@/assets/0418.mp4';*/
+}
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -19,24 +22,24 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* фон - optimized for GPU */}
-      <video
+      {/*  <video
         autoPlay
         loop
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0 will-change-transform"
       >
-        <source src="/background.mp4" type="video/mp4" />
-      </video>
+        <source src={''} type="video/mp4" />
+      </video>*/}
 
-      <div className="absolute inset-0 bg-black/40 z-10" style={{ contain: 'paint' }} />
+      <div className="absolute inset-0 bg-background/20 z-10" style={{ contain: 'paint' }} />
 
       {!isMobile && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
         className={cn('relative z-20 flex', isMobile ? 'pl-0 pb-16' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
         style={{
-          transition: 'padding-left 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'padding-left 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'padding-left',
           contain: 'layout',
         }}
@@ -77,17 +80,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           {active && (
                             <motion.div
                               layoutId="mobile-nav-active-tab"
-                              className="absolute -inset-1 z-10 rounded-[1.4rem] bg-gradient-to-r from-emerald-500 to-teal-600"
-                              initial={{ scale: 0.8, opacity: 1 }}
-                              animate={{ scale: 1.01, opacity: 1 }}
+                              className="absolute -inset-1 z-10 rounded-[1.4rem] bg-background/30 backdrop-blur-lg"
+                              initial={{ scale: 1.25, opacity: 1 }}
+                              animate={{ scale: 1.15, opacity: 1 }}
                               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
                             >
-                              <div className="absolute inset-0 rounded-[1.4rem] bg-gradient-to-r from-emerald-500 to-teal-600" />
+                              <div className="absolute inset-0 rounded-[1.4rem] bg-background/30 backdrop-blur-lg" />
                             </motion.div>
                           )}
 
                           <Icon
-                            className={`relative z-20 h-6 w-6 transition-all duration-200 ${
+                            className={`relative z-20 h-7 w-7 transition-all duration-200 ${
                               active
                                 ? 'scale-110 text-white'
                                 : 'text-emerald-200/70 group-hover:scale-105 group-hover:text-emerald-100'
@@ -126,19 +129,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       className={`relative flex w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2.5 transition-colors ${
                         mobileDrawerOpen ? 'bg-emerald-500/20' : 'bg-transparent'
                       }`}
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 1.01 }}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 1.15 }}
                       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     >
                       {mobileDrawerOpen && (
                         <motion.div
                           layoutId="mobile-nav-active-tab"
-                          className="absolute inset-0 rounded-2xl bg-emerald-500/20"
+                          className="absolute inset-0 rounded-2xl backdrop-blur-lg"
                           transition={{ type: 'spring', stiffness: 320, damping: 26 }}
                         />
                       )}
                       <Menu
-                        className={`relative z-10 h-6 w-6 transition-all ${
+                        className={`relative z-10 h-7 w-7 transition-all ${
                           mobileDrawerOpen ? 'text-white' : 'text-emerald-200/60 group-hover:text-emerald-100'
                         }`}
                       />

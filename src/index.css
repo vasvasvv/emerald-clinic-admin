@@ -7,7 +7,7 @@
     --font-heading: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
 
-    --background: 176 52% 8%;
+    --background: 176 52% 6%;
     --foreground: 160 20% 90%;
 
     --card: 176 40% 12%;
@@ -83,7 +83,7 @@
     --glass-border-gold-strong: rgba(212, 203, 40, 0.55);
 
     /* Shadows */
-    --glass-shadow: 0 8px 32px hsl(176 50% 8% / 0.6), 0 1px 0 rgba(255, 255, 255, 0.04);
+    --glass-shadow: 0 8px 32px hsl(176 50% 8% / 0.6), 0 1px 0 rgba(28, 28, 28, 0.04);
     --glass-shadow-hover: 0 16px 48px hsl(176 50% 8% / 0.7), 0 1px 0 rgba(255, 255, 255, 0.06);
     --glass-shadow-gold: 0 0 0 1px rgba(212, 192, 40, 0.4), 0 8px 32px hsl(176 50% 8% / 0.6);
 
@@ -130,9 +130,9 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
     /* Removed transform from transition - use separate class for hover effects */
     transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
+      background-color 0.5s ease,
+      border-color 0.5s ease,
+      box-shadow 0.5s ease;
   }
 
   .glass-panel-sm {
@@ -261,8 +261,8 @@
   .glass-card {
     @apply glass p-4 sm:p-5;
     transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
+      background-color 0.4s ease,
+      border-color 0.4s ease,
       transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
   }
@@ -286,9 +286,9 @@
   .glass-button {
     @apply glass px-4 py-2 font-medium cursor-pointer;
     transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      transform 0.15s ease;
+      background-color 0.4s ease,
+      border-color 0.4s ease,
+      transform 0.5s ease;
     will-change: transform;
   }
 
