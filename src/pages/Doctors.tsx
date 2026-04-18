@@ -225,11 +225,13 @@ export default function Doctors() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="glass-panel w-full max-w-lg space-y-5 p-6"
+                className="glass-panel w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4 sm:space-y-5 p-4 sm:p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newDoctor')}</h2>
+                  <h2 className="font-heading text-base sm:text-lg font-semibold">
+                    {editingId ? t('edit') : t('newDoctor')}
+                  </h2>
                   <button
                     onClick={() => setShowForm(false)}
                     className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"

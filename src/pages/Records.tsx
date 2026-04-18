@@ -145,25 +145,25 @@ export default function Records() {
     <>
       <AdminLayout>
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-2xl font-heading font-bold">{t('records')}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <h1 className="text-xl sm:text-2xl font-heading font-bold">{t('records')}</h1>
 
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <button
                 onClick={() => setShowNewForm(true)}
-                className="btn-accent flex items-center gap-2"
+                className="btn-accent flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-2.5"
                 disabled={saving}
               >
                 <Plus className="w-4 h-4" />
                 {t('newRecord')}
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
                 <select
                   value={selectedDoctor}
                   onChange={(e) => setSelectedDoctor(e.target.value)}
-                  className="input-glass text-sm py-1.5 pr-8"
+                  className="input-glass text-xs sm:text-sm py-1.5 pr-8 h-9 sm:h-10"
                 >
                   <option value="">{t('allDoctors')}</option>
                   {doctorOptions.map((doctor) => (
@@ -177,7 +177,7 @@ export default function Records() {
               <div className="flex rounded-xl overflow-hidden border border-border">
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'week'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-secondary/60'
@@ -187,7 +187,7 @@ export default function Records() {
                 </button>
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'month'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-secondary/60'
@@ -205,21 +205,21 @@ export default function Records() {
             </p>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <button
               onClick={() => (viewMode === 'week' ? navigateWeek(-1) : navigateMonth(-1))}
-              className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="font-heading font-semibold text-lg capitalize">
+            <span className="font-heading font-semibold text-sm sm:text-lg capitalize text-center">
               {viewMode === 'week' ? weekRangeLabel : monthLabel}
             </span>
             <button
               onClick={() => (viewMode === 'week' ? navigateWeek(1) : navigateMonth(1))}
-              className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
@@ -228,7 +228,7 @@ export default function Records() {
               key={monday.getTime()}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"
             >
               {weekDays.map((day, index) => {
                 const dateStr = formatDateKey(day);
@@ -241,35 +241,41 @@ export default function Records() {
                     className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}
                   >
                     <div
-                      className={`px-4 py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}
+                      className={`px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}
                     >
-                      <span className="text-xs text-muted-foreground font-medium">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                         {dayNames[lang]?.[index] || dayNames.en[index]}
                       </span>
-                      <span className={`font-heading font-semibold ${isToday ? 'text-primary' : ''}`}>
+                      <span className={`font-heading font-semibold text-sm ${isToday ? 'text-primary' : ''}`}>
                         {day.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                       </span>
                       {isToday && (
-                        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-medium ml-auto">
+                        <span className="text-[10px] sm:text-xs bg-primary/20 text-primary px-1.5 sm:px-2 py-0.5 rounded-full font-medium ml-auto">
                           {t('today')}
                         </span>
                       )}
                     </div>
                     {loading ? (
-                      <div className="px-4 py-6 text-center text-sm text-muted-foreground">{t('loading')}</div>
+                      <div className="px-3 sm:px-4 py-4 sm:py-6 text-center text-xs sm:text-sm text-muted-foreground">
+                        {t('loading')}
+                      </div>
                     ) : dayRecords.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-sm text-muted-foreground/60">{t('noRecords')}</div>
+                      <div className="px-3 sm:px-4 py-4 sm:py-6 text-center text-xs sm:text-sm text-muted-foreground/60">
+                        {t('noRecords')}
+                      </div>
                     ) : (
                       <div className="divide-y divide-border/40">
                         {dayRecords.map((record) => (
                           <div
                             key={record.id}
-                            className="px-4 py-2.5 flex items-center gap-3 hover:bg-secondary/30 transition-colors"
+                            className="px-3 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2 sm:gap-3 hover:bg-secondary/30 transition-colors"
                           >
-                            <span className="text-sm font-semibold text-accent w-12 shrink-0">{record.time}</span>
+                            <span className="text-xs sm:text-sm font-semibold text-accent w-10 sm:w-12 shrink-0">
+                              {record.time}
+                            </span>
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium truncate">{record.clientName}</p>
-                              <p className="text-xs text-muted-foreground">{record.phone}</p>
+                              <p className="text-xs sm:text-sm font-medium truncate">{record.clientName}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">{record.phone}</p>
                             </div>
                           </div>
                         ))}
@@ -288,14 +294,20 @@ export default function Records() {
             >
               <div className="grid grid-cols-7 border-b border-border">
                 {(dayNames[lang] || dayNames.en).concat(lang === 'uk' ? 'Нд' : 'Sun').map((name) => (
-                  <div key={name} className="px-2 py-2 text-center text-xs text-muted-foreground font-medium">
-                    {name}
+                  <div
+                    key={name}
+                    className="px-1 sm:px-2 py-1.5 sm:py-2 text-center text-[10px] sm:text-xs text-muted-foreground font-medium"
+                  >
+                    {name.slice(0, 2)}
                   </div>
                 ))}
               </div>
               <div className="grid grid-cols-7">
                 {Array.from({ length: (monthDays[0]?.getDay() || 7) - 1 }, (_, index) => (
-                  <div key={`empty-${index}`} className="border-b border-r border-border/30 min-h-[80px]" />
+                  <div
+                    key={`empty-${index}`}
+                    className="border-b border-r border-border/30 min-h-[60px] sm:min-h-[80px]"
+                  />
                 ))}
                 {monthDays.map((day) => {
                   const dateStr = formatDateKey(day);
@@ -306,24 +318,26 @@ export default function Records() {
                   return (
                     <div
                       key={dateStr}
-                      className={`border-b border-r border-border/30 min-h-[80px] p-1.5 ${isToday ? 'bg-primary/5' : ''} ${isSunday ? 'opacity-50' : ''}`}
+                      className={`border-b border-r border-border/30 min-h-[60px] sm:min-h-[80px] p-1 sm:p-1.5 ${isToday ? 'bg-primary/5' : ''} ${isSunday ? 'opacity-50' : ''}`}
                     >
                       <span
-                        className={`text-xs font-medium ${isToday ? 'bg-primary text-primary-foreground px-1.5 py-0.5 rounded-md' : 'text-muted-foreground'}`}
+                        className={`text-[10px] sm:text-xs font-medium ${isToday ? 'bg-primary text-primary-foreground px-1 sm:px-1.5 py-0.5 rounded-md' : 'text-muted-foreground'}`}
                       >
                         {day.getDate()}
                       </span>
-                      <div className="mt-1 space-y-0.5">
-                        {dayRecords.slice(0, 3).map((record) => (
+                      <div className="mt-0.5 sm:mt-1 space-y-0.5">
+                        {dayRecords.slice(0, 2).map((record) => (
                           <div
                             key={record.id}
-                            className="text-[10px] bg-accent/15 text-accent rounded px-1 py-0.5 truncate"
+                            className="text-[9px] sm:text-[10px] bg-accent/15 text-accent rounded px-0.5 sm:px-1 py-0.5 truncate"
                           >
                             {record.time} {extractFirstName(record.clientName)}
                           </div>
                         ))}
-                        {dayRecords.length > 3 && (
-                          <div className="text-[10px] text-muted-foreground pl-1">+{dayRecords.length - 3}</div>
+                        {dayRecords.length > 2 && (
+                          <div className="text-[9px] sm:text-[10px] text-muted-foreground pl-0.5 sm:pl-1">
+                            +{dayRecords.length - 2}
+                          </div>
                         )}
                       </div>
                     </div>

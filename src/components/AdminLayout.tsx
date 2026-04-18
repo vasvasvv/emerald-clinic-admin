@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { AppSidebar, SidebarContent, mobileBottomNavItems } from '@/components/AppSidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile, useIsTablet } from '@/hooks/use-mobile';
 import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -11,30 +11,34 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const { pathname } = useLocation();
   const { t } = useI18n();
 
   const closeMobileDrawer = () => setMobileDrawerOpen(false);
 
+  const showMobileStyle = isMobile || isTablet;
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden" style={{ background: 'var(--gradient)' }}>
-      {!isMobile && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
+      {!showMobileStyle && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
-        className={cn('relative z-20 flex', isMobile ? 'pl-0' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
+        className={cn('relative z-20 flex', showMobileStyle ? 'pl-0' : collapsed ? 'pl-[86px]' : 'pl-[280px]')}
         style={{
           transition: 'padding-left 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'padding-left',
           contain: 'layout',
-          paddingTop: isMobile ? 'env(safe-area-inset-top)' : undefined,
+          paddingTop: showMobileStyle ? 'env(safe-area-inset-top)' : undefined,
         }}
       >
         <main className="flex-1 min-h-screen">
-          <div className={cn('max-w-7xl mx-auto px-4 py-6', isMobile && 'pb-24')}>{children}</div>
+          <div className={cn('max-w-7xl mx-auto px-4 py-6', showMobileStyle && 'pb-24')}>{children}</div>
         </main>
       </div>
 
-      {isMobile && (
+      {/* Bottom navigation for mobile and tablet */}
+      {showMobileStyle && (
         <>
           <div
             className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2"

@@ -141,19 +141,26 @@ function ToothButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex min-w-0 flex-col items-center rounded-[18px] border px-1 py-2 transition-all',
+        'flex min-w-0 flex-col items-center rounded-[14px] sm:rounded-[18px] border px-0.5 sm:px-1 py-1.5 sm:py-2 transition-all',
         selected
           ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_10px_24px_rgba(16,185,129,0.18)]'
           : 'border-border/60 bg-background hover:border-emerald-400/50 hover:bg-muted/30',
       )}
     >
-      {isUpper && <span className="mb-1 text-[11px] font-medium text-muted-foreground">{tooth}</span>}
+      {isUpper && (
+        <span className="mb-0.5 sm:mb-1 text-[9px] sm:text-[11px] font-medium text-muted-foreground">{tooth}</span>
+      )}
       <img
         src={`/teeth/${mapped?.imageNumber ?? (isUpper ? 8 : 18)}.png`}
         alt={`Tooth ${tooth}`}
-        className={cn('h-[64px] w-[28px] object-contain sm:h-[70px] sm:w-[30px]', mapped?.mirrored && '-scale-x-100')}
+        className={cn(
+          'h-[52px] w-[22px] sm:h-[60px] sm:w-[26px] md:h-[70px] md:w-[30px] object-contain',
+          mapped?.mirrored && '-scale-x-100',
+        )}
       />
-      {!isUpper && <span className="mt-1 text-[11px] font-medium text-muted-foreground">{tooth}</span>}
+      {!isUpper && (
+        <span className="mt-0.5 sm:mt-1 text-[9px] sm:text-[11px] font-medium text-muted-foreground">{tooth}</span>
+      )}
     </button>
   );
 }
@@ -552,49 +559,58 @@ export default function Xrays() {
         )}
 
         {step === 'patient' && (
-          <section className="mx-auto max-w-3xl rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">{t('xraySelectPatientTitle')}</h1>
-              <p className="text-sm text-muted-foreground">{t('xraySelectPatientDescription')}</p>
+          <section className="mx-auto max-w-3xl rounded-[24px] sm:rounded-[28px] border border-border/70 bg-card p-4 sm:p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
+            <div className="space-y-1.5 sm:space-y-2">
+              <h1 className="text-xl sm:text-2xl font-semibold">{t('xraySelectPatientTitle')}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t('xraySelectPatientDescription')}</p>
             </div>
 
             <form onSubmit={handleSearchSubmit}>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="xray-last-name">{t('lastName')}</Label>
+              <div className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 md:grid-cols-2">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="xray-last-name" className="text-xs sm:text-sm">
+                    {t('lastName')}
+                  </Label>
                   <Input
                     id="xray-last-name"
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
                     onBlur={triggerSearch}
                     placeholder={t('lastName')}
+                    className="h-9 sm:h-10"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="xray-first-name">{t('firstName')}</Label>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="xray-first-name" className="text-xs sm:text-sm">
+                    {t('firstName')}
+                  </Label>
                   <Input
                     id="xray-first-name"
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
                     onBlur={triggerSearch}
                     placeholder={t('firstName')}
+                    className="h-9 sm:h-10"
                   />
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4 md:grid-cols-[1fr_auto]">
-                <div className="space-y-2">
-                  <Label htmlFor="xray-phone">{t('phone')}</Label>
+              <div className="mt-3 sm:mt-4 grid gap-3 sm:gap-4 md:grid-cols-[1fr_auto]">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="xray-phone" className="text-xs sm:text-sm">
+                    {t('phone')}
+                  </Label>
                   <Input
                     id="xray-phone"
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
                     onBlur={triggerSearch}
                     placeholder="+380..."
+                    className="h-9 sm:h-10"
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button type="submit" variant="outline">
+                  <Button type="submit" variant="outline" className="w-full md:w-auto h-9 sm:h-10">
                     {isSearching ? (
                       <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -606,37 +622,43 @@ export default function Xrays() {
               </div>
             </form>
 
-            <div className="mt-6 flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">{t('xrayCreateReadyHint')}</p>
-              <Button onClick={() => setIsCreatingPatient(true)} disabled={!canCreate}>
+            <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 rounded-[20px] sm:rounded-[24px] border border-border/60 bg-muted/20 px-3 sm:px-4 py-2.5 sm:py-3">
+              <p className="text-xs sm:text-sm text-muted-foreground">{t('xrayCreateReadyHint')}</p>
+              <Button
+                onClick={() => setIsCreatingPatient(true)}
+                disabled={!canCreate}
+                className="w-full sm:w-auto h-9 sm:h-10"
+              >
                 <UserPlus className="mr-2 h-4 w-4" />
                 {t('xrayCreateButton')}
               </Button>
             </div>
 
             {hasSearched && (
-              <div className="mt-4 rounded-[24px] border border-border/60 bg-muted/20 p-3">
-                <p className="mb-3 text-sm font-medium">
+              <div className="mt-3 sm:mt-4 rounded-[20px] sm:rounded-[24px] border border-border/60 bg-muted/20 p-2.5 sm:p-3">
+                <p className="mb-2 sm:mb-3 text-xs sm:text-sm font-medium">
                   {matches.length > 0 ? t('xrayMatchesFound') : t('xrayNoMatches')}
                 </p>
                 {matches.length > 0 ? (
-                  <ScrollArea className="h-[260px]">
+                  <ScrollArea className="h-[220px] sm:h-[260px]">
                     <div className="space-y-2 pr-2">
                       {matches.map((patient) => (
                         <button
                           key={patient.id}
                           type="button"
                           onClick={() => pickPatient(patient)}
-                          className="w-full rounded-[18px] border border-transparent bg-background px-4 py-3 text-left transition-colors hover:border-border hover:bg-muted/40"
+                          className="w-full rounded-[16px] sm:rounded-[18px] border border-transparent bg-background px-3 sm:px-4 py-2.5 sm:py-3 text-left transition-colors hover:border-border hover:bg-muted/40"
                         >
-                          <p className="font-medium">{formatPatientName(patient)}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{patient.phone || t('xrayNoPhone')}</p>
+                          <p className="text-sm font-medium truncate">{formatPatientName(patient)}</p>
+                          <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">
+                            {patient.phone || t('xrayNoPhone')}
+                          </p>
                         </button>
                       ))}
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="rounded-[18px] bg-background px-4 py-5 text-sm text-muted-foreground">
+                  <div className="rounded-[16px] sm:rounded-[18px] bg-background px-3 sm:px-4 py-4 sm:py-5 text-xs sm:text-sm text-muted-foreground">
                     {t('xrayNoMatchesDescription')}
                   </div>
                 )}
@@ -647,22 +669,24 @@ export default function Xrays() {
 
         {step === 'tooth' && (
           <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">{t('xrayPatientLabel')}</p>
-                <h1 className="text-2xl font-semibold">{formatPatientName(selectedPatient)}</h1>
-                <p className="mt-2 text-sm text-muted-foreground">{t('xrayChooseToothDescription')}</p>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">{t('xrayPatientLabel')}</p>
+                <h1 className="text-xl sm:text-2xl font-semibold truncate">{formatPatientName(selectedPatient)}</h1>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
+                  {t('xrayChooseToothDescription')}
+                </p>
               </div>
-              <Button variant="outline" onClick={() => setStep('patient')}>
+              <Button variant="outline" onClick={() => setStep('patient')} className="w-full sm:w-auto shrink-0">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t('xrayBack')}
               </Button>
             </div>
 
-            <div className="rounded-[24px] border border-border/60 bg-background p-4 sm:p-5">
-              <p className="mb-3 text-sm font-semibold">{t('xrayUpperJaw')}</p>
-              <div className="overflow-x-auto">
-                <div className="flex min-w-[720px] justify-between gap-2">
+            <div className="rounded-[24px] border border-border/60 bg-background p-3 sm:p-4 md:p-5">
+              <p className="mb-2 text-xs sm:text-sm font-semibold">{t('xrayUpperJaw')}</p>
+              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+                <div className="flex min-w-[600px] sm:min-w-[680px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
                   {UPPER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}
@@ -675,9 +699,9 @@ export default function Xrays() {
                 </div>
               </div>
 
-              <p className="mb-3 mt-6 text-sm font-semibold">{t('xrayLowerJaw')}</p>
-              <div className="overflow-x-auto">
-                <div className="flex min-w-[720px] justify-between gap-2">
+              <p className="mb-2 mt-4 sm:mt-6 text-xs sm:text-sm font-semibold">{t('xrayLowerJaw')}</p>
+              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+                <div className="flex min-w-[600px] sm:min-w-[680px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
                   {LOWER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}
@@ -691,14 +715,14 @@ export default function Xrays() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-3 sm:px-4 py-3">
+              <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 {selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}
               </p>
               <Button
                 onClick={startCapture}
                 disabled={!selectedTooth || startXraySessionMutation.isPending}
-                className="h-12 rounded-2xl px-6 text-base"
+                className="h-11 sm:h-12 rounded-2xl px-4 sm:px-6 text-sm sm:text-base w-full sm:w-auto"
               >
                 {startXraySessionMutation.isPending ? (
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
@@ -712,37 +736,45 @@ export default function Xrays() {
         )}
 
         {step === 'capture' && session && !session.xray && (
-          <section className="flex min-h-[72vh] flex-col justify-between rounded-[28px] border border-amber-500/20 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.12),transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.98))] p-6 md:p-8">
+          <section className="flex min-h-[60vh] sm:min-h-[72vh] flex-col justify-between rounded-[28px] border border-amber-500/20 bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.12),transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.98))] p-4 sm:p-6 md:p-8">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-amber-700">{t('xrayWaitingEyebrow')}</p>
-              <h2 className="mt-2 text-3xl font-semibold">{t('xrayWaitingTitle')}</h2>
-              <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{t('xrayWaitingDescription')}</p>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-semibold">{t('xrayWaitingTitle')}</h2>
+              <p className="mt-2 sm:mt-3 max-w-2xl text-xs sm:text-sm text-muted-foreground">
+                {t('xrayWaitingDescription')}
+              </p>
             </div>
 
-            <div className="grid gap-4 rounded-[24px] border border-border/70 bg-background/90 p-5 md:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 rounded-[20px] sm:rounded-[24px] border border-border/70 bg-background/90 p-4 sm:p-5 md:grid-cols-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayPatientLabel')}</p>
-                <p className="mt-2 font-medium">{session.patientName}</p>
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('xrayPatientLabel')}
+                </p>
+                <p className="mt-1 sm:mt-2 text-sm font-medium truncate">{session.patientName}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayToothLabel')}</p>
-                <p className="mt-2 font-medium">FDI {session.toothId}</p>
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('xrayToothLabel')}
+                </p>
+                <p className="mt-1 sm:mt-2 text-sm font-medium">FDI {session.toothId}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{t('xrayStatusLabel')}</p>
-                <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-500/12 px-3 py-1 text-sm text-amber-700">
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('xrayStatusLabel')}
+                </p>
+                <div className="mt-1 sm:mt-2 inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-amber-500/12 px-2 sm:px-3 py-1 text-xs sm:text-sm text-amber-700">
+                  <LoaderCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   {t('xrayPollingStatus')}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <Button variant="outline" onClick={() => setStep('tooth')}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4">
+              <Button variant="outline" onClick={() => setStep('tooth')} className="w-full sm:w-auto">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t('xrayChangeTooth')}
               </Button>
-              <Button variant="outline" onClick={refreshCapture}>
+              <Button variant="outline" onClick={refreshCapture} className="w-full sm:w-auto">
                 <RefreshCw className={`mr-2 h-4 w-4 ${activeSessionQuery.isFetching ? 'animate-spin' : ''}`} />
                 {t('xrayRefreshNow')}
               </Button>
@@ -751,25 +783,25 @@ export default function Xrays() {
         )}
 
         {step === 'capture' && session?.xray && (
-          <section className="space-y-5 rounded-[28px] border border-border/70 bg-card p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
+          <section className="space-y-4 sm:space-y-5 rounded-[28px] border border-border/70 bg-card p-4 sm:p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:p-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">{t('xrayResultEyebrow')}</p>
-                <h2 className="mt-2 text-2xl font-semibold">{t('xrayResultTitle')}</h2>
-                <p className="mt-2 text-sm text-muted-foreground">{t('xrayResultDescription')}</p>
+                <h2 className="mt-2 text-xl sm:text-2xl font-semibold">{t('xrayResultTitle')}</h2>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">{t('xrayResultDescription')}</p>
               </div>
-              <div className="rounded-[20px] border border-border/70 bg-muted/30 px-4 py-3">
-                <p className="text-sm font-medium">{session.patientName}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
+              <div className="rounded-[16px] sm:rounded-[20px] border border-border/70 bg-muted/30 px-3 sm:px-4 py-2 sm:py-3 shrink-0">
+                <p className="text-xs sm:text-sm font-medium truncate">{session.patientName}</p>
+                <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground">
                   {t('xrayToothLabel')} FDI {session.toothId}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <label className="flex items-center gap-3 text-sm">
-                <ZoomIn className="h-4 w-4 text-muted-foreground" />
-                {t('xrayZoom')}
+            <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+              <label className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                <ZoomIn className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <span className="shrink-0">{t('xrayZoom')}</span>
                 <input
                   type="range"
                   min={1}
@@ -777,36 +809,40 @@ export default function Xrays() {
                   step={0.1}
                   value={zoom}
                   onChange={(event) => setZoom(Number(event.target.value))}
-                  className="w-40"
+                  className="w-28 sm:w-40"
                 />
-                <span className="w-10 text-right text-muted-foreground">{zoom.toFixed(1)}x</span>
+                <span className="w-8 sm:w-10 text-right text-muted-foreground">{zoom.toFixed(1)}x</span>
               </label>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => navigate('/dental-charts')}>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/dental-charts')}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
+                >
                   {t('xrayGoToDentalCharts')}
                 </Button>
-                <Button variant="outline" onClick={resetCapture}>
+                <Button variant="outline" onClick={resetCapture} className="w-full sm:w-auto text-xs sm:text-sm">
                   {t('xrayNewCapture')}
                 </Button>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[28px] border border-border/70 bg-[linear-gradient(180deg,rgba(15,23,42,0.04),rgba(15,23,42,0.01))]">
+            <div className="overflow-hidden rounded-[24px] sm:rounded-[28px] border border-border/70 bg-[linear-gradient(180deg,rgba(15,23,42,0.04),rgba(15,23,42,0.01))]">
               <button
                 type="button"
                 onClick={() => setIsFullResOpen(true)}
-                className="flex min-h-[68vh] w-full items-center justify-center overflow-auto p-6"
+                className="flex min-h-[50vh] sm:min-h-[68vh] w-full items-center justify-center overflow-auto p-3 sm:p-6"
               >
                 {isImageLoading || !previewUrl ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                    <LoaderCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                     {t('xrayPreviewLoading')}
                   </div>
                 ) : (
                   <img
                     src={previewUrl}
                     alt={`Preview tooth ${session.toothId}`}
-                    className="max-w-none rounded-2xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] transition-transform"
+                    className="max-w-none rounded-xl sm:rounded-2xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] transition-transform"
                     style={{ transform: `scale(${zoom})` }}
                   />
                 )}

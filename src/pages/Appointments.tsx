@@ -286,12 +286,15 @@ export default function Appointments() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-heading font-bold">{t('appointments')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-heading font-bold">{t('appointments')}</h1>
+            <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">{subtitle}</p>
           </div>
-          <button onClick={openNew} className="btn-accent flex items-center gap-2 self-start">
+          <button
+            onClick={openNew}
+            className="btn-accent flex items-center gap-2 self-stretch sm:self-start justify-center sm:justify-start py-2.5 sm:py-2"
+          >
             <Plus className="h-4 w-4" />
             {t('newAppointment')}
           </button>
@@ -303,8 +306,8 @@ export default function Appointments() {
           </p>
         )}
 
-        <div className="glass-panel p-4 md:p-5">
-          <div className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
+        <div className="glass-panel p-3 sm:p-4 md:p-5">
+          <div className="grid gap-2 sm:gap-3 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -312,7 +315,7 @@ export default function Appointments() {
                 placeholder={t('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-glass w-full pl-10"
+                className="input-glass w-full pl-10 h-10 sm:h-11"
               />
             </div>
 
@@ -331,7 +334,7 @@ export default function Appointments() {
                 setFilterDate('');
                 setSelectedDoctor('');
               }}
-              className="rounded-2xl border border-border/70 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+              className="rounded-2xl border border-border/70 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground h-10 sm:h-auto"
             >
               {t('all')}
             </button>
@@ -360,23 +363,23 @@ export default function Appointments() {
               {filtered.map((appointment) => (
                 <div
                   key={appointment.id}
-                  className="px-4 py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5"
+                  className="px-3 sm:px-4 py-3 sm:py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5"
                 >
-                  <div className="grid gap-3 lg:grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] lg:items-center">
+                  <div className="grid gap-2 sm:gap-3 lg:grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] lg:items-center">
                     <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                       <Clock3 className="h-4 w-4" />
                       {appointment.time}
                     </div>
 
-                    <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('doctor')}
                       </p>
                       <p className="text-sm font-medium text-foreground">{appointment.doctor}</p>
                     </div>
 
-                    <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {patientLabel}
                       </p>
                       <div className="flex items-center gap-2">
@@ -385,8 +388,8 @@ export default function Appointments() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('phone')}
                       </p>
                       <div className="flex items-center gap-2 text-sm text-foreground">
@@ -395,34 +398,36 @@ export default function Appointments() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
+                    <div className="space-y-0.5 sm:space-y-1">
+                      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
                         {t('status')}
                       </p>
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[appointment.status]}`}
+                        className={`inline-flex rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-medium ${statusColors[appointment.status]}`}
                       >
                         {t(appointment.status)}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 lg:justify-end">
+                    <div className="flex items-center gap-1 sm:gap-2 lg:justify-end">
                       <button
                         onClick={() => openEdit(appointment)}
-                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                        className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setDeletingId(appointment.id)}
-                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
 
-                  {appointment.comment && <p className="mt-3 text-sm text-muted-foreground">{appointment.comment}</p>}
+                  {appointment.comment && (
+                    <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground">{appointment.comment}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -435,18 +440,20 @@ export default function Appointments() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-sm"
               onClick={() => setShowForm(false)}
             >
               <motion.div
                 initial={{ scale: 0.97, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.97, opacity: 0 }}
-                className="glass-panel w-full max-w-xl space-y-5 p-6"
+                className="glass-panel w-full max-w-xl max-h-[90vh] overflow-y-auto space-y-4 sm:space-y-5 p-4 sm:p-6"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-heading text-lg font-semibold">{editingId ? t('edit') : t('newAppointment')}</h2>
+                  <h2 className="font-heading text-base sm:text-lg font-semibold">
+                    {editingId ? t('edit') : t('newAppointment')}
+                  </h2>
                   <button
                     onClick={() => setShowForm(false)}
                     className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"
@@ -455,11 +462,11 @@ export default function Appointments() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('lastName')}</label>
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
+                  <div className="space-y-1 sm:space-y-1.5">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('lastName')}</label>
                     <input
-                      className="input-glass w-full"
+                      className="input-glass w-full h-10 sm:h-11"
                       value={form.lastName}
                       onChange={(e) =>
                         setForm({
@@ -471,10 +478,10 @@ export default function Appointments() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('firstName')}</label>
+                  <div className="space-y-1 sm:space-y-1.5">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('firstName')}</label>
                     <input
-                      className="input-glass w-full"
+                      className="input-glass w-full h-10 sm:h-11"
                       value={form.firstName}
                       onChange={(e) =>
                         setForm({
@@ -486,20 +493,20 @@ export default function Appointments() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('phone')}</label>
+                  <div className="space-y-1 sm:space-y-1.5">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('phone')}</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input
-                        className="input-glass w-full pl-10"
+                        className="input-glass w-full pl-10 h-10 sm:h-11"
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('date')}</label>
+                  <div className="space-y-1 sm:space-y-1.5">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('date')}</label>
                     <DateField
                       value={form.date}
                       onChange={(value) => setForm({ ...form, date: value })}
@@ -508,18 +515,18 @@ export default function Appointments() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-muted-foreground">{t('time')}</label>
+                  <div className="space-y-1 sm:space-y-1.5">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('time')}</label>
                     <input
                       type="time"
-                      className="input-glass w-full"
+                      className="input-glass w-full h-10 sm:h-11"
                       value={form.time}
                       onChange={(e) => setForm({ ...form, time: e.target.value })}
                     />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-sm text-muted-foreground">{t('doctor')}</label>
+                  <div className="space-y-1 sm:space-y-1.5 sm:col-span-2">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('doctor')}</label>
                     <SelectField
                       value={form.doctor || '__placeholder__'}
                       onChange={(value) => setForm({ ...form, doctor: value === '__placeholder__' ? '' : value })}
@@ -528,25 +535,29 @@ export default function Appointments() {
                     />
                   </div>
 
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-sm text-muted-foreground">{t('comment')}</label>
+                  <div className="space-y-1 sm:space-y-1.5 sm:col-span-2">
+                    <label className="text-xs sm:text-sm text-muted-foreground">{t('comment')}</label>
                     <textarea
                       className="input-glass w-full resize-none"
-                      rows={3}
+                      rows={2}
                       value={form.comment}
                       onChange={(e) => setForm({ ...form, comment: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
                   <button
                     onClick={() => setShowForm(false)}
-                    className="rounded-xl px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60"
+                    className="rounded-xl px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary/60 w-full sm:w-auto order-2 sm:order-1"
                   >
                     {t('cancel')}
                   </button>
-                  <button onClick={() => void handleSave()} className="btn-accent" disabled={saving}>
+                  <button
+                    onClick={() => void handleSave()}
+                    className="btn-accent w-full sm:w-auto order-1 sm:order-2"
+                    disabled={saving}
+                  >
                     {t('save')}
                   </button>
                 </div>

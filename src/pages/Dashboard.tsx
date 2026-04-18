@@ -166,15 +166,15 @@ export default function Dashboard() {
             </p>
           )}
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               onClick={() => setShowNewForm(true)}
-              className="btn-accent flex items-center justify-center gap-3 rounded-2xl py-8 text-lg font-heading font-semibold"
+              className="btn-accent flex items-center justify-center gap-2 sm:gap-3 rounded-2xl py-6 sm:py-8 text-base sm:text-lg font-heading font-semibold"
             >
-              <CalendarPlus className="h-6 w-6" />
+              <CalendarPlus className="h-5 w-5 sm:h-6 sm:w-6" />
               {t('addRecord')}
             </motion.button>
 
@@ -183,28 +183,28 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               onClick={() => navigate('/xrays')}
-              className="glass-panel flex cursor-pointer items-center justify-center gap-3 rounded-2xl border-0 py-6 text-lg font-heading font-semibold text-foreground transition-colors hover:bg-secondary/60"
+              className="glass-panel flex cursor-pointer items-center justify-center gap-2 sm:gap-3 rounded-2xl border-0 py-5 sm:py-6 text-base sm:text-lg font-heading font-semibold text-foreground transition-colors hover:bg-secondary/60"
             >
-              <ScanSearch className="h-6 w-6" />
+              <ScanSearch className="h-5 w-5 sm:h-6 sm:w-6" />
               {'Зробити знімок'}
             </motion.button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               onClick={() => setActiveView('today')}
-              className={`dashboard-toggle-card text-left ${activeView === 'today' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
+              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === 'today' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
-                  <Clock className="h-5 w-5 text-primary" />
+              <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-primary/15">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">{t('todayAppointments')}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground leading-tight">{t('todayAppointments')}</p>
               </div>
-              <p className="text-3xl font-heading font-bold">{todayAppointments.length}</p>
+              <p className="text-2xl sm:text-3xl font-heading font-bold">{todayAppointments.length}</p>
             </motion.button>
 
             <motion.button
@@ -212,15 +212,17 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               onClick={() => setActiveView('tomorrow')}
-              className={`dashboard-toggle-card text-left ${activeView === 'tomorrow' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
+              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === 'tomorrow' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
-                  <Clock className="h-5 w-5 text-accent" />
+              <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-accent/15">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
                 </div>
-                <p className="text-sm text-muted-foreground">{t('tomorrowAppointments')}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground leading-tight">
+                  {t('tomorrowAppointments')}
+                </p>
               </div>
-              <p className="text-3xl font-heading font-bold">{tomorrowAppointments.length}</p>
+              <p className="text-2xl sm:text-3xl font-heading font-bold">{tomorrowAppointments.length}</p>
             </motion.button>
           </div>
 
@@ -231,46 +233,52 @@ export default function Dashboard() {
             transition={{ delay: 0.1 }}
             className="glass-panel"
           >
-            <div className="border-b border-border p-5">
-              <h2 className="font-heading text-lg font-semibold">
+            <div className="border-b border-border p-3 sm:p-5">
+              <h2 className="font-heading text-base sm:text-lg font-semibold">
                 {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} -{' '}
                 {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
               </h2>
             </div>
             {loading ? (
-              <div className="p-8 text-center text-muted-foreground">{t('loading')}</div>
+              <div className="p-6 sm:p-8 text-center text-muted-foreground">{t('loading')}</div>
             ) : displayedAppointments.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">{t('noAppointments')}</div>
+              <div className="p-6 sm:p-8 text-center text-muted-foreground">{t('noAppointments')}</div>
             ) : (
-              <div className="space-y-3 p-4 sm:p-5">
+              <div className="space-y-2 sm:space-y-3 p-3 sm:p-4 md:p-5">
                 {displayedAppointments.map((appointment) => {
                   const doctorAccent = doctorAccentMap.get(appointment.doctor || 'Без лікаря') ?? doctorBadgePalette[0];
                   return (
                     <div
                       key={appointment.id}
-                      className="rounded-2xl border border-border/60 bg-secondary/18 px-4 py-4 transition-colors duration-300 hover:bg-secondary/24"
+                      className="rounded-xl sm:rounded-2xl border border-border/60 bg-secondary/18 px-3 sm:px-4 py-3 sm:py-4 transition-colors duration-300 hover:bg-secondary/24"
                     >
-                      <div className="grid gap-3 lg:grid-cols-[90px_1fr_1.2fr_1fr] lg:items-center">
+                      <div className="grid gap-2 sm:gap-3 lg:grid-cols-[90px_1fr_1.2fr_1fr] lg:items-center">
                         <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                           <Clock className="h-4 w-4" />
                           {appointment.time}
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Лікар</p>
+                          <p className="text-[10px] sm:text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                            Лікар
+                          </p>
                           <div
-                            className={`mt-1 inline-flex items-center gap-2 rounded-full border border-white/5 border-l-4 px-3 py-1.5 text-xs font-semibold ${doctorAccent}`}
+                            className={`mt-0.5 sm:mt-1 inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/5 border-l-4 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold ${doctorAccent}`}
                           >
-                            <Stethoscope className="h-3.5 w-3.5" />
+                            <Stethoscope className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             {appointment.doctor || 'Без лікаря'}
                           </div>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Пацієнт</p>
+                          <p className="text-[10px] sm:text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                            Пацієнт
+                          </p>
                           <p className="text-sm font-medium text-foreground">{appointment.client}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Телефон</p>
-                          <div className="mt-1 flex items-center gap-2 text-sm text-foreground">
+                          <p className="text-[10px] sm:text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                            Телефон
+                          </p>
+                          <div className="mt-0.5 sm:mt-1 flex items-center gap-2 text-sm text-foreground">
                             <Phone className="h-4 w-4 text-muted-foreground" />
                             {appointment.phone}
                           </div>
