@@ -93,7 +93,7 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">
             {isEditing ? 'Редагувати пацієнта' : 'Додати нового пацієнта'}

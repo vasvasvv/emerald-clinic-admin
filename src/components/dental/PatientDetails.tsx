@@ -65,7 +65,7 @@ export function PatientDetails({
   onSelectTooth,
 }: PatientDetailsProps) {
   return (
-    <section className={cn('glass-panel min-h-[720px] overflow-hidden', isCompactLayout && !shouldHide && 'hidden')}>
+    <section className={cn('glass-panel min-h-[400px] md:min-h-[720px] overflow-hidden', isCompactLayout && !shouldHide && 'hidden')}>
       {!selectedPatient ? (
         <div className="flex h-full min-h-[720px] items-center justify-center">
           <div className="p-8 text-center">
@@ -80,17 +80,17 @@ export function PatientDetails({
         <div className="flex h-full flex-col">
           <div className="border-b bg-card/80 p-4 md:p-6">
             <div className="flex flex-col gap-3">
-              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none" style={{scrollbarWidth:'none'}}>
                 {isCompactLayout && (
-                  <Button variant="ghost" size="sm" className="h-9 px-3 text-muted-foreground" onClick={onBack}>
+                  <Button variant="ghost" size="sm" className="h-9 shrink-0 px-3 text-muted-foreground" onClick={onBack}>
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     До списку
                   </Button>
                 )}
-                <Button variant="outline" onClick={onRefresh} disabled={loading || saving} className="h-9 px-3">
+                <Button variant="outline" onClick={onRefresh} disabled={loading || saving} className="h-9 shrink-0 px-3">
                   Оновити
                 </Button>
-                <Button onClick={onOpenForm043} className="h-9 gap-2 px-3">
+                <Button onClick={onOpenForm043} className="h-9 shrink-0 gap-2 px-3">
                   <Printer className="mr-2 h-4 w-4" />
                   Форма 043
                 </Button>
@@ -128,34 +128,38 @@ export function PatientDetails({
                 <div className="mb-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">
                   Верхня щелепа
                 </div>
-                <div className="flex items-end justify-center gap-0 py-[4px] px-1">
-                  {UPPER_TEETH.map((number) => (
-                    <Tooth
-                      key={number}
-                      number={number}
-                      isUpper
-                      record={selectedPatient.dentalChart.find((item) => item.toothNumber === number)}
-                      onClick={() => canEditDental && onSelectTooth(number)}
-                      alignBottom
-                      compact={isCompactLayout}
-                      mobile={isCompactLayout}
-                    />
-                  ))}
+                <div className="overflow-x-auto touch-pan-x -mx-1">
+                  <div className="flex items-end justify-center gap-0 py-[4px] px-1 min-w-[320px]">
+                    {UPPER_TEETH.map((number) => (
+                      <Tooth
+                        key={number}
+                        number={number}
+                        isUpper
+                        record={selectedPatient.dentalChart.find((item) => item.toothNumber === number)}
+                        onClick={() => canEditDental && onSelectTooth(number)}
+                        alignBottom
+                        compact={isCompactLayout}
+                        mobile={isCompactLayout}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
               <div>
-                <div className="flex items-start justify-center gap-0 py-[4px] px-1">
-                  {LOWER_TEETH.map((number) => (
-                    <Tooth
-                      key={number}
-                      number={number}
-                      isUpper={false}
-                      record={selectedPatient.dentalChart.find((item) => item.toothNumber === number)}
-                      onClick={() => canEditDental && onSelectTooth(number)}
-                      compact={isCompactLayout}
-                      mobile={isCompactLayout}
-                    />
-                  ))}
+                <div className="overflow-x-auto touch-pan-x -mx-1">
+                  <div className="flex items-start justify-center gap-0 py-[4px] px-1 min-w-[320px]">
+                    {LOWER_TEETH.map((number) => (
+                      <Tooth
+                        key={number}
+                        number={number}
+                        isUpper={false}
+                        record={selectedPatient.dentalChart.find((item) => item.toothNumber === number)}
+                        onClick={() => canEditDental && onSelectTooth(number)}
+                        compact={isCompactLayout}
+                        mobile={isCompactLayout}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-1 text-center text-[10px] font-medium text-muted-foreground md:text-xs">
                   Нижня щелепа

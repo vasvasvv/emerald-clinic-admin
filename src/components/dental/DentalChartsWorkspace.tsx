@@ -199,16 +199,16 @@ export function DentalChartsWorkspace() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-bold">{t('dentalCharts')}</h1>
+          <h1 className="text-xl sm:text-2xl font-heading font-bold">{t('dentalCharts')}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {!shouldShowCompactPatientDetails && (
-            <Button variant="outline" onClick={() => void refresh()} disabled={loading || saving}>
+            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading || saving}>
               {t('refresh')}
             </Button>
           )}
           {selectedPatient && !shouldShowCompactPatientDetails && (
-            <Button onClick={() => setShowForm043(true)} className="gap-2">
+            <Button size="sm" onClick={() => setShowForm043(true)} className="gap-2">
               <Printer className="h-4 w-4" />
               {t('form043')}
             </Button>

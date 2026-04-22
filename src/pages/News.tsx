@@ -167,16 +167,16 @@ export default function News() {
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-shrink-0 gap-1">
+                  <div className="flex flex-shrink-0 gap-0.5 sm:gap-1">
                     <button
                       onClick={() => openEdit(item)}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                      className="rounded-xl p-2.5 sm:p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setDeletingId(item.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-xl p-2.5 sm:p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -444,7 +444,7 @@ export function Form043Editor({ patient, doctors, onClose }: Form043EditorProps)
             >
               <Eye className="h-3 w-3" />
             </Button>
-            <button onClick={onClose} className="ml-1 rounded p-1 transition-colors hover:bg-teal-700">
+            <button onClick={onClose} className="ml-1 rounded-lg p-2 transition-colors hover:bg-teal-700">
               <X className="h-4 w-4" />
             </button>
           </div>
