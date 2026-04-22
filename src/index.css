@@ -226,6 +226,14 @@
 }
 
 @layer utilities {
+  .ios-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .ios-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .font-heading {
     font-family: var(--font-heading);
   }
