@@ -19,7 +19,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const showMobileStyle = isMobile || isTablet;
 
   return (
-    <div className="relative min-h-screen min-h-dvh w-full overflow-hidden">
+    <div className="relative min-h-screen min-h-dvh w-full overflow-hidden ios-safe-top">
       {!showMobileStyle && <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       <div
@@ -28,7 +28,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           transition: 'padding-left 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           willChange: 'padding-left',
           contain: 'layout',
-          paddingTop: showMobileStyle ? 'env(safe-area-inset-top)' : undefined,
         }}
       >
         <main className="flex-1 min-h-screen min-h-dvh" style={{ transform: 'translateZ(0)' }}>
@@ -39,10 +38,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Bottom navigation for mobile and tablet */}
       {showMobileStyle && (
         <>
-          <div
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2"
-            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-          >
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2 pb-4 ios-safe-bottom">
             <div className="pointer-events-auto relative mx-auto max-w-4xl overflow-visible">
               <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-[linear-gradient(180deg,rgba(24,56,53,0.95)_0%,rgba(16,39,37,0.98)_100%)] p-2 shadow-2xl backdrop-blur-xl">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 pointer-events-none z-0" />
