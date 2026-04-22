@@ -36,6 +36,10 @@ function toAppointmentDate(date: string, time: string) {
   return new Date(`${date}T${time}:00`);
 }
 
+function normalizeName(value: string | null | undefined) {
+  return (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
