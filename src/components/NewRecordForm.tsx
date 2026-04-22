@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { ArrowLeft, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,6 +58,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
   const [phone, setPhone] = useState('');
   const [comment, setComment] = useState('');
   const [saving, setSaving] = useState(false);
+  const confirmButtonRef = useRef<HTMLDivElement | null>(null);
 
   const monday = useMemo(() => getMonday(currentDate), [currentDate]);
 
@@ -127,6 +128,13 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
     setSelectedDoctor(defaultDoctor);
   }, [defaultDoctor]);
 
+  useEffect(() => {
+    if (!selectedDate || typeof window === 'undefined' || window.innerWidth >= 640) return;
+    window.setTimeout(() => {
+      confirmButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 150);
+  }, [selectedDate, selectedTime]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -144,14 +152,14 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             className="max-w-5xl mx-auto p-4 sm:p-5 space-y-3"
           >
             {/* Header with doctor selector */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 pl-14 sm:pl-0">
+              <button
+                onClick={onClose}
+                className="fixed left-4 top-4 z-10 p-2 rounded-xl bg-background/90 hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors sm:static sm:bg-transparent"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
               <div className="flex items-center gap-3">
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
                 <div>
                   <h1 className="text-xl font-heading font-bold">{t('newRecord')}</h1>
                   <p className="text-xs text-muted-foreground">{t('selectTimeSlot')}</p>
@@ -264,7 +272,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             )}
 
             {/* Next button */}
-            <div className="pb-4">
+            <div ref={confirmButtonRef} className="pb-4">
               <button
                 onClick={handleNext}
                 disabled={!selectedDate || !selectedTime}
