@@ -193,6 +193,23 @@ describe('dental-charts-utils', () => {
     expect(resolveDoctorFilter(doctors, null)).toBe('all');
   });
 
+  it('resolves doctor filter when user and doctor names have reversed order', () => {
+    const doctors: Doctor[] = normalizeDoctors([
+      { id: 5, name: 'Фаримець Олександр', specialty: 'Терапевт' },
+      { id: 6, name: 'Інший Лікар', specialty: 'Хірург' },
+    ]);
+
+    expect(
+      resolveDoctorFilter(doctors, {
+        id: '5',
+        username: 'far',
+        name: 'Олександр Фаримець',
+        role: 'doctor',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      }),
+    ).toBe('5');
+  });
+
   it('formats phones and patient names for display', () => {
     expect(formatPhoneForSave('0501234567')).toBe('+380501234567');
     expect(formatPhoneForDisplay('+380501234567')).toBe('+38 (050)-123-45-67');
