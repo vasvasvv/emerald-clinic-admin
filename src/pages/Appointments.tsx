@@ -16,7 +16,7 @@ import {
   useUpdateAppointment,
 } from '@/hooks/use-appointments';
 import { useAuth } from '@/lib/auth-context';
-import { findDoctorOptionForUser } from '@/lib/admin-user';
+import { findDoctorOptionForUser, mapDoctorOptions, resolveDoctorIdForAppointment } from '@/lib/admin-user';
 import { useI18n } from '@/lib/i18n';
 import { buildPatientName, splitPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
@@ -171,10 +171,7 @@ export default function Appointments() {
     [appointmentItems, noDoctorLabel],
   );
 
-  const doctorOptions = useMemo<DoctorOption[]>(
-    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
-    [doctorItems],
-  );
+  const doctorOptions = useMemo<DoctorOption[]>(() => mapDoctorOptions(doctorItems), [doctorItems]);
   const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctorOptions, user), [doctorOptions, user]);
 
   const filterDoctorOptions = useMemo(
@@ -250,12 +247,11 @@ export default function Appointments() {
 
     setSaving(true);
     setError('');
-    const doctor = doctorOptions.find((item) => item.name === form.doctor);
     const payload = {
       patient_name: buildPatientName(form.lastName, form.firstName),
       phone: form.phone,
       appointment_at: `${form.date}T${form.time}:00`,
-      doctor_user_id: doctor?.id ?? null,
+      doctor_user_id: resolveDoctorIdForAppointment(doctorOptions, form.doctor, user),
       notes: form.comment,
       status: form.status,
     };

@@ -9,7 +9,7 @@ import { formatDateKey } from '@/lib/date-utils';
 import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
 import { useSystemDoctors } from '@/hooks/use-doctors';
 import { useAuth } from '@/lib/auth-context';
-import { findDoctorOptionForUser } from '@/lib/admin-user';
+import { findDoctorOptionForUser, mapDoctorOptions, resolveDoctorIdForAppointment } from '@/lib/admin-user';
 import { buildPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -75,16 +75,7 @@ export default function Dashboard() {
     [appointmentItems],
   );
 
-  const doctors = useMemo<DoctorOption[]>(
-    () =>
-      doctorItems
-        .map((doctor) => ({
-          id: Number(doctor.id),
-          name: (doctor.name ?? doctor.fullName ?? '').trim(),
-        }))
-        .filter((doctor) => doctor.name.length > 0),
-    [doctorItems],
-  );
+  const doctors = useMemo<DoctorOption[]>(() => mapDoctorOptions(doctorItems), [doctorItems]);
   const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctors, user), [doctors, user]);
 
   const loadError = appointmentsError ?? doctorsError;
@@ -135,13 +126,11 @@ export default function Dashboard() {
     setSaving(true);
     setError('');
     try {
-      const doctor = doctors.find((item) => normalizeName(item.name) === normalizeName(record.doctor));
-      const fallbackDoctorId = user?.role === 'doctor' ? user.id : null;
       await createAppointment.mutateAsync({
         patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
-        doctor_user_id: doctor?.id ?? fallbackDoctorId,
+        doctor_user_id: resolveDoctorIdForAppointment(doctors, record.doctor, user),
         notes: record.comment,
         status: 'scheduled',
       });

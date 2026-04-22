@@ -8,7 +8,7 @@ import { formatDateKey, getDaysInMonth, getMonday } from '@/lib/date-utils';
 import { useCreateAppointment, useAppointments } from '@/hooks/use-appointments';
 import { useSystemDoctors } from '@/hooks/use-doctors';
 import { useAuth } from '@/lib/auth-context';
-import { findDoctorOptionForUser } from '@/lib/admin-user';
+import { findDoctorOptionForUser, mapDoctorOptions, resolveDoctorIdForAppointment } from '@/lib/admin-user';
 import { buildPatientName, extractFirstName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
@@ -60,10 +60,7 @@ export default function Records() {
     [appointmentItems],
   );
 
-  const doctorOptions = useMemo<DoctorOption[]>(
-    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
-    [doctorItems],
-  );
+  const doctorOptions = useMemo<DoctorOption[]>(() => mapDoctorOptions(doctorItems), [doctorItems]);
   const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctorOptions, user), [doctorOptions, user]);
 
   useEffect(() => {
@@ -123,12 +120,11 @@ export default function Records() {
     setSaving(true);
     setError('');
     try {
-      const doctor = doctorOptions.find((item) => item.name === record.doctor);
       await createAppointment.mutateAsync({
         patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
-        doctor_user_id: doctor?.id ?? null,
+        doctor_user_id: resolveDoctorIdForAppointment(doctorOptions, record.doctor, user),
         notes: record.comment,
         status: 'scheduled',
       });
