@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { api } from '@/lib/api';
 import { getAdminToken } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
@@ -13,18 +13,32 @@ import { DENTAL_TEMPLATES } from '@/types/dental';
 interface ToothModalProps {
   isOpen: boolean;
   onClose: () => void;
+  patientId: string;
   toothNumber: number;
   record?: ToothRecord;
   onSave: (payload: Partial<ToothRecord>) => Promise<void>;
+  onUploadImage: (patientId: string, toothNumber: number, file: File) => Promise<void>;
 }
 
-export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: ToothModalProps) {
+export function ToothModal({
+  isOpen,
+  onClose,
+  patientId,
+  toothNumber,
+  record,
+  onSave,
+  onUploadImage,
+}: ToothModalProps) {
   const [templateId, setTemplateId] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
-  const [selectedXrayUrl, setSelectedXrayUrl] = useState<string | null>(null);
-  const [isLoadingXrays, setIsLoadingXrays] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<{ url: string; title: string } | null>(null);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -35,8 +49,8 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
 
   useEffect(() => {
     if (!isOpen) return;
-    const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray' && file.data);
-    if (xrayFiles.length === 0) {
+    const filesWithData = (record?.files ?? []).filter((file) => file.data);
+    if (filesWithData.length === 0) {
       setPreviewUrls({});
       return;
     }
@@ -48,10 +62,10 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
     const createdUrls: string[] = [];
 
     void (async () => {
-      setIsLoadingXrays(true);
+      setIsLoadingFiles(true);
       try {
         const entries = await Promise.all(
-          xrayFiles.map(async (file) => {
+          filesWithData.map(async (file) => {
             const blob = await api.getProtectedImageBlob(token, file.data);
             const url = URL.createObjectURL(blob);
             createdUrls.push(url);
@@ -63,7 +77,7 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
           setPreviewUrls(Object.fromEntries(entries));
         }
       } finally {
-        if (!cancelled) setIsLoadingXrays(false);
+        if (!cancelled) setIsLoadingFiles(false);
       }
     })();
 
@@ -71,7 +85,7 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
       cancelled = true;
       createdUrls.forEach((url) => URL.revokeObjectURL(url));
       setPreviewUrls({});
-      setSelectedXrayUrl(null);
+      setSelectedFile(null);
     };
   }, [isOpen, record?.files]);
 
@@ -99,8 +113,26 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
     onClose();
   };
 
+  const handleUploadImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !patientId) return;
+
+    setUploadError('');
+    setIsUploadingImage(true);
+    try {
+      await onUploadImage(patientId, toothNumber, file);
+      setIsUploadModalOpen(false);
+      event.target.value = '';
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Не вдалося завантажити зображення');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const currentTemplate = DENTAL_TEMPLATES.find((item) => item.id === templateId);
   const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray');
+  const toothImageFiles = (record?.files ?? []).filter((file) => file.type === 'image');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -157,27 +189,41 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
             />
           </div>
 
-          {xrayFiles.length > 0 && (
+          <div className="space-y-2">
+            <Label>Зображення зуба</Label>
+            <Button variant="outline" type="button" className="w-full" onClick={() => setIsUploadModalOpen(true)}>
+              Додати зображення
+            </Button>
+          </div>
+
+          {(xrayFiles.length > 0 || toothImageFiles.length > 0) && (
             <div className="space-y-2">
-              <Label>Знімки</Label>
+              <Label>Файли зуба</Label>
               <div className="rounded-lg border bg-muted/30 p-3">
                 <div className="mb-2 flex flex-wrap gap-2">
-                  <Badge variant="secondary">Знімки: {xrayFiles.length}</Badge>
-                  <Badge variant="outline">Стан: Знімки</Badge>
+                  {xrayFiles.length > 0 && <Badge variant="secondary">Знімки: {xrayFiles.length}</Badge>}
+                  {toothImageFiles.length > 0 && <Badge variant="secondary">Фото: {toothImageFiles.length}</Badge>}
                 </div>
                 <div className="space-y-2">
-                  {xrayFiles.map((file) => (
+                  {(record?.files ?? []).map((file) => (
                     <button
                       key={file.id}
                       type="button"
-                      onClick={() => previewUrls[file.id] && setSelectedXrayUrl(previewUrls[file.id])}
+                      onClick={() =>
+                        previewUrls[file.id] &&
+                        setSelectedFile({
+                          url: previewUrls[file.id],
+                          title:
+                            file.type === 'xray' ? `Рентген-знімок зуба ${toothNumber}` : `Фото зуба ${toothNumber}`,
+                        })
+                      }
                       className="flex w-full items-center gap-3 rounded-md border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/40"
                     >
                       <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md bg-muted">
                         {previewUrls[file.id] ? (
                           <img src={previewUrls[file.id]} alt={file.name} className="h-full w-full object-cover" />
                         ) : (
-                          <span className="text-[11px] text-muted-foreground">{isLoadingXrays ? '...' : 'N/A'}</span>
+                          <span className="text-[11px] text-muted-foreground">{isLoadingFiles ? '...' : 'N/A'}</span>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -186,7 +232,7 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
                           {new Date(file.uploadedAt).toLocaleString('uk-UA')}
                         </p>
                       </div>
-                      <Badge variant="outline">Перегляд</Badge>
+                      <Badge variant="outline">{file.type === 'xray' ? 'Знімок' : 'Фото'}</Badge>
                     </button>
                   ))}
                 </div>
@@ -216,14 +262,40 @@ export function ToothModal({ isOpen, onClose, toothNumber, record, onSave }: Too
         </DialogFooter>
       </DialogContent>
 
-      <Dialog open={Boolean(selectedXrayUrl)} onOpenChange={(open) => !open && setSelectedXrayUrl(null)}>
+      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Додати зображення до зуба {toothNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleUploadImage}
+              className="block w-full text-sm"
+            />
+            {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" type="button" onClick={() => setIsUploadModalOpen(false)}>
+              Скасувати
+            </Button>
+            <Button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploadingImage}>
+              {isUploadingImage ? 'Завантаження...' : 'Обрати файл'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(selectedFile)} onOpenChange={(open) => !open && setSelectedFile(null)}>
         <DialogContent className="max-h-[92vh] max-w-5xl overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Рентген-знімок зуба {toothNumber}</DialogTitle>
+            <DialogTitle>{selectedFile?.title}</DialogTitle>
           </DialogHeader>
           <div className="overflow-auto rounded-2xl border border-border/70 bg-muted/20 p-4">
-            {selectedXrayUrl && (
-              <img src={selectedXrayUrl} alt={`Xray ${toothNumber}`} className="mx-auto rounded-xl" />
+            {selectedFile?.url && (
+              <img src={selectedFile.url} alt={`Tooth ${toothNumber}`} className="mx-auto rounded-xl" />
             )}
           </div>
         </DialogContent>

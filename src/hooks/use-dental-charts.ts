@@ -176,6 +176,21 @@ export function useDentalCharts({
     }
   };
 
+  const uploadToothImage = async (patientId: string, toothNumber: number, file: File) => {
+    if (!token) return;
+    setSaving(true);
+    setError('');
+    try {
+      await api.uploadToothImage(token, patientId, toothNumber, file);
+      await loadPatientDetails(patientId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не вдалося завантажити зображення зуба');
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const createVisit = async (patientId: string, payload: DentalVisitPayload) => {
     if (!token) return;
     setSaving(true);
@@ -257,5 +272,6 @@ export function useDentalCharts({
     refresh,
     saveTooth,
     submitPatient,
+    uploadToothImage,
   };
 }

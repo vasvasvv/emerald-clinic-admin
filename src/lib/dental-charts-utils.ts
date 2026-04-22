@@ -164,8 +164,8 @@ export function normalizeTooth(value: unknown): ToothRecord {
   const record = asRecord(value) as RawToothRecord;
   const description = normalizeString(record.description ?? record.status);
   const files = Array.isArray(record.files) ? record.files : [];
-  const templateId =
-    normalizeString(record.templateId) || (files.length > 0 ? 'xray' : resolveToothTemplateId(description));
+  const hasXrays = files.some((file) => asRecord(file).type === 'xray');
+  const templateId = normalizeString(record.templateId) || (hasXrays ? 'xray' : resolveToothTemplateId(description));
 
   return {
     toothNumber: Number(record.toothNumber ?? record.tooth_number ?? 0),

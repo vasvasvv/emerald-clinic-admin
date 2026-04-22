@@ -196,6 +196,24 @@ export const api = {
 
     return uploadedUrl;
   },
+  uploadToothImage: async (token: string, patientId: string, toothNumber: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiFetch(
+      `/api/patients/${patientId}/teeth/${toothNumber}/images`,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body: formData,
+      },
+      token,
+    );
+
+    return response.json();
+  },
 
   getSystemDoctors: (token: string) => apiCall<ApiDoctor[]>('/api/doctors', {}, token),
 

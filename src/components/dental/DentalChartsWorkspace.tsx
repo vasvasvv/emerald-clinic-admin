@@ -72,6 +72,7 @@ export function DentalChartsWorkspace() {
     refresh,
     saveTooth,
     submitPatient,
+    uploadToothImage,
   } = useDentalCharts({
     currentUser,
     selectedPatientId,
@@ -310,9 +311,11 @@ export function DentalChartsWorkspace() {
       <ToothModal
         isOpen={selectedTooth !== null}
         onClose={() => setSelectedTooth(null)}
+        patientId={selectedPatient?.id ?? ''}
         toothNumber={selectedTooth ?? 0}
         record={selectedToothRecord}
         onSave={handleSaveTooth}
+        onUploadImage={uploadToothImage}
       />
 
       <HistoryModal
