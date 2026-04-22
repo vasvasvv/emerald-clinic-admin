@@ -49,7 +49,8 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
             <Label htmlFor="visit-date">Дата</Label>
             <Input
               id="visit-date"
-              type="date"
+              type="datetime-local"
+              step={900}
               value={date}
               onChange={(event) => setDate(event.target.value)}
               required

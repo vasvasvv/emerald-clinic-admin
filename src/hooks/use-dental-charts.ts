@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { api, apiCall } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { normalizeDoctors, normalizePatient, resolveDoctorFilter } from '@/lib/dental-charts-utils';
@@ -36,6 +37,7 @@ export function useDentalCharts({
   historyPatientId,
 }: UseDentalChartsOptions) {
   const { token } = useAuth();
+  const queryClient = useQueryClient();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('all');
@@ -194,6 +196,7 @@ export function useDentalCharts({
         token,
       );
       await loadPatientDetails(patientId);
+      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося додати візит');
       throw err;
@@ -209,6 +212,7 @@ export function useDentalCharts({
     try {
       await apiCall(`/api/patients/${patientId}/visits/${visitId}`, { method: 'DELETE' }, token);
       await loadPatients(searchQuery.trim());
+      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося видалити візит');
     } finally {
