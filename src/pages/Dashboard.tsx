@@ -36,6 +36,10 @@ function toAppointmentDate(date: string, time: string) {
   return new Date(`${date}T${time}:00`);
 }
 
+function normalizeName(value: string | null | undefined) {
+  return (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -72,7 +76,13 @@ export default function Dashboard() {
   );
 
   const doctors = useMemo<DoctorOption[]>(
-    () => doctorItems.map((doctor) => ({ id: Number(doctor.id), name: doctor.name })),
+    () =>
+      doctorItems
+        .map((doctor) => ({
+          id: Number(doctor.id),
+          name: (doctor.name ?? doctor.fullName ?? '').trim(),
+        }))
+        .filter((doctor) => doctor.name.length > 0),
     [doctorItems],
   );
   const defaultDoctor = useMemo(() => findDoctorOptionForUser(doctors, user), [doctors, user]);
@@ -125,12 +135,13 @@ export default function Dashboard() {
     setSaving(true);
     setError('');
     try {
-      const doctor = doctors.find((item) => item.name === record.doctor);
+      const doctor = doctors.find((item) => normalizeName(item.name) === normalizeName(record.doctor));
+      const fallbackDoctorId = user?.role === 'doctor' ? user.id : null;
       await createAppointment.mutateAsync({
         patient_name: buildPatientName(record.lastName, record.firstName),
         phone: record.phone,
         appointment_at: `${record.date}T${record.time}:00`,
-        doctor_user_id: doctor?.id ?? null,
+        doctor_user_id: doctor?.id ?? fallbackDoctorId,
         notes: record.comment,
         status: 'scheduled',
       });
