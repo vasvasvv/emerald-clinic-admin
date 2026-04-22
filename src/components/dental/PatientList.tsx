@@ -75,7 +75,9 @@ export function PatientList({
   onAddPatient,
 }: PatientListProps) {
   return (
-    <section className={cn('glass-panel flex min-h-[400px] md:min-h-[720px] flex-col overflow-hidden', shouldHide && 'hidden')}>
+    <section
+      className={cn('glass-panel flex min-h-[400px] md:min-h-[720px] flex-col overflow-hidden', shouldHide && 'hidden')}
+    >
       <div className="border-b p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="font-heading text-lg">Пацієнти</h2>

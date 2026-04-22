@@ -65,7 +65,12 @@ export function PatientDetails({
   onSelectTooth,
 }: PatientDetailsProps) {
   return (
-    <section className={cn('glass-panel min-h-[400px] md:min-h-[720px] overflow-hidden', isCompactLayout && !shouldHide && 'hidden')}>
+    <section
+      className={cn(
+        'glass-panel min-h-[400px] md:min-h-[720px] overflow-hidden',
+        isCompactLayout && !shouldHide && 'hidden',
+      )}
+    >
       {!selectedPatient ? (
         <div className="flex h-full min-h-[720px] items-center justify-center">
           <div className="p-8 text-center">
@@ -80,14 +85,27 @@ export function PatientDetails({
         <div className="flex h-full flex-col">
           <div className="border-b bg-card/80 p-4 md:p-6">
             <div className="flex flex-col gap-3">
-              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none" style={{scrollbarWidth:'none'}}>
+              <div
+                className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none"
+                style={{ scrollbarWidth: 'none' }}
+              >
                 {isCompactLayout && (
-                  <Button variant="ghost" size="sm" className="h-9 shrink-0 px-3 text-muted-foreground" onClick={onBack}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 shrink-0 px-3 text-muted-foreground"
+                    onClick={onBack}
+                  >
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     До списку
                   </Button>
                 )}
-                <Button variant="outline" onClick={onRefresh} disabled={loading || saving} className="h-9 shrink-0 px-3">
+                <Button
+                  variant="outline"
+                  onClick={onRefresh}
+                  disabled={loading || saving}
+                  className="h-9 shrink-0 px-3"
+                >
                   Оновити
                 </Button>
                 <Button onClick={onOpenForm043} className="h-9 shrink-0 gap-2 px-3">
