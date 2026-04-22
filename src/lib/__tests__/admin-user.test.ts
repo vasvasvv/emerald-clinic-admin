@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { mapDoctorOptions, resolveDoctorIdForAppointment } from '@/lib/admin-user';
+import {
+  findDentalDoctorForUser,
+  findDoctorOptionForUser,
+  mapDoctorOptions,
+  resolveDoctorIdForAppointment,
+} from '@/lib/admin-user';
 
 describe('admin-user helpers', () => {
   it('maps doctor options with fallback to fullName and drops empty names', () => {
@@ -28,5 +33,20 @@ describe('admin-user helpers', () => {
     expect(
       resolveDoctorIdForAppointment(options, 'unknown', { id: 77, email: 'a@x.com', fullName: 'A', role: 'admin' }),
     ).toBeNull();
+  });
+
+  it('matches doctor profiles for doctor users even when first and last names are swapped', () => {
+    const options = [
+      { id: 10, name: 'Фаримець Олександр' },
+      { id: 11, name: 'Інший Лікар' },
+    ];
+    const user = { id: 99, email: 'far@example.com', fullName: 'Олександр Фаримець', role: 'doctor' } as const;
+
+    expect(findDoctorOptionForUser(options, user)).toEqual({ id: 10, name: 'Фаримець Олександр' });
+    expect(findDentalDoctorForUser([{ id: '10', name: 'Фаримець Олександр', specialty: '' }], user)).toEqual({
+      id: '10',
+      name: 'Фаримець Олександр',
+      specialty: '',
+    });
   });
 });

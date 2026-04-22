@@ -54,6 +54,32 @@ function normalizeStringId(value: unknown): string {
   return '';
 }
 
+function normalizeName(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function toNameParts(value: string | null | undefined): string[] {
+  return normalizeName(value)
+    .split(' ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function namesMatch(doctorName: string | null | undefined, userName: string | null | undefined): boolean {
+  const normalizedDoctor = normalizeName(doctorName);
+  const normalizedUser = normalizeName(userName);
+  if (!normalizedDoctor || !normalizedUser) return false;
+  if (normalizedDoctor === normalizedUser) return true;
+
+  const doctorParts = toNameParts(doctorName);
+  const userParts = toNameParts(userName);
+  if (doctorParts.length < 2 || userParts.length < 2) return false;
+
+  const doctorKey = [doctorParts[0], doctorParts[1]].sort().join('|');
+  const userKey = [userParts[0], userParts[1]].sort().join('|');
+  return doctorKey === userKey;
+}
+
 export function normalizeRole(role: string | undefined): User['role'] {
   if (role === 'superuser' || role === 'superadmin') return 'super-admin';
   if (role === 'manager' || role === 'admin') return 'admin';
@@ -205,9 +231,7 @@ export function normalizeDoctors(items: unknown): Doctor[] {
 
 export function resolveDoctorFilter(normalized: Doctor[], currentUser: User | null): string {
   if (currentUser?.role === 'doctor' && currentUser.name) {
-    const matched = normalized.find(
-      (doctor) => doctor.name.trim().toLowerCase() === currentUser.name.trim().toLowerCase(),
-    );
+    const matched = normalized.find((doctor) => namesMatch(doctor.name, currentUser.name));
     return matched?.id ?? 'all';
   }
 
