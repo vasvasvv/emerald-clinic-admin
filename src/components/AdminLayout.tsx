@@ -38,7 +38,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Bottom navigation for mobile and tablet */}
       {showMobileStyle && (
         <>
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-2 pb-4 ios-safe-bottom">
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-2 pb-4 ios-safe-bottom">
             <div className="pointer-events-auto relative mx-auto max-w-4xl overflow-visible">
               <div className="relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-[linear-gradient(180deg,rgba(24,56,53,0.95)_0%,rgba(16,39,37,0.98)_100%)] p-2 shadow-2xl backdrop-blur-xl">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 pointer-events-none z-0" />
@@ -120,7 +120,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <div
             className={cn(
-              'fixed inset-0 z-40 bg-black/50 transition-opacity duration-300',
+              'fixed inset-0 z-30 bg-black/50 transition-opacity duration-300',
               mobileDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
             )}
             onClick={closeMobileDrawer}
@@ -128,7 +128,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <aside
             className={cn(
-              'glass-sidebar fixed right-0 z-50 h-screen w-[280px] transform',
+              'glass-sidebar fixed right-0 z-40 h-screen w-[280px] transform',
               mobileDrawerOpen ? 'translate-x-0' : 'translate-x-full',
             )}
             style={{
