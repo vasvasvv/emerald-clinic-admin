@@ -143,7 +143,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background overflow-auto"
+      className="fixed inset-0 z-50 bg-background overflow-auto ios-safe-top"
     >
       <AnimatePresence mode="wait">
         {step === 1 ? (
@@ -158,7 +158,8 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             <div className="flex items-center justify-between gap-4 pl-14 sm:pl-0">
               <button
                 onClick={onClose}
-                className="fixed left-4 top-4 z-10 p-2 rounded-xl bg-background/90 hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors sm:static sm:bg-transparent"
+                className="fixed left-4 z-10 p-2 rounded-xl bg-background/90 hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors sm:static sm:bg-transparent"
+                style={{ top: 'calc(1rem + env(safe-area-inset-top))' }}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>

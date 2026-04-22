@@ -18,6 +18,7 @@ export interface VisitModalProps {
 
 export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmit }: VisitModalProps) {
   const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [type, setType] = useState<'past' | 'future'>('future');
   const [notes, setNotes] = useState('');
   const [doctorId, setDoctorId] = useState('');
@@ -25,6 +26,7 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
   useEffect(() => {
     if (!isOpen) return;
     setDate('');
+    setTime('');
     setType('future');
     setNotes('');
     setDoctorId(selectedDoctorId === 'all' ? (doctors[0]?.id ?? '') : selectedDoctorId || doctors[0]?.id || '');
@@ -32,8 +34,8 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!doctorId || !date) return;
-    await onSubmit({ date, type, notes, doctorId });
+    if (!doctorId || !date || !time) return;
+    await onSubmit({ date: `${date}T${time}`, type, notes, doctorId });
     onClose();
   };
 
@@ -49,10 +51,21 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
             <Label htmlFor="visit-date">Дата</Label>
             <Input
               id="visit-date"
-              type="datetime-local"
-              step={900}
+              type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="visit-time">Час</Label>
+            <Input
+              id="visit-time"
+              type="time"
+              step={900}
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
               required
             />
           </div>
@@ -106,7 +119,7 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
             <Button type="button" variant="outline" onClick={onClose}>
               Скасувати
             </Button>
-            <Button type="submit" disabled={!doctorId || !date}>
+            <Button type="submit" disabled={!doctorId || !date || !time}>
               Додати візит
             </Button>
           </DialogFooter>

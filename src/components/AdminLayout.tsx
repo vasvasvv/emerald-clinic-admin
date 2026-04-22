@@ -31,7 +31,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         }}
       >
         <main className="flex-1 min-h-screen min-h-dvh" style={{ transform: 'translateZ(0)' }}>
-          <div className={cn('max-w-7xl mx-auto px-4 py-6', showMobileStyle && 'pb-24')}>{children}</div>
+          <div
+            className="max-w-7xl mx-auto px-4 py-6"
+            style={showMobileStyle ? { paddingBottom: 'calc(7.5rem + env(safe-area-inset-bottom))' } : undefined}
+          >
+            {children}
+          </div>
         </main>
       </div>
 
