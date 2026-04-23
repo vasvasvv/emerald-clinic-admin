@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth-context';
 import { findDoctorOptionForUser, mapDoctorOptions, resolveDoctorIdForAppointment } from '@/lib/admin-user';
 import { buildPatientName, extractFirstName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface AppointmentRecord {
   id: number;
@@ -34,6 +35,7 @@ export default function Records() {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [doctorFilterInitialized, setDoctorFilterInitialized] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const { user } = useAuth();
@@ -107,6 +109,8 @@ export default function Records() {
   const weekRangeLabel = `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'short' })} - ${weekDays[5].toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}`;
   const monthLabel = currentDate.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
   const today = formatDateKey(new Date());
+  const selectedDayKey = selectedDay ? formatDateKey(selectedDay) : '';
+  const selectedDayRecords = selectedDay ? getRecordsForDate(selectedDayKey) : [];
 
   const handleNewRecord = async (record: {
     firstName: string;
@@ -153,12 +157,12 @@ export default function Records() {
             </button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-2 sm:gap-3 flex-wrap">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-4">
                 <Users className="w-7 h-7 text-muted-foreground" />
                 <select
                   value={selectedDoctor}
                   onChange={(e) => setSelectedDoctor(e.target.value)}
-                  className="input-glass text-lg sm:text-lg py-1.5 pr-8 h-9 sm:h-10"
+                  className="input-glass text-lg sm:text-lg py-1.5 pr-16 h-12 sm:h-12"
                 >
                   <option value="">{t('allDoctors')}</option>
                   {doctorOptions.map((doctor) => (
@@ -233,7 +237,8 @@ export default function Records() {
                 return (
                   <div
                     key={dateStr}
-                    className={`glass-panel overflow-hidden ${isToday ? 'ring-1 ring-primary/50' : ''}`}
+                    onClick={() => setSelectedDay(day)}
+                    className={`glass-panel overflow-hidden cursor-pointer transition-colors hover:bg-secondary/20 ${isToday ? 'ring-1 ring-primary/50' : ''}`}
                   >
                     <div
                       className={`px-3 sm:px-4 py-2 sm:py-3 border-b border-border flex items-center gap-2 ${isToday ? 'bg-primary/10' : ''}`}
@@ -270,7 +275,6 @@ export default function Records() {
                             </span>
                             <div className="min-w-0 flex-1">
                               <p className="text-xs sm:text-sm font-medium truncate">{record.clientName}</p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground">{record.phone}</p>
                             </div>
                           </div>
                         ))}
@@ -355,6 +359,55 @@ export default function Records() {
           />
         )}
       </AnimatePresence>
+
+      <Dialog open={Boolean(selectedDay)} onOpenChange={(open) => !open && setSelectedDay(null)}>
+        <DialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[85vh] overflow-hidden p-0">
+          <div className="flex max-h-[85vh] flex-col">
+            <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
+              <DialogTitle className="font-heading text-base sm:text-lg">
+                {selectedDay?.toLocaleDateString(locale, {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                })}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedDayRecords.length
+                  ? `${selectedDayRecords.length} ${lang === 'uk' ? 'записів' : 'records'}`
+                  : t('noRecords')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="overflow-y-auto px-4 py-4 sm:px-6">
+              {selectedDay && selectedDayRecords.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedDayRecords.map((record) => (
+                    <div key={record.id} className="rounded-2xl border border-border bg-card/70 p-3 sm:p-4">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-sm sm:text-base font-semibold">{record.clientName}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{record.phone || '-'}</p>
+                        </div>
+                        <span className="text-sm font-semibold text-accent">{record.time}</span>
+                      </div>
+                      <div className="mt-3 rounded-xl bg-secondary/40 px-3 py-2">
+                        <p className="text-[11px] sm:text-xs text-muted-foreground">
+                          {lang === 'uk' ? 'Коментар' : 'Comment'}
+                        </p>
+                        <p className="mt-1 text-xs sm:text-sm break-words">
+                          {record.comment?.trim() || (lang === 'uk' ? 'Без коментаря' : 'No comment')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">{t('noRecords')}</div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

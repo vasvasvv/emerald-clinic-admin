@@ -39,8 +39,8 @@ function formatDate(d: Date): string {
 }
 
 const dayNamesMap: Record<string, string[]> = {
-  uk: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
-  en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  uk: ['Понеділок', 'Вівторок', 'Середа', 'Четвер', "П'ятниця", 'Субота'],
+  en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
 };
 
 function getWorkHours(dateStr: string) {
@@ -158,17 +158,12 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             <div className="flex items-center justify-between gap-4 pl-14 sm:pl-0">
               <button
                 onClick={onClose}
-                className="fixed left-4 z-10 p-2 rounded-xl bg-background/90 hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors sm:static sm:bg-transparent"
+                className="fixed left-4 z-10 p-2 rounded-xl bg-primary/90 hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground transition-colors sm:static sm:bg-transparent"
                 style={{ top: 'calc(1rem + env(safe-area-inset-top))' }}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <div className="flex items-center gap-3">
-                <div>
-                  <h1 className="text-xl font-heading font-bold">{t('newRecord')}</h1>
-                  <p className="text-xs text-muted-foreground">{t('selectTimeSlot')}</p>
-                </div>
-              </div>
+              <div className="flex items-center gap-3"></div>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-muted-foreground hidden sm:inline">{t('doctor')}:</label>
                 <select
@@ -183,6 +178,9 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
                   ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground text-center">{t('selectTimeSlot')}</p>
             </div>
 
             {/* Week navigation */}
@@ -296,21 +294,26 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             className="max-w-lg mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-8"
           >
             <div className="space-y-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 text-center">
                 <button
                   onClick={() => setStep(1)}
-                  className="p-2 rounded-xl hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-2 rounded-xl hover:bg-primary/60 bg-primary text-secondary hover:text-foreground transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div>
-                  <h1 className="text-2xl font-heading font-bold">{t('newRecord')}</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedDate} · {selectedTime} · {selectedDoctor}
-                  </p>
+                <div className="text-center px-18 lg:px-24 sm:px-12">
+                  <h1 className="text-2xl font-heading font-bold text-center">{t('newRecord')}</h1>
                 </div>
               </div>
 
+              <div className="text-center">
+                <p className="text-muted-foreground">{selectedDoctor}</p>
+              </div>
+              <div className="border-t border-border/30 text-center pt-4">
+                <p className="text-lg text-muted-foreground">
+                  {selectedDate} · {selectedTime}
+                </p>
+              </div>
               <div className="glass-panel p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
