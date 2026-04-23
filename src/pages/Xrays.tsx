@@ -223,7 +223,7 @@ function PatientModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('xrayCreatePatientTitle')}</DialogTitle>
         </DialogHeader>
@@ -685,8 +685,8 @@ export default function Xrays() {
 
             <div className="rounded-[24px] border border-border/60 bg-background p-3 sm:p-4 md:p-5">
               <p className="mb-2 text-xs sm:text-sm font-semibold">{t('xrayUpperJaw')}</p>
-              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-                <div className="flex min-w-[750px] sm:min-w-[850px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
+              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0 touch-pan-x">
+                <div className="flex min-w-[560px] sm:min-w-[700px] md:min-w-0 md:justify-between gap-0.5 sm:gap-2">
                   {UPPER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}
@@ -700,8 +700,8 @@ export default function Xrays() {
               </div>
 
               <p className="mb-2 mt-4 sm:mt-6 text-xs sm:text-sm font-semibold">{t('xrayLowerJaw')}</p>
-              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
-                <div className="flex min-w-[750px] sm:min-w-[850px] md:min-w-0 md:justify-between gap-1 sm:gap-2">
+              <div className="overflow-x-auto -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0 touch-pan-x">
+                <div className="flex min-w-[560px] sm:min-w-[700px] md:min-w-0 md:justify-between gap-0.5 sm:gap-2">
                   {LOWER_TEETH.map((tooth) => (
                     <ToothButton
                       key={tooth}

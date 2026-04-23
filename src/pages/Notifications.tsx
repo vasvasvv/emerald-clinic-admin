@@ -219,7 +219,7 @@ export default function Notifications() {
   const FilterDateField = () => (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="input-glass flex h-11 min-w-[220px] items-center justify-between rounded-2xl border-border/70 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
+        <button className="input-glass flex h-11 w-full sm:min-w-[220px] items-center justify-between rounded-2xl border-border/70 bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
           <span className={filterDate ? 'text-foreground' : 'text-muted-foreground'}>
             {filterDateValue ? format(filterDateValue, 'dd MMMM yyyy', { locale: dateLocale }) : t('date')}
           </span>
@@ -300,23 +300,25 @@ export default function Notifications() {
         <div className="inline-flex w-full max-w-6xl rounded-3xl border border-border bg-secondary/35 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
           <button
             onClick={() => setSection('telegram')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-[20px] px-2 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all ${section === 'telegram' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
           >
-            <Send className="h-4 w-4" />
-            {t('notificationsSectionTelegram')}
+            <Send className="h-4 w-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('notificationsSectionTelegram')}</span>
+            <span className="xs:hidden sm:hidden">TG</span>
           </button>
           <button
             onClick={() => setSection('push')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-[20px] px-2 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all ${section === 'push' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
           >
-            <Bell className="h-4 w-4" />
-            {t('notificationsSectionPush')}
+            <Bell className="h-4 w-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('notificationsSectionPush')}</span>
+            <span className="xs:hidden sm:hidden">Push</span>
           </button>
           <button
             onClick={() => setSection('pwa')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-[20px] px-5 py-3 text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-[20px] px-2 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all ${section === 'pwa' ? 'bg-primary text-primary-foreground shadow-lg' : 'text-muted-foreground hover:bg-secondary/70'}`}
           >
-            <Smartphone className="h-4 w-4" />
+            <Smartphone className="h-4 w-4 shrink-0" />
             PWA
           </button>
         </div>
@@ -439,22 +441,22 @@ export default function Notifications() {
 
         {section === 'telegram' && (
           <>
-            <div className="inline-flex w-full max-w-6xl rounded-2xl border border-border bg-secondary/25 p-2">
+            <div className="inline-flex w-full max-w-6xl rounded-2xl border border-border bg-secondary/25 p-1.5 sm:p-2">
               <button
                 onClick={() => setTelegramTab('appointments')}
-                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium leading-tight text-center ${telegramTab === 'appointments' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 {t('telegramTabAppointments')}
               </button>
               <button
                 onClick={() => setTelegramTab('pending')}
-                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium leading-tight text-center ${telegramTab === 'pending' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 {t('telegramTabPending')}
               </button>
               <button
                 onClick={() => setTelegramTab('settings')}
-                className={`flex-1 rounded-[14px] px-4 py-2.5 text-sm font-medium ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
+                className={`flex-1 rounded-[14px] px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium leading-tight text-center ${telegramTab === 'settings' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/60'}`}
               >
                 {t('telegramTabSettings')}
               </button>
@@ -464,19 +466,21 @@ export default function Notifications() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-panel p-6 space-y-4"
+                className="glass-panel p-4 sm:p-6 space-y-4"
               >
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <FilterDateField />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 sm:flex-none">
+                      <FilterDateField />
+                    </div>
                     <button
                       onClick={() => void telegramAppointmentsQuery.refetch()}
-                      className="p-2 rounded-xl hover:bg-secondary/60"
+                      className="p-2.5 rounded-xl hover:bg-secondary/60 shrink-0"
                     >
                       <RefreshCw className={`w-4 h-4 ${loadingTelegramAppointments ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {t('telegramStatusForDate')} {filterDate}
                   </span>
                 </div>
@@ -491,7 +495,7 @@ export default function Notifications() {
                       return (
                         <div
                           key={appointment.id}
-                          className="rounded-2xl border border-border p-4 flex items-center gap-3"
+                          className="rounded-2xl border border-border p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -535,10 +539,10 @@ export default function Notifications() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-panel p-6 space-y-4"
+                className="glass-panel p-4 sm:p-6 space-y-4"
               >
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-muted-foreground">{t('telegramPendingHelp')}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p className="text-xs sm:text-sm text-muted-foreground">{t('telegramPendingHelp')}</p>
                   <button
                     onClick={() => void telegramPendingQuery.refetch()}
                     className="p-2 rounded-xl hover:bg-secondary/60"

@@ -38,7 +38,7 @@ export function HistoryModal({ isOpen, onClose, patient }: HistoryModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">Історія змін — {patient ? formatPatientName(patient) : ''}</DialogTitle>
         </DialogHeader>

@@ -183,18 +183,18 @@ export default function Doctors() {
                       <p className="text-xs text-primary">{doctor.position}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5 sm:gap-1">
                     <button
                       onClick={() => openEdit(doctor)}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                      className="rounded-xl p-2.5 sm:p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
                     >
-                      <Edit2 className="h-3.5 w-3.5" />
+                      <Edit2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                     </button>
                     <button
                       onClick={() => setDeletingId(doctor.id)}
-                      className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-xl p-2.5 sm:p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -234,7 +234,7 @@ export default function Doctors() {
                   </h2>
                   <button
                     onClick={() => setShowForm(false)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary/60"
+                    className="rounded-xl p-2 text-muted-foreground hover:bg-secondary/60"
                   >
                     <X className="w-5 h-5" />
                   </button>

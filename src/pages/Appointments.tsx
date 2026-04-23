@@ -303,8 +303,8 @@ export default function Appointments() {
         )}
 
         <div className="glass-panel p-3 sm:p-4 md:p-5">
-          <div className="grid gap-2 sm:gap-3 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
-            <div className="relative">
+          <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.2fr_0.9fr_0.9fr_auto]">
+            <div className="relative sm:col-span-2 md:col-span-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
@@ -361,8 +361,37 @@ export default function Appointments() {
                   key={appointment.id}
                   className="px-3 sm:px-4 py-3 sm:py-4 transition-colors duration-300 hover:bg-secondary/20 lg:px-5"
                 >
+                  {/* Mobile: compact card header with time + status + actions */}
+                  <div className="flex items-center justify-between gap-2 mb-2 lg:hidden">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-accent">
+                        <Clock3 className="h-4 w-4" />
+                        {appointment.time}
+                      </div>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusColors[appointment.status]}`}
+                      >
+                        {t(appointment.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEdit(appointment)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(appointment.id)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid gap-2 sm:gap-3 lg:grid-cols-[110px_1.2fr_1.3fr_1fr_140px_110px] lg:items-center">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                    <div className="hidden lg:flex items-center gap-2 text-sm font-semibold text-accent">
                       <Clock3 className="h-4 w-4" />
                       {appointment.time}
                     </div>
@@ -394,27 +423,24 @@ export default function Appointments() {
                       </div>
                     </div>
 
-                    <div className="space-y-0.5 sm:space-y-1">
-                      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-muted-foreground lg:hidden">
-                        {t('status')}
-                      </p>
+                    <div className="hidden lg:block space-y-0.5 sm:space-y-1">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-medium ${statusColors[appointment.status]}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColors[appointment.status]}`}
                       >
                         {t(appointment.status)}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 sm:gap-2 lg:justify-end">
+                    <div className="hidden lg:flex items-center gap-2 lg:justify-end">
                       <button
                         onClick={() => openEdit(appointment)}
-                        className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setDeletingId(appointment.id)}
-                        className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

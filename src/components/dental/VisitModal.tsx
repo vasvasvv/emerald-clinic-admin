@@ -41,7 +41,7 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading">Додати візит</DialogTitle>
         </DialogHeader>

@@ -75,7 +75,9 @@ export function PatientList({
   onAddPatient,
 }: PatientListProps) {
   return (
-    <section className={cn('glass-panel flex min-h-[720px] flex-col overflow-hidden', shouldHide && 'hidden')}>
+    <section
+      className={cn('glass-panel flex min-h-[400px] md:min-h-[720px] flex-col overflow-hidden', shouldHide && 'hidden')}
+    >
       <div className="border-b p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="font-heading text-lg">Пацієнти</h2>
@@ -200,7 +202,7 @@ export function PatientList({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                              className="h-9 w-9 md:h-7 md:w-7 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
                               onClick={(event) => event.stopPropagation()}
                             >
                               <MoreVertical className="h-4 w-4" />

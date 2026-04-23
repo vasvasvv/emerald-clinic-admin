@@ -293,7 +293,7 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
-            className="max-w-lg mx-auto p-4 sm:p-6 lg:p-8 space-y-6 min-h-screen flex flex-col justify-center"
+            className="max-w-lg mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-8"
           >
             <div className="space-y-6">
               <div className="flex items-center gap-4">
