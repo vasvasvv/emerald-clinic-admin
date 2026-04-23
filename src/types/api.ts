@@ -147,6 +147,7 @@ export interface ApiXraySession {
   patientId: number;
   patientName: string;
   toothId: number;
+  captureType: 'twin' | 'scanner';
   status: 'waiting' | 'completed';
   createdAt: string;
   updatedAt: string;

@@ -230,7 +230,7 @@ export const api = {
       token,
     ),
 
-  startXraySession: (token: string, data: { patientId: number; toothId: number }) =>
+  startXraySession: (token: string, data: { patientId: number; toothId: number; captureType: 'twin' | 'scanner' }) =>
     apiCall<ApiXraySession>('/api/sessions/start', { method: 'POST', body: JSON.stringify(data) }, token),
   getActiveXraySession: (token: string, sessionId?: number) =>
     apiCall<ApiXraySession | null>(`/api/sessions/active${sessionId ? `?sessionId=${sessionId}` : ''}`, {}, token),

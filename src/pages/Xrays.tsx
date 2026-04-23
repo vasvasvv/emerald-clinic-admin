@@ -341,6 +341,7 @@ export default function Xrays() {
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(1);
   const [isFullResOpen, setIsFullResOpen] = useState(false);
+  const [captureType, setCaptureType] = useState<'twin' | 'scanner'>('twin');
   const systemDoctorsQuery = useSystemDoctors();
   const searchPatientsMutation = useSearchPatients();
   const createPatientMutation = useCreatePatient();
@@ -515,6 +516,7 @@ export default function Xrays() {
       const nextSession = await startXraySessionMutation.mutateAsync({
         patientId: selectedPatient.id,
         toothId: selectedTooth,
+        captureType,
       });
       setSessionState(nextSession);
       setStep('capture');
@@ -547,6 +549,7 @@ export default function Xrays() {
     setHasSearched(false);
     setIsFullResOpen(false);
     setZoom(1);
+    setCaptureType('twin');
   };
 
   return (
@@ -716,9 +719,38 @@ export default function Xrays() {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-[20px] border border-border/60 bg-muted/20 px-3 sm:px-4 py-3">
-              <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-                {selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}
-              </p>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+                  {selectedTooth ? `${t('xrayToothLabel')}: FDI ${selectedTooth}` : t('xraySelectToothPrompt')}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">{t('xrayCaptureType')}:</span>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCaptureType('twin')}
+                      className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+                        captureType === 'twin'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-background border border-border text-muted-foreground hover:bg-muted/40'
+                      }`}
+                    >
+                      TWIN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCaptureType('scanner')}
+                      className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+                        captureType === 'scanner'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-background border border-border text-muted-foreground hover:bg-muted/40'
+                      }`}
+                    >
+                      Scanner
+                    </button>
+                  </div>
+                </div>
+              </div>
               <Button
                 onClick={startCapture}
                 disabled={!selectedTooth || startXraySessionMutation.isPending}
@@ -745,7 +777,7 @@ export default function Xrays() {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:gap-4 rounded-[20px] sm:rounded-[24px] border border-border/70 bg-background/90 p-4 sm:p-5 md:grid-cols-3">
+            <div className="grid gap-3 sm:gap-4 rounded-[20px] sm:rounded-[24px] border border-border/70 bg-background/90 p-4 sm:p-5 md:grid-cols-4">
               <div>
                 <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   {t('xrayPatientLabel')}
@@ -757,6 +789,14 @@ export default function Xrays() {
                   {t('xrayToothLabel')}
                 </p>
                 <p className="mt-1 sm:mt-2 text-sm font-medium">FDI {session.toothId}</p>
+              </div>
+              <div>
+                <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {t('xrayCaptureType')}
+                </p>
+                <p className="mt-1 sm:mt-2 text-sm font-medium">
+                  {session.captureType === 'scanner' ? t('xrayCaptureTypeScanner') : t('xrayCaptureTypeTwin')}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-muted-foreground">

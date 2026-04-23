@@ -143,23 +143,22 @@ export default function Records() {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <h1 className="text-xl sm:text-2xl font-heading font-bold">{t('records')}</h1>
+            <button
+              onClick={() => setShowNewForm(true)}
+              className="btn-accent flex items-center gap-2 text-lg sm:text-lg py-2 sm:py-2.5"
+              disabled={saving}
+            >
+              <Plus className="w-4 h-4" />
+              {t('newRecord')}
+            </button>
 
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <button
-                onClick={() => setShowNewForm(true)}
-                className="btn-accent flex items-center gap-2 text-xs sm:text-sm py-2 sm:py-2.5"
-                disabled={saving}
-              >
-                <Plus className="w-4 h-4" />
-                {t('newRecord')}
-              </button>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-2 sm:gap-3 flex-wrap">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
+                <Users className="w-7 h-7 text-muted-foreground" />
                 <select
                   value={selectedDoctor}
                   onChange={(e) => setSelectedDoctor(e.target.value)}
-                  className="input-glass text-xs sm:text-sm py-1.5 pr-8 h-9 sm:h-10"
+                  className="input-glass text-lg sm:text-lg py-1.5 pr-8 h-9 sm:h-10"
                 >
                   <option value="">{t('allDoctors')}</option>
                   {doctorOptions.map((doctor) => (
@@ -173,7 +172,7 @@ export default function Records() {
               <div className="flex rounded-xl overflow-hidden border border-border">
                 <button
                   onClick={() => setViewMode('week')}
-                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+                  className={`px-12 sm:px-12 py-1.5 text-lg sm:text-lg font-medium transition-colors ${
                     viewMode === 'week'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-secondary/60'
@@ -183,7 +182,7 @@ export default function Records() {
                 </button>
                 <button
                   onClick={() => setViewMode('month')}
-                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+                  className={`px-16 sm:px-16 py-1.5 text-lg sm:text-lg font-medium transition-colors ${
                     viewMode === 'month'
                       ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:bg-secondary/60'

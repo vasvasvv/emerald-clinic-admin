@@ -6,7 +6,8 @@ export function useStartXraySession() {
   const { token } = useAuth();
 
   return useMutation({
-    mutationFn: (data: { patientId: number; toothId: number }) => api.startXraySession(token!, data),
+    mutationFn: (data: { patientId: number; toothId: number; captureType: 'twin' | 'scanner' }) =>
+      api.startXraySession(token!, data),
   });
 }
 
