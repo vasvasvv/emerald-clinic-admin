@@ -21,7 +21,56 @@ const API_URLS = {
 } as const;
 
 const isDev = import.meta.env.DEV;
-export const API_URL = isDev ? API_URLS.development : API_URLS.production;
+const CLOUD_API = isDev ? API_URLS.development : API_URLS.production;
+
+// Локальний агент — зберігаємо знайдений URL в sessionStorage
+const LOCAL_AGENT_KEY = 'xray_agent_url';
+const LOCAL_AGENT_TIMEOUT = 1200; // ms
+
+async function _probeAgent(url: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${url}/api/health`, {
+      signal: AbortSignal.timeout(LOCAL_AGENT_TIMEOUT),
+    });
+    if (!r.ok) return false;
+    const data = (await r.json()) as { ok?: boolean; mode?: string };
+    return data.ok === true && data.mode === 'local';
+  } catch {
+    return false;
+  }
+}
+
+async function resolveApiBase(): Promise<string> {
+  // 1. Перевіряємо закешований URL агента
+  const cached = sessionStorage.getItem(LOCAL_AGENT_KEY);
+  if (cached) {
+    const ok = await _probeAgent(cached);
+    if (ok) return cached;
+    sessionStorage.removeItem(LOCAL_AGENT_KEY);
+  }
+  // 2. Шукаємо через mDNS (браузер резолвить xray-agent.local)
+  const mdnsUrl = `http://xray-agent.local:8765`;
+  if (await _probeAgent(mdnsUrl)) {
+    sessionStorage.setItem(LOCAL_AGENT_KEY, mdnsUrl);
+    return mdnsUrl;
+  }
+  // 3. Fallback — Cloud API
+  return CLOUD_API;
+}
+
+// Глобальний проміс щоб не резолвити паралельно
+let _resolving: Promise<string> | null = null;
+export async function getApiBase(): Promise<string> {
+  if (!_resolving) {
+    _resolving = resolveApiBase().finally(() => {
+      _resolving = null;
+    });
+  }
+  return _resolving;
+}
+
+// Синхронний базовий URL (для зворотньої сумісності)
+export const API_URL = CLOUD_API;
 const DOCTOR_PHOTO_UPLOAD_ENDPOINT = import.meta.env.VITE_DOCTOR_PHOTO_UPLOAD_ENDPOINT as string | undefined;
 const GET_CACHE_TTL_MS = 60_000; // 60с — відповідає серверному TTL
 const getResponseCache = new Map<string, { expiresAt: number; value: unknown }>();
@@ -80,7 +129,8 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}, to
   }
 
   const execute = async () => {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const base = await getApiBase();
+    const response = await fetch(`${base}${endpoint}`, {
       ...options,
       headers,
     });
@@ -126,7 +176,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, toke
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const base = await getApiBase();
+  const response = await fetch(`${base}${endpoint}`, {
     ...options,
     headers,
   });
