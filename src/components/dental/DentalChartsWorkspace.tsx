@@ -281,6 +281,7 @@ export function DentalChartsWorkspace() {
           onBack={() => setIsMobilePatientViewOpen(false)}
           onDeleteVisit={setDeletingVisitId}
           onOpenForm043={() => setShowForm043(true)}
+          onOpenHistory={() => selectedPatient && setHistoryPatientId(selectedPatient.id)}
           onOpenVisitModal={() => setIsAddingVisit(true)}
           onRefresh={() => void refresh()}
           onSelectDate={setSelectedDate}

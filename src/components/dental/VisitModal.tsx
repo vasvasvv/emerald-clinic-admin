@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 import type { Doctor } from '@/types/dental';
 
 export interface VisitModalProps {
@@ -49,24 +49,18 @@ export function VisitModal({ isOpen, onClose, doctors, selectedDoctorId, onSubmi
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="visit-date">Дата</Label>
-            <Input
-              id="visit-date"
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              required
-            />
+            <WheelDateTimeField mode="date" value={date} onChange={setDate} placeholder="Дата" disablePortal />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="visit-time">Час</Label>
-            <Input
-              id="visit-time"
-              type="time"
-              step={900}
+            <WheelDateTimeField
+              mode="time"
+              minuteStep={15}
               value={time}
-              onChange={(event) => setTime(event.target.value)}
-              required
+              onChange={setTime}
+              placeholder="Час"
+              disablePortal
             />
           </div>
 

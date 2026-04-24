@@ -163,7 +163,7 @@ export function Tooth({
     <div
       className={cn(
         'flex flex-none flex-col items-center',
-        mobile ? 'w-[23px] md:w-[38px]' : compact ? 'w-[38px] md:w-[45px]' : 'w-[23px] md:w-[30px]',
+        mobile ? 'w-[calc(100%/16)] min-w-0 md:w-[38px]' : compact ? 'w-[38px] md:w-[45px]' : 'w-[23px] md:w-[30px]',
         alignBottom ? 'justify-end' : 'justify-start',
       )}
     >
@@ -184,7 +184,7 @@ export function Tooth({
         onClick={handleClick}
         className={cn(
           mobile
-            ? 'block h-[53px] w-[23px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[90px] md:w-[38px]'
+            ? 'block h-[48px] w-full flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[90px] md:w-[38px]'
             : compact
               ? 'block h-[90px] w-[38px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[120px] md:w-[45px]'
               : 'block h-[70px] w-[23px] flex-none cursor-pointer transition-transform duration-200 hover:scale-105 md:h-[90px] md:w-[30px]',

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 import { formatPhoneForSave } from '@/lib/dental-charts-utils';
 import type { Doctor, Patient } from '@/types/dental';
 
@@ -159,11 +160,11 @@ export function PatientModal({ isOpen, onClose, doctors, selectedDoctorId, patie
 
           <div className="space-y-2">
             <Label htmlFor="patient-dob">Дата народження</Label>
-            <Input
-              id="patient-dob"
-              type="date"
+            <WheelDateTimeField
+              mode="date"
               value={dateOfBirth}
-              onChange={(event) => setDateOfBirth(event.target.value)}
+              onChange={setDateOfBirth}
+              placeholder="Дата народження"
             />
           </div>
 

@@ -13,7 +13,7 @@ import { findDoctorOptionForUser, mapDoctorOptions, resolveDoctorIdForAppointmen
 import { buildPatientName } from '@/lib/patient-utils';
 import type { DoctorOption } from '@/types/api';
 
-type ViewMode = 'today' | 'tomorrow';
+type ViewMode = 'today' | 'tomorrow' | 'dayAfterTomorrow';
 
 interface AppointmentCard {
   id: number;
@@ -43,7 +43,17 @@ function normalizeName(value: string | null | undefined) {
 export default function Dashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<ViewMode>('today');
+  const [activeView, setActiveView] = useState<ViewMode>(() => {
+    try {
+      const h = parseInt(
+        new Date().toLocaleString('en-US', { timeZone: 'Europe/Kyiv', hour: 'numeric', hour12: false }),
+        10,
+      );
+      return h >= 18 ? 'tomorrow' : 'today';
+    } catch {
+      return 'today';
+    }
+  });
   const [showNewForm, setShowNewForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -86,6 +96,23 @@ export default function Dashboard() {
   const todayKey = formatDateKey(today);
   const tomorrowKey = formatDateKey(tomorrow);
 
+  const kyivHour = useMemo(() => {
+    try {
+      return parseInt(now.toLocaleString('en-US', { timeZone: 'Europe/Kyiv', hour: 'numeric', hour12: false }), 10);
+    } catch {
+      return now.getHours();
+    }
+  }, [now]);
+  const isAfter18 = kyivHour >= 18;
+
+  const dayAfterTomorrow = useMemo(() => {
+    const d = new Date(now);
+    d.setDate(d.getDate() + 2);
+    while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    return d;
+  }, [now]);
+  const dayAfterTomorrowKey = formatDateKey(dayAfterTomorrow);
+
   const doctorAccentMap = useMemo(() => {
     const allDoctors = Array.from(new Set(appointments.map((appointment) => appointment.doctor || 'Без лікаря')));
     return new Map(allDoctors.map((doctor, index) => [doctor, doctorBadgePalette[index % doctorBadgePalette.length]]));
@@ -111,8 +138,28 @@ export default function Dashboard() {
     [appointments, tomorrowKey],
   );
 
-  const displayedAppointments = activeView === 'today' ? todayAppointments : tomorrowAppointments;
-  const displayDate = activeView === 'today' ? today : tomorrow;
+  const dayAfterTomorrowAppointments = useMemo(
+    () =>
+      appointments
+        .filter((appointment) => appointment.date === dayAfterTomorrowKey)
+        .sort((a, b) => a.time.localeCompare(b.time)),
+    [appointments, dayAfterTomorrowKey],
+  );
+
+  const primaryView: ViewMode = isAfter18 ? 'tomorrow' : 'today';
+  const secondaryView: ViewMode = isAfter18 ? 'dayAfterTomorrow' : 'tomorrow';
+  const primaryLabel = isAfter18 ? 'Завтра' : 'Сьогодні';
+  const secondaryLabel = isAfter18 ? dayAfterTomorrow.toLocaleDateString('uk-UA', { weekday: 'long' }) : 'Завтра';
+
+  const getAppointmentsForView = (view: ViewMode) => {
+    if (view === 'today') return todayAppointments;
+    if (view === 'tomorrow') return tomorrowAppointments;
+    return dayAfterTomorrowAppointments;
+  };
+
+  const displayedAppointments = getAppointmentsForView(activeView);
+  const displayDate = activeView === 'today' ? today : activeView === 'tomorrow' ? tomorrow : dayAfterTomorrow;
+  const activeLabel = activeView === primaryView ? primaryLabel : secondaryLabel;
 
   const handleCreateRecord = async (record: {
     firstName: string;
@@ -135,7 +182,9 @@ export default function Dashboard() {
         status: 'scheduled',
       });
       setShowNewForm(false);
-      setActiveView(record.date === tomorrowKey ? 'tomorrow' : 'today');
+      setActiveView(
+        record.date === dayAfterTomorrowKey ? 'dayAfterTomorrow' : record.date === tomorrowKey ? 'tomorrow' : 'today',
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create appointment');
       throw err;
@@ -195,34 +244,42 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              onClick={() => setActiveView('today')}
-              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === 'today' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
+              onClick={() => setActiveView(primaryView)}
+              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === primaryView ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
             >
               <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3">
                 <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-primary/15">
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <p className="text-[10px] sm:text-sm text-muted-foreground leading-tight">{t('todayAppointments')}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight uppercase tracking-[0.08em]">
+                  {primaryLabel}
+                </p>
               </div>
-              <p className="text-2xl sm:text-3xl font-heading font-bold">{todayAppointments.length}</p>
+              <p className="text-2xl sm:text-3xl font-heading font-bold">
+                {getAppointmentsForView(primaryView).length}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">прийомів</p>
             </motion.button>
 
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              onClick={() => setActiveView('tomorrow')}
-              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === 'tomorrow' ? 'dashboard-toggle-card-active' : 'dashboard-toggle-card-idle'}`}
+              onClick={() => setActiveView(secondaryView)}
+              className={`dashboard-toggle-card text-left p-4 sm:p-5 ${activeView === secondaryView ? 'dashboard-toggle-card-active-blue' : 'dashboard-toggle-card-idle'}`}
             >
               <div className="mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3">
-                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-accent/15">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-info/15">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-info" />
                 </div>
-                <p className="text-[10px] sm:text-sm text-muted-foreground leading-tight">
-                  {t('tomorrowAppointments')}
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight uppercase tracking-[0.08em]">
+                  {secondaryLabel}
                 </p>
               </div>
-              <p className="text-2xl sm:text-3xl font-heading font-bold">{tomorrowAppointments.length}</p>
+              <p className="text-2xl sm:text-3xl font-heading font-bold">
+                {getAppointmentsForView(secondaryView).length}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">прийомів</p>
             </motion.button>
           </div>
 
@@ -235,8 +292,7 @@ export default function Dashboard() {
           >
             <div className="border-b border-border p-3 sm:p-5">
               <h2 className="font-heading text-base sm:text-lg font-semibold">
-                {activeView === 'today' ? t('todayAppointments') : t('tomorrowAppointments')} -{' '}
-                {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
+                {activeLabel} — {displayDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}
               </h2>
             </div>
             {loading ? (

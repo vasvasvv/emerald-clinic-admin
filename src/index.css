@@ -215,6 +215,13 @@
       0 0 0 1px rgba(255, 209, 92, 0.16);
   }
 
+  .dashboard-toggle-card-active-blue {
+    @apply border-info/40 bg-info/10;
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.26),
+      0 0 0 1px rgba(80, 180, 220, 0.16);
+  }
+
   .appointment-accordion-trigger {
     @apply transition-colors duration-300;
     background: linear-gradient(180deg, rgba(26, 57, 54, 0.62) 0%, rgba(18, 42, 40, 0.28) 100%);

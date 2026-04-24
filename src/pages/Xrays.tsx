@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 import { useSystemDoctors } from '@/hooks/use-doctors';
 import { useCreatePatient, useSearchPatients } from '@/hooks/use-patients';
 import { useActiveXraySession, useStartXraySession } from '@/hooks/use-xray';
@@ -280,11 +281,11 @@ function PatientModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="patient-date">{t('dateOfBirth')}</Label>
-              <Input
-                id="patient-date"
-                type="date"
+              <WheelDateTimeField
+                mode="date"
                 value={dateOfBirth}
-                onChange={(event) => setDateOfBirth(event.target.value)}
+                onChange={setDateOfBirth}
+                placeholder={t('dateOfBirth')}
               />
             </div>
           </div>

@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Plus, Edit2, Trash2, X, Flame, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCreateNews, useDeleteNews, useNews, useUpdateNews } from '@/hooks/use-news';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 
 interface NewsItem {
   id: number;
@@ -257,11 +258,12 @@ export default function News() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-muted-foreground">{t('expiryDate')}</label>
-                    <input
-                      type="date"
-                      className="input-glass w-full"
+                    <WheelDateTimeField
+                      mode="date"
+                      className="w-full"
                       value={form.expiryDate}
-                      onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                      onChange={(value) => setForm({ ...form, expiryDate: value })}
+                      placeholder={t('expiryDate')}
                     />
                   </div>
                   <div className="flex items-center gap-3 pt-6">

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { ArrowLeft, Clock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 
 interface NewRecordFormProps {
   onClose: () => void;
@@ -19,7 +20,7 @@ interface NewRecordFormProps {
   defaultDoctor?: string;
 }
 
-const WORK_HOURS_WEEKDAY = Array.from({ length: 9 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
+const WORK_HOURS_WEEKDAY = Array.from({ length: 10 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
 const WORK_HOURS_SATURDAY = Array.from({ length: 5 }, (_, i) => `${String(9 + i).padStart(2, '0')}:00`);
 
 function getMonday(d: Date): Date {
@@ -232,28 +233,30 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
                         {freeSlots.length} {t('available')}
                       </span>
                     </div>
-                    <div className="p-3 flex flex-wrap gap-1.5">
-                      {workHours.map((hour) => {
-                        const isFree = freeSlots.includes(hour);
-                        const isSelected = selectedDate === dateStr && selectedTime === hour;
-                        return (
-                          <button
-                            key={hour}
-                            disabled={!isFree || isPast}
-                            onClick={() => handleSlotClick(dateStr, hour)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                              isSelected
-                                ? 'bg-accent text-accent-foreground ring-2 ring-accent/50'
-                                : isFree && !isPast
-                                  ? 'bg-secondary/40 text-foreground hover:bg-primary/20 hover:text-primary'
-                                  : 'bg-secondary/20 text-muted-foreground/40 cursor-not-allowed line-through'
-                            }`}
-                          >
-                            {hour}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {!isPast && (
+                      <div className="p-3 flex flex-wrap gap-1.5">
+                        {workHours.map((hour) => {
+                          const isFree = freeSlots.includes(hour);
+                          const isSelected = selectedDate === dateStr && selectedTime === hour;
+                          return (
+                            <button
+                              key={hour}
+                              disabled={!isFree}
+                              onClick={() => handleSlotClick(dateStr, hour)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                isSelected
+                                  ? 'bg-accent text-accent-foreground ring-2 ring-accent/50'
+                                  : isFree
+                                    ? 'bg-secondary/40 text-foreground hover:bg-primary/20 hover:text-primary'
+                                    : 'bg-secondary/20 text-muted-foreground/40 cursor-not-allowed line-through'
+                              }`}
+                            >
+                              {hour}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -264,10 +267,11 @@ export function NewRecordForm({ onClose, onSave, existingRecords, doctors, defau
               <div className="flex items-center gap-3 glass-panel-sm px-4 py-2.5">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">{selectedDate}</span>
-                <input
-                  type="time"
+                <WheelDateTimeField
+                  mode="time"
                   value={manualTime}
-                  onChange={(e) => handleManualTimeChange(e.target.value)}
+                  onChange={handleManualTimeChange}
+                  placeholder={t('time')}
                   className="input-glass text-sm py-1 w-28"
                 />
               </div>

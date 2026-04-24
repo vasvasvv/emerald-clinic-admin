@@ -136,7 +136,7 @@ export function ToothModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-heading">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
@@ -199,7 +199,7 @@ export function ToothModal({
           {(xrayFiles.length > 0 || toothImageFiles.length > 0) && (
             <div className="space-y-2">
               <Label>Файли зуба</Label>
-              <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="rounded-lg border bg-muted/30 p-2 sm:p-3">
                 <div className="mb-2 flex flex-wrap gap-2">
                   {xrayFiles.length > 0 && <Badge variant="secondary">Знімки: {xrayFiles.length}</Badge>}
                   {toothImageFiles.length > 0 && <Badge variant="secondary">Фото: {toothImageFiles.length}</Badge>}
@@ -217,9 +217,9 @@ export function ToothModal({
                             file.type === 'xray' ? `Рентген-знімок зуба ${toothNumber}` : `Фото зуба ${toothNumber}`,
                         })
                       }
-                      className="flex w-full items-center gap-3 rounded-md border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/40"
+                      className="flex w-full items-center gap-2 rounded-md border bg-background px-2 py-2 text-left text-sm transition-colors hover:bg-muted/40 sm:gap-3 sm:px-3"
                     >
-                      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md bg-muted">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted sm:h-16 sm:w-16">
                         {previewUrls[file.id] ? (
                           <img src={previewUrls[file.id]} alt={file.name} className="h-full w-full object-cover" />
                         ) : (
@@ -227,12 +227,14 @@ export function ToothModal({
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium">{file.name}</p>
+                        <p className="truncate font-medium">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(file.uploadedAt).toLocaleString('uk-UA')}
                         </p>
                       </div>
-                      <Badge variant="outline">{file.type === 'xray' ? 'Знімок' : 'Фото'}</Badge>
+                      <Badge variant="outline" className="shrink-0">
+                        {file.type === 'xray' ? 'Знімок' : 'Фото'}
+                      </Badge>
                     </button>
                   ))}
                 </div>
@@ -241,10 +243,11 @@ export function ToothModal({
           )}
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button
             variant="outline"
             type="button"
+            className="w-full sm:w-auto"
             onClick={() => {
               setTemplateId('');
               setDescription('');
@@ -253,10 +256,10 @@ export function ToothModal({
           >
             Очистити
           </Button>
-          <Button variant="outline" type="button" onClick={onClose}>
+          <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={onClose}>
             Скасувати
           </Button>
-          <Button type="button" onClick={handleSave}>
+          <Button type="button" className="w-full sm:w-auto" onClick={handleSave}>
             Зберегти
           </Button>
         </DialogFooter>
@@ -289,13 +292,24 @@ export function ToothModal({
       </Dialog>
 
       <Dialog open={Boolean(selectedFile)} onOpenChange={(open) => !open && setSelectedFile(null)}>
-        <DialogContent className="max-h-[92vh] max-w-5xl overflow-hidden">
-          <DialogHeader>
+        <DialogContent className="h-dvh w-screen max-w-none overflow-hidden border-0 p-0 sm:rounded-none [&>button:last-child]:hidden">
+          <DialogHeader className="sr-only">
             <DialogTitle>{selectedFile?.title}</DialogTitle>
           </DialogHeader>
-          <div className="overflow-auto rounded-2xl border border-border/70 bg-muted/20 p-4">
+          <button
+            type="button"
+            onClick={() => setSelectedFile(null)}
+            className="absolute right-4 top-4 z-10 rounded-md bg-background/90 px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-background"
+          >
+            Закрити
+          </button>
+          <div className="flex h-full w-full items-center justify-center bg-black p-3 sm:p-6">
             {selectedFile?.url && (
-              <img src={selectedFile.url} alt={`Tooth ${toothNumber}`} className="mx-auto rounded-xl" />
+              <img
+                src={selectedFile.url}
+                alt={`Tooth ${toothNumber}`}
+                className="max-h-full max-w-full object-contain"
+              />
             )}
           </div>
         </DialogContent>

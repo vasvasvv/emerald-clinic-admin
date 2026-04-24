@@ -6,7 +6,7 @@ const translations = {
   uk: {
     dashboard: 'Головна',
     appointments: 'Прийоми',
-    records: 'Записи',
+    records: 'Розклад',
     doctors: 'Лікарі',
     news: 'Новини',
     notifications: 'Сповіщення',

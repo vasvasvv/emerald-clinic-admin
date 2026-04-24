@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format, type Locale } from 'date-fns';
-import { enUS, uk } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock3, Edit2, Phone, Plus, Search, Trash2, UserRound, X } from 'lucide-react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { Calendar as DateCalendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WheelDateTimeField } from '@/components/ui/wheel-date-time-field';
 import { useSystemDoctors } from '@/hooks/use-doctors';
 import {
   useAppointments,
@@ -52,8 +49,6 @@ const statusColors: Record<Appointment['status'], string> = {
   cancelled: 'bg-destructive/20 text-destructive',
 };
 
-const parseDateValue = (value: string) => (value ? new Date(`${value}T00:00:00`) : undefined);
-
 function SelectField({
   value,
   onChange,
@@ -93,35 +88,24 @@ function DateField({
 }: {
   value: string;
   onChange: (value: string) => void;
-  locale: Locale;
+  locale: string;
   placeholder: string;
 }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="input-glass flex h-11 w-full items-center justify-between rounded-2xl bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] px-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]">
-          <span className={value ? 'text-foreground' : 'text-muted-foreground'}>
-            {value ? format(parseDateValue(value)!, 'dd MMMM yyyy', { locale }) : placeholder}
-          </span>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto overflow-hidden border-glass-border p-0 glass-panel" align="start">
-        <DateCalendar
-          mode="single"
-          selected={parseDateValue(value)}
-          onSelect={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-          className="bg-card/95"
-          locale={locale}
-        />
-      </PopoverContent>
-    </Popover>
+    <WheelDateTimeField
+      mode="date"
+      value={value}
+      onChange={onChange}
+      locale={locale}
+      placeholder={placeholder}
+      className="bg-[linear-gradient(180deg,rgba(24,56,53,0.92)_0%,rgba(16,39,37,0.96)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_28px_rgba(0,0,0,0.14)]"
+    />
   );
 }
 
 export default function Appointments() {
   const { t, lang } = useI18n();
-  const locale = lang === 'uk' ? uk : enUS;
+  const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
   const patientLabel = lang === 'uk' ? 'Пацієнт' : 'Patient';
   const noDoctorLabel = lang === 'uk' ? 'Без лікаря' : 'No doctor';
   const subtitle =
@@ -539,11 +523,12 @@ export default function Appointments() {
 
                   <div className="space-y-1 sm:space-y-1.5">
                     <label className="text-xs sm:text-sm text-muted-foreground">{t('time')}</label>
-                    <input
-                      type="time"
-                      className="input-glass w-full h-10 sm:h-11"
+                    <WheelDateTimeField
+                      mode="time"
+                      className="h-10 sm:h-11"
                       value={form.time}
-                      onChange={(e) => setForm({ ...form, time: e.target.value })}
+                      onChange={(value) => setForm({ ...form, time: value })}
+                      placeholder={t('time')}
                     />
                   </div>
 

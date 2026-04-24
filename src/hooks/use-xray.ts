@@ -18,6 +18,7 @@ export function useActiveXraySession(sessionId?: number, enabled = true) {
     queryKey: ['xray-session', sessionId],
     queryFn: () => api.getActiveXraySession(token!, sessionId),
     enabled: Boolean(token) && Boolean(sessionId) && enabled,
-    refetchInterval: enabled ? 3000 : false,
+    refetchInterval: (query) =>
+      enabled && query.state.data?.status === 'waiting' && !query.state.data?.xray ? 5000 : false,
   });
 }
