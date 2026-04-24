@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, apiCall } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -25,17 +25,9 @@ export interface DentalVisitPayload {
 
 interface UseDentalChartsOptions {
   currentUser: User | null;
-  selectedPatientId: string;
-  editingPatientId: string | null;
-  historyPatientId: string | null;
 }
 
-export function useDentalCharts({
-  currentUser,
-  selectedPatientId,
-  editingPatientId,
-  historyPatientId,
-}: UseDentalChartsOptions) {
+export function useDentalCharts({ currentUser }: UseDentalChartsOptions) {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -44,6 +36,8 @@ export function useDentalCharts({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Зберігаємо деталі пацієнтів які вже завантажено щоб не перезавантажувати
+  const patientDetailsCache = useRef<Set<string>>(new Set());
 
   const loadDoctors = useCallback(async () => {
     if (!token) return;
@@ -64,10 +58,13 @@ export function useDentalCharts({
   );
 
   const loadPatientDetails = useCallback(
-    async (patientId: string) => {
+    async (patientId: string, force = false) => {
       if (!token || !patientId) return;
+      // Не завантажуємо повторно якщо вже є в кеші (якщо не force)
+      if (!force && patientDetailsCache.current.has(patientId)) return;
       const data = await apiCall(`/api/patients/${patientId}`, {}, token);
       const normalized = normalizePatient(data);
+      patientDetailsCache.current.add(patientId);
       setPatients((current) =>
         current.map((patient) =>
           patient.id === patientId ? { ...patient, ...normalized, detailsLoaded: true } : patient,
@@ -82,6 +79,8 @@ export function useDentalCharts({
     setLoading(true);
     setError('');
     try {
+      // При refresh скидаємо кеш деталей — дані могли змінитись
+      patientDetailsCache.current.clear();
       await Promise.all([loadDoctors(), loadPatients()]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося завантажити dental charts');
@@ -109,6 +108,8 @@ export function useDentalCharts({
           },
           token,
         );
+        // Інвалідуємо кеш деталей цього пацієнта щоб при наступному відкритті дані оновились
+        if (editingPatient.id) patientDetailsCache.current.delete(editingPatient.id);
       } else {
         await apiCall(
           '/api/patients',
@@ -125,8 +126,9 @@ export function useDentalCharts({
       }
 
       await loadPatients(searchQuery.trim());
+      // Деталі редагованого пацієнта завантажуємо примусово (force=true)
       if (editingPatient?.id) {
-        await loadPatientDetails(editingPatient.id);
+        await loadPatientDetails(editingPatient.id, true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося зберегти пацієнта');
@@ -167,7 +169,8 @@ export function useDentalCharts({
         },
         token,
       );
-      await loadPatientDetails(patientId);
+      patientDetailsCache.current.delete(patientId);
+      await loadPatientDetails(patientId, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося зберегти зубну карту');
       throw err;
@@ -210,8 +213,13 @@ export function useDentalCharts({
         },
         token,
       );
-      await loadPatientDetails(patientId);
-      await queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      patientDetailsCache.current.delete(patientId);
+      await loadPatientDetails(patientId, true);
+      // Інвалідуємо тільки записи за датою нового візиту
+      const visitDate = payload.date?.slice(0, 10);
+      if (visitDate) {
+        await queryClient.invalidateQueries({ queryKey: ['appointments', visitDate] });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося додати візит');
       throw err;
@@ -226,7 +234,9 @@ export function useDentalCharts({
     setError('');
     try {
       await apiCall(`/api/patients/${patientId}/visits/${visitId}`, { method: 'DELETE' }, token);
-      await loadPatients(searchQuery.trim());
+      patientDetailsCache.current.delete(patientId);
+      // Оновлюємо список пацієнтів і деталі паралельно
+      await Promise.all([loadPatients(searchQuery.trim()), loadPatientDetails(patientId, true)]);
       await queryClient.invalidateQueries({ queryKey: ['appointments'] });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не вдалося видалити візит');
@@ -238,21 +248,6 @@ export function useDentalCharts({
   useEffect(() => {
     void refresh();
   }, [refresh]);
-
-  useEffect(() => {
-    const patientIds = [selectedPatientId, editingPatientId, historyPatientId].filter((value): value is string =>
-      Boolean(value),
-    );
-    const pendingIds = patientIds.filter((patientId, index) => {
-      if (patientIds.indexOf(patientId) !== index) return false;
-      const patient = patients.find((item) => item.id === patientId);
-      return Boolean(patient && !patient.detailsLoaded);
-    });
-
-    pendingIds.forEach((patientId) => {
-      void loadPatientDetails(patientId).catch(() => null);
-    });
-  }, [editingPatientId, historyPatientId, loadPatientDetails, patients, selectedPatientId]);
 
   return {
     doctors,

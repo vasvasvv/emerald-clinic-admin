@@ -68,23 +68,38 @@ export function DentalChartsWorkspace() {
     createVisit,
     deletePatient,
     deleteVisit,
+    loadPatientDetails,
     loadPatients,
     refresh,
     saveTooth,
     submitPatient,
     uploadToothImage,
-  } = useDentalCharts({
-    currentUser,
-    selectedPatientId,
-    editingPatientId,
-    historyPatientId,
-  });
+  } = useDentalCharts({ currentUser });
 
   useEffect(() => {
     setSelectedPatientId((current) =>
       patients.some((patient) => patient.id === current) ? current : (patients[0]?.id ?? ''),
     );
   }, [patients]);
+
+  // Lazy-load деталей пацієнта при виборі (один запит замість N при mount)
+  useEffect(() => {
+    if (selectedPatientId) {
+      void loadPatientDetails(selectedPatientId).catch(() => null);
+    }
+  }, [selectedPatientId, loadPatientDetails]);
+
+  useEffect(() => {
+    if (editingPatientId) {
+      void loadPatientDetails(editingPatientId).catch(() => null);
+    }
+  }, [editingPatientId, loadPatientDetails]);
+
+  useEffect(() => {
+    if (historyPatientId) {
+      void loadPatientDetails(historyPatientId).catch(() => null);
+    }
+  }, [historyPatientId, loadPatientDetails]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 1279px)');

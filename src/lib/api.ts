@@ -23,9 +23,30 @@ const API_URLS = {
 const isDev = import.meta.env.DEV;
 export const API_URL = isDev ? API_URLS.development : API_URLS.production;
 const DOCTOR_PHOTO_UPLOAD_ENDPOINT = import.meta.env.VITE_DOCTOR_PHOTO_UPLOAD_ENDPOINT as string | undefined;
-const GET_CACHE_TTL_MS = 15_000;
+const GET_CACHE_TTL_MS = 60_000; // 60с — відповідає серверному TTL
 const getResponseCache = new Map<string, { expiresAt: number; value: unknown }>();
 const getInFlightRequests = new Map<string, Promise<unknown>>();
+
+// Паттерни URL які потребують інвалідації кешу після мутацій
+const MUTATION_CACHE_INVALIDATE: Array<{ match: RegExp; clear: RegExp }> = [
+  { match: /\/api\/patients(\/|$|\?)/, clear: /\/api\/patients/ },
+  { match: /\/api\/appointments(\/|$|\?)/, clear: /\/api\/appointments/ },
+  { match: /\/api\/news(\/|$|\?)/, clear: /\/api\/news/ },
+  { match: /\/api\/site\/doctors(\/|$|\?)/, clear: /\/api\/site\/doctors/ },
+];
+
+function invalidateGetCacheForMutation(endpoint: string) {
+  for (const rule of MUTATION_CACHE_INVALIDATE) {
+    if (rule.match.test(endpoint)) {
+      for (const key of getResponseCache.keys()) {
+        if (rule.clear.test(key)) {
+          getResponseCache.delete(key);
+        }
+      }
+      break;
+    }
+  }
+}
 
 function buildRequestKey(endpoint: string, token?: string | null) {
   return `${token ?? 'anon'}:${endpoint}`;
@@ -79,6 +100,10 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}, to
     const data = await response.json();
     if (requestKey) {
       getResponseCache.set(requestKey, { expiresAt: Date.now() + GET_CACHE_TTL_MS, value: data });
+    }
+    // Після мутації (POST/PUT/DELETE) інвалідуємо повʼязані GET-кеші
+    if (method !== 'GET') {
+      invalidateGetCacheForMutation(endpoint);
     }
     return data as T;
   };

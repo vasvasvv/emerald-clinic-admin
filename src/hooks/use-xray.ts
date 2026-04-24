@@ -22,6 +22,8 @@ export function useActiveXraySession(sessionId?: number, enabled = true) {
     queryKey: ['xray-session', sessionId],
     queryFn: () => api.getActiveXraySession(token!, sessionId),
     enabled: Boolean(token) && Boolean(sessionId) && enabled,
+    // Не кешуємо стан сесії — polling повинен завжди бачити актуальний стан
+    staleTime: 0,
     refetchInterval: (query) =>
       enabled && query.state.data?.status === 'waiting' && !query.state.data?.xray ? 5000 : false,
   });
