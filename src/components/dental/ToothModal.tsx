@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { XrayViewer } from '@/components/XrayViewer';
 import type { ToothRecord } from '@/types/dental';
 import { DENTAL_TEMPLATES } from '@/types/dental';
 
@@ -33,7 +34,9 @@ export function ToothModal({
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
-  const [selectedFile, setSelectedFile] = useState<{ url: string; title: string } | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerFiles, setViewerFiles] = useState<{ id: string; url: string; label?: string }[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -85,7 +88,6 @@ export function ToothModal({
       cancelled = true;
       createdUrls.forEach((url) => URL.revokeObjectURL(url));
       setPreviewUrls({});
-      setSelectedFile(null);
     };
   }, [isOpen, record?.files]);
 
@@ -130,7 +132,26 @@ export function ToothModal({
     }
   };
 
-  const currentTemplate = DENTAL_TEMPLATES.find((item) => item.id === templateId);
+  const openViewer = (clickedFile: NonNullable<ToothRecord['files']>[number]) => {
+    // Будуємо список files для XrayViewer — спочатку original якщо є, потім preview
+    const allFiles = record?.files ?? [];
+    const files = allFiles.map((f) => {
+      const fileWithOriginal = f as typeof f & { originalUrl?: string };
+      return {
+        id: f.id,
+        // Для рентгенів передаємо originalUrl якщо є (максимальна якість)
+        url: fileWithOriginal.originalUrl ?? f.data,
+        label:
+          f.type === 'xray'
+            ? `Рентген-знімок зуба ${toothNumber} — ${new Date(f.uploadedAt).toLocaleDateString('uk-UA')}`
+            : `Фото зуба ${toothNumber}`,
+      };
+    });
+    const idx = files.findIndex((f) => f.id === clickedFile.id);
+    setViewerFiles(files);
+    setViewerIndex(Math.max(0, idx));
+    setViewerOpen(true);
+  };
   const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray');
   const toothImageFiles = (record?.files ?? []).filter((file) => file.type === 'image');
 
@@ -209,14 +230,7 @@ export function ToothModal({
                     <button
                       key={file.id}
                       type="button"
-                      onClick={() =>
-                        previewUrls[file.id] &&
-                        setSelectedFile({
-                          url: previewUrls[file.id],
-                          title:
-                            file.type === 'xray' ? `Рентген-знімок зуба ${toothNumber}` : `Фото зуба ${toothNumber}`,
-                        })
-                      }
+                      onClick={() => openViewer(file)}
                       className="flex w-full items-center gap-2 rounded-md border bg-background px-2 py-2 text-left text-sm transition-colors hover:bg-muted/40 sm:gap-3 sm:px-3"
                     >
                       <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted sm:h-16 sm:w-16">
@@ -291,29 +305,9 @@ export function ToothModal({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(selectedFile)} onOpenChange={(open) => !open && setSelectedFile(null)}>
-        <DialogContent className="h-dvh w-screen max-w-none overflow-hidden border-0 p-0 sm:rounded-none [&>button:last-child]:hidden">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{selectedFile?.title}</DialogTitle>
-          </DialogHeader>
-          <button
-            type="button"
-            onClick={() => setSelectedFile(null)}
-            className="absolute right-4 top-4 z-10 rounded-md bg-background/90 px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-background"
-          >
-            Закрити
-          </button>
-          <div className="flex h-full w-full items-center justify-center bg-black p-3 sm:p-6">
-            {selectedFile?.url && (
-              <img
-                src={selectedFile.url}
-                alt={`Tooth ${toothNumber}`}
-                className="max-h-full max-w-full object-contain"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {viewerOpen && viewerFiles.length > 0 && (
+        <XrayViewer files={viewerFiles} initialIndex={viewerIndex} onClose={() => setViewerOpen(false)} />
+      )}
     </Dialog>
   );
 }
