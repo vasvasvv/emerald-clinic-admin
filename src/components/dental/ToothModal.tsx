@@ -152,6 +152,7 @@ export function ToothModal({
     setViewerIndex(Math.max(0, idx));
     setViewerOpen(true);
   };
+  const currentTemplate = DENTAL_TEMPLATES.find((t) => t.id === templateId);
   const xrayFiles = (record?.files ?? []).filter((file) => file.type === 'xray');
   const toothImageFiles = (record?.files ?? []).filter((file) => file.type === 'image');
 
